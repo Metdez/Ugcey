@@ -2,6 +2,7 @@
 create_app(agent=..., deps=...) to inject a prepared agent and container instead."""
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -43,6 +44,11 @@ async def _startup(app: FastAPI) -> Deps:
     app.state.deps = deps
     app.state.agent = build_agent(deps)
     await ensure_default_accounts(deps.app)
+    try:  # re-poll media jobs orphaned by a restart; never block startup
+        from ugecy.tools.media import resume_media_jobs
+        await resume_media_jobs()
+    except Exception:
+        logging.getLogger(__name__).exception("resume_media_jobs failed")
     return deps
 
 

@@ -60,7 +60,7 @@ def _subagents(deps: Deps, models: dict[str, BaseChatModel]) -> list[dict[str, A
 def _system_prompt(deps: Deps) -> str:
     m = deps.modes
     line = (f"Current provider modes: llm={m.llm}, research={m.research}, media={m.media}, "
-            f"device={m.device}, publishing={m.publishing}.")
+            f"device=dynamic (call device_status), publishing={m.publishing}.")
     return f"{load_prompt('orchestrator')}\n\n{line}"
 
 

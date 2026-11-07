@@ -92,6 +92,13 @@ class GlasshandProvider:
             self._vision = make_model("vision", self._settings)
         return await vision.describe_jpeg(self._vision, await self.screenshot(device_id))
 
+    async def observe(self, device_id: str) -> dict[str, Any]:
+        if self._vision is None:
+            from ugecy.llm.workers_ai import make_model
+
+            self._vision = make_model("vision", self._settings)
+        return await vision.observe_jpeg(self._vision, await self.screenshot(device_id))
+
     async def send(self, device_id: str, action: dict[str, Any], *, idempotency_key: str | None = None) -> dict[str, Any]:
         try:
             body_in = map_action(action)

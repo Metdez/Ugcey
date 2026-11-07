@@ -80,3 +80,7 @@ class AutoDeviceProvider:
 
     async def send(self, device_id: str, action: dict[str, Any], *, idempotency_key: str) -> dict[str, Any]:
         return await (await self._pick(device_id)).send(device_id, action, idempotency_key=idempotency_key)
+
+    async def observe(self, device_id: str) -> dict[str, Any] | None:
+        fn = getattr(await self._pick(device_id), "observe", None)
+        return await fn(device_id) if fn else None

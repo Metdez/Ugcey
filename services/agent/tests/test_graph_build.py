@@ -18,7 +18,8 @@ from ugecy.middleware.audit import AuditMiddleware
 SIDE_EFFECT_TOOLS = {"generate_media", "publish_post", "device_commit", "device_tap", "device_swipe",
                      "device_type", "device_start_session"}
 EXPECTED = {
-    "research-analyst": {"web_search", "fetch_page", "remember_pattern", "search_patterns"},
+    "research-analyst": {"web_search", "fetch_page", "remember_pattern", "search_patterns", "device_status", "device_start_session",
+                         "device_screenshot", "device_observe", "device_tap", "device_swipe", "device_next_post", "device_type", "device_home"},
     "creative-strategist": {"search_patterns"},
     "compliance-critic": {"compliance_check"},
     "production-coordinator": {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
@@ -96,7 +97,7 @@ async def test_seed_store_writes_skills_and_keeps_existing_memory():
     names = {i.key for i in await store.asearch(("global", "skills"))}
     assert names == {f"/{n}/SKILL.md" for n in (
         "ugc-hook-extraction", "short-form-script-structure", "script-critic-rubric",
-        "higgsfield-prompting", "platform-publishing-checklist", "ftc-disclosure")}
+        "higgsfield-prompting", "platform-publishing-checklist", "ftc-disclosure", "phone-research")}
     assert (await store.aget(("ws1", "memories"), "/AGENTS.md")).value["content"].startswith("# Brand voice")
     await store.aput(("ws1", "memories"), "/AGENTS.md", {"content": "mine", "encoding": "utf-8"})
     await seed_store(store, "ws1")
@@ -107,7 +108,7 @@ def test_skill_frontmatter_is_valid():
     from importlib.resources import files
     root = files("ugecy").joinpath("skills")
     skills = [d for d in root.iterdir() if d.is_dir() and not d.name.startswith("_")]
-    assert len(skills) == 6
+    assert len(skills) == 7
     for d in skills:
         head = d.joinpath("SKILL.md").read_text("utf-8").split("---")[1]
         assert re.search(rf"^name: {d.name}$", head, re.MULTILINE)

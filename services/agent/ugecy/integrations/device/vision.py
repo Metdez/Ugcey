@@ -23,6 +23,52 @@ PROMPT = (
 )
 
 
+METRIC_KEYS = ("views", "likes", "comments", "shares", "saves")
+POST_PROMPT = (
+    "You see a real iPhone screen showing a short-form video app (TikTok, Instagram Reels or YouTube Shorts). Reply with ONLY compact JSON: "
+    '{"platform": "tiktok|instagram|youtube|other", "creator": "<@handle>", "caption": "<caption text>", '
+    '"on_screen_text": "<text overlaid on the video>", "hook_guess": "<the opening line or overlay that grabs attention>", '
+    '"metrics": {"views": "<as shown>", "likes": "...", "comments": "...", "shares": "...", "saves": "..."}, '
+    '"audio": "<sound name or original audio>", "format_guess": "testimonial|problem_solution|unboxing|before_after|tutorial_demo|pov_skit|'
+    'street_interview|us_vs_them|green_screen_reaction|day_in_life|founder_story|text_on_screen_ugly_ad", '
+    '"is_ad": false, "url": "<post URL only if visible, else empty>", '
+    '"elements": [{"label": "<name>", "kind": "button|field|tab|icon|text", "x": 0.5, "y": 0.9}]}. '
+    "Copy metrics exactly as displayed (for example 1.2M, 45.3K); use an empty string for anything not visible. "
+    "is_ad is true only for a visible Sponsored/Ad label or #ad/#sponsored. x and y are element CENTRES as fractions 0..1. "
+    "If no post is on screen (search grid, home screen) leave creator, caption and hook_guess empty. No commentary."
+)
+
+
+def parse_count(v: Any) -> int | None:
+    """'1.2M' -> 1200000, '45.3K' -> 45300, '987' -> 987, '1,234' -> 1234; None if unparseable."""
+    if isinstance(v, bool):
+        return None
+    if isinstance(v, int | float):
+        return round(v) if v >= 0 and not math.isnan(v) else None
+    m = re.fullmatch(r"\s*([\d.,]+)\s*([kmb])?\s*", str(v or ""), re.IGNORECASE)
+    if not m:
+        return None
+    try:
+        return round(float(m[1].replace(",", "")) * {"": 1, "k": 1e3, "m": 1e6, "b": 1e9}[(m[2] or "").lower()])
+    except ValueError:
+        return None
+
+
+def normalize_post(text: str) -> dict[str, Any]:
+    """Model reply -> post dict with numeric metrics. {'error': ...} when the reply is not JSON."""
+    obj = extract_json(text)
+    if obj is None:
+        return {"error": "model output was not JSON"}
+    raw = obj.get("metrics") if isinstance(obj.get("metrics"), dict) else {}
+    metrics = {k: n for k in METRIC_KEYS if (n := parse_count(raw.get(k))) is not None}
+    els = json.loads(normalize(json.dumps(obj)))["elements"]
+    s = lambda k, n=300: str(obj.get(k) or "").strip()[:n]
+    return {"platform": s("platform", 20).lower() or "other", "creator": s("creator", 60), "caption": s("caption"),
+            "on_screen_text": s("on_screen_text"), "hook_guess": s("hook_guess"), "metrics": metrics, "audio": s("audio", 100),
+            "format_guess": s("format_guess", 40), "is_ad": str(obj.get("is_ad")).lower() in ("true", "1", "yes"),
+            "url": s("url", 300), "elements": els}
+
+
 def crop_viewport(img: Image.Image, geometry: dict[str, Any]) -> Image.Image:
     """Crop to geometry.viewport (pixels of geometry.width x height), scaling if the image size differs."""
     vp = geometry["viewport"]
@@ -91,3 +137,10 @@ async def describe_jpeg(model: Any, cropped_jpeg: bytes) -> str:
     msg = {"role": "user", "content": [{"type": "text", "text": PROMPT}, {"type": "image_url", "image_url": {"url": uri}}]}
     resp = await model.ainvoke([msg])
     return normalize(_text(resp.content).strip())
+
+
+async def observe_jpeg(model: Any, cropped_jpeg: bytes) -> dict[str, Any]:
+    small = to_jpeg(Image.open(io.BytesIO(cropped_jpeg)), max_h=MAX_H, quality=80)
+    uri = "data:image/jpeg;base64," + base64.b64encode(small).decode()
+    msg = {"role": "user", "content": [{"type": "text", "text": POST_PROMPT}, {"type": "image_url", "image_url": {"url": uri}}]}
+    return normalize_post(_text((await model.ainvoke([msg])).content).strip())

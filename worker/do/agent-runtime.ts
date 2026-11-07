@@ -42,6 +42,21 @@ export class AgentRuntime extends DurableObject<Env> {
     return tcpPort(this.ctx).fetch(fwd); // returned unchanged so SSE streams unbuffered
   }
 
+  // ---- operator admin RPC (routes in worker/index.ts, behind the cookie gate) ----
+  async runtimeInfo(): Promise<{ running: boolean; image: string | null; info: unknown }> {
+    const c = this.ctx.container!;
+    const info = c.running ? await c.inspect().catch(() => null) : null;
+    return { running: c.running, image: c.images.agent ?? null, info };
+  }
+
+  /** Stop the container so the next request starts a fresh one from the currently deployed image. */
+  async restartRuntime(): Promise<{ restarted: boolean }> {
+    const c = this.ctx.container!;
+    if (!c.running) return { restarted: false };
+    await c.destroy();
+    return { restarted: true };
+  }
+
   // ---- state.internal RPC (values cross RPC as base64 strings) ----
   kvGet(ns: string, prefix: string): { key: string; value_b64: string }[] {
     const rows = this.ctx.storage.sql
