@@ -126,3 +126,16 @@ async def test_orchestrator_can_delegate_to_registered_subagent(reg):
                               {"configurable": {"thread_id": "d"}}, context=RunContext())
     task_result = next(m for m in out["messages"] if isinstance(m, ToolMessage) and m.name == "task")
     assert "summary.md" in task_result.content
+
+
+def test_research_gets_its_own_clean_stop_cap(reg):
+    from langchain.agents.middleware import ModelCallLimitMiddleware
+
+    def cap(spec):
+        lims = [m for m in spec["middleware"] if isinstance(m, ModelCallLimitMiddleware)]
+        assert len(lims) == 1 and lims[0].exit_behavior == "end"
+        return lims[0].run_limit
+    deps = fake_deps()
+    specs = {s["name"]: s for s in _subagents(deps, fake_models()) if "middleware" in s}
+    assert cap(specs["research-analyst"]) == deps.settings.max_model_calls_research == 200
+    assert all(cap(s) == deps.settings.max_model_calls_per_subagent for n, s in specs.items() if n != "research-analyst")
