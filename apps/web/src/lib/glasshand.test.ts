@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { cropRect, formatCountdown, streamUrl, viewState } from "./glasshand";
+import { cropRect, formatCountdown, isGeometry, streamUrl, viewState } from "./glasshand";
 
 describe("cropRect", () => {
   const g = { width: 1920, height: 1080, viewport: { x: 700, y: 0, width: 500, height: 1080 } };
   it("uses the viewport", () => expect(cropRect(g, 1920, 1080)).toEqual([700, 0, 500, 1080]));
   it("clamps to a smaller bitmap", () => expect(cropRect(g, 900, 1080)).toEqual([700, 0, 200, 1080]));
+});
+describe("isGeometry", () => {
+  const viewport = { x: 700, y: 0, width: 500, height: 1080 };
+  it("accepts a viewport inside the frame", () => expect(isGeometry({ width: 1920, height: 1080, viewport })).toBe(true));
+  it("rejects what would leave the canvas blank", () => {
+    for (const g of [null, "x", { width: 1 }, { width: 1920, height: 1080 }, { width: 1920, height: 1080, viewport: { ...viewport, x: 1500 } },
+      { width: 1920, height: 1080, viewport: { x: 0.3, y: 0, width: 0.4, height: 0 } }, { width: "1920", height: 1080, viewport }]) expect(isGeometry(g)).toBe(false);
+  });
 });
 describe("viewState", () => {
   it("maps states", () => {

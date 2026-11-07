@@ -28,6 +28,14 @@ export function streamUrl(loc: Pick<Location, "protocol" | "host"> = window.loca
   return `${loc.protocol === "https:" ? "wss:" : "ws:"}//${loc.host}/api/glasshand/stream`;
 }
 
+/** A usable `hello` geometry: a positive frame size with a pixel viewport inside it (as Glasshand's own viewer checks). */
+export function isGeometry(g: unknown): g is Geometry {
+  const f = g as Partial<Geometry> | null, v = f?.viewport;
+  return !!v && [f.width, f.height, v.x, v.y, v.width, v.height].every(Number.isFinite)
+    && f.width! > 0 && f.height! > 0 && v.x >= 0 && v.y >= 0 && v.width > 0 && v.height > 0
+    && v.x + v.width <= f.width! && v.y + v.height <= f.height!;
+}
+
 /** drawImage source rect: crop the full HDMI frame to the viewport (clamped to the frame). */
 export function cropRect(g: Geometry, bmpW: number, bmpH: number): [number, number, number, number] {
   const v = g.viewport;

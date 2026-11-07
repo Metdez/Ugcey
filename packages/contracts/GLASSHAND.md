@@ -24,10 +24,11 @@ These routes are handled inside the Worker and are **not** proxied to the contai
 **Relay protocol for `GET /api/glasshand/stream`.** The Worker fetches the `controlUrl` from `GET /rentals/{id}/connection` and opens it as an outbound WebSocket with `Authorization: Bearer <token>`. The token is never put in the URL.
 - **Upstream messages:**
   - `hello` (JSON with geometry): forward to the client as `{type:"hello", geometry}`.
-  - `{v:1,type:"frame",frameId,...}`, followed immediately by a binary JPEG: reply upstream at once with `{v:1,type:"frame_ack",frameId}` (at most 4 unacked frames are allowed), then forward the **binary JPEG** to the client.
+  - `{v:1,type:"frame",frameId,...}`, followed immediately by a binary JPEG: forward the header as `{type:"frame", frameId}`, then the **binary JPEG**. Do not ack here.
   - Any `error` JSON: forward it as `{type:"error", message}`.
-- **Client messages:** ignored, because viewers are read-only. A human takes over only through `https://app.glasshand.com`.
-- **Closing:** if either side closes, close the other. Not connected, or no rental selected, means close with code 4401 or 4404 and a reason.
+- **Client messages:** the client draws a frame, then sends `{type:"frame_ack", frameId}`, as Glasshand's protocol requires ("decode/render the JPEG, then send `frame_ack`"; at most 4 unacked frames). It acks only frames it drew; the newest frame wins. The relay forwards it upstream as `{v:1,type:"frame_ack",frameId}` when `frameId` is an integer, and ignores everything else, because viewers are read-only. A human takes over only through `https://app.glasshand.com`.
+- **Client view:** snapshots stay on screen until the first frame is drawn. If nothing is drawn for 10 s, the client closes the socket, shows snapshots and reconnects with backoff.
+- **Closing:** if either side closes, close the other. Not connected, or no rental selected, means close with code 4401 or 4404 and a reason. Only codes 1000 or 3000-4999 may be sent: `close()` throws on any other code (an upstream `error` closes the client with 4502).
 - **Frames:** each binary frame is the **full HDMI image**. The client crops it to `geometry.viewport` (pixel rect `{x,y,width,height}` within `{width,height}`) when drawing.
 
 ## 2. Container ↔ Worker (the `glasshand.internal` egress intercept)

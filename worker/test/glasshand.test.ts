@@ -174,26 +174,47 @@ describe("relay pipe", () => {
     let closed: [number?, string?] | null = null;
     return {
       sent, get closed() { return closed; }, emit: (t: string, e: any) => l[t]?.forEach((f) => f(e)),
-      send: (d: unknown) => void sent.push(d), close: (c?: number, r?: string) => void (closed = [c, r]),
+      send: (d: unknown) => void sent.push(d),
+      close: (c?: number, r?: string) => {
+        if (c !== undefined && c !== 1000 && (c < 3000 || c > 4999)) throw new Error(`InvalidAccessError: close code ${c}`); // as workerd and browsers do
+        closed = [c, r];
+      },
       addEventListener: (t: string, f: (e: any) => void) => void (l[t] ??= []).push(f),
     };
   }
-  it("acks frames, forwards hello/error as JSON and JPEGs as binary, closes both ways, ignores client", () => {
+  it("forwards hello, frame headers, JPEGs and errors; acks only what the client acks after drawing", () => {
     const up = fake(), cl = fake();
     pipe(up, cl);
     up.emit("message", { data: JSON.stringify({ type: "hello", geometry: { width: 1 } }) });
-    up.emit("message", { data: JSON.stringify({ v: 1, type: "frame", frameId: 7 }) });
+    up.emit("message", { data: JSON.stringify({ v: 1, type: "frame", frameId: 7, ts: 1 }) });
     const jpg = new Uint8Array([0xff, 0xd8]).buffer;
     up.emit("message", { data: jpg });
     up.emit("message", { data: JSON.stringify({ type: "error", message: "boom" }) });
+    up.emit("message", { data: "null" });
+    expect(up.sent).toEqual([]); // nothing is acked before the browser has drawn it
+    expect(cl.sent).toEqual([JSON.stringify({ type: "hello", geometry: { width: 1 } }), JSON.stringify({ type: "frame", frameId: 7 }), jpg, JSON.stringify({ type: "error", message: "boom" })]);
+    cl.emit("message", { data: JSON.stringify({ type: "frame_ack", frameId: 7 }) });
     expect(up.sent).toEqual([JSON.stringify({ v: 1, type: "frame_ack", frameId: 7 })]);
-    expect(cl.sent).toEqual([JSON.stringify({ type: "hello", geometry: { width: 1 } }), jpg, JSON.stringify({ type: "error", message: "boom" })]);
-    cl.emit("message", { data: "tap" });
-    expect(up.sent).toHaveLength(1);
+  });
+  it("forwards nothing else from the client (read-only)", () => {
+    const up = fake(), cl = fake();
+    pipe(up, cl);
+    for (const data of ["tap", "null", JSON.stringify({ type: "input", input: { type: "home" } }), JSON.stringify({ type: "frame_ack", frameId: "7" }), new ArrayBuffer(1)]) cl.emit("message", { data });
+    expect(up.sent).toEqual([]);
+  });
+  it("closes both ways with sendable codes", () => {
+    const up = fake(), cl = fake();
+    pipe(up, cl);
     cl.emit("close", { code: 1001, reason: "bye" });
     expect(up.closed).toEqual([1000, "bye"]); // 1001 is not sendable in close(); normalised
     up.emit("close", { code: 4000, reason: "x" });
     expect(cl.closed).toEqual([4000, "x"]);
+    const up2 = fake(), cl2 = fake();
+    pipe(up2, cl2);
+    up2.emit("error", {});
+    expect(cl2.closed).toEqual([4502, "upstream error"]); // the browser learns and falls back to snapshots
+    cl2.emit("error", {});
+    expect(up2.closed).toEqual([1000, "client error"]); // no orphaned control session
   });
 });
 
