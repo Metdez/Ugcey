@@ -45,7 +45,7 @@ export class AgentRuntime extends DurableObject<Env> {
     return tcpPort(this.ctx).fetch(fwd); // returned unchanged so SSE streams unbuffered
   }
 
-  // ---- operator admin RPC (routes in worker/index.ts, behind the cookie gate) ----
+  // ---- operator admin RPC (routes in worker/index.ts) ----
   async runtimeInfo(): Promise<{ code: string; running: boolean; image: string | null; info: unknown }> {
     const c = this.ctx.container!;
     const info = c.running ? await c.inspect().catch(() => null) : null;

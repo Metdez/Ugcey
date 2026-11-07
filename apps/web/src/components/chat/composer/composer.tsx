@@ -11,7 +11,7 @@ export function Composer() {
   const [draft, setDraft] = useState("");
   const [active, setActive] = useState(0);
   const ref = useRef<HTMLTextAreaElement>(null);
-  const disabled = status === "locked" || status === "offline";
+  const disabled = status === "offline";
   const streaming = status === "streaming" || status === "connecting";
   const menu = matchSlash(draft);
   const product = useProductPhotos(() => draft);

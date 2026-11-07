@@ -11,7 +11,7 @@ Glasshand (https://glasshand.com, API `https://api.glasshand.com/v1`, OpenAPI at
 
 ## 1. Browser ↔ Worker
 
-These routes are handled inside the Worker and are **not** proxied to the container. They sit behind the same `ugecy_key` cookie gate as the rest of `/api/*`. Responses use `GlasshandStatus` from `packages/contracts/src/models.ts`.
+These routes are handled inside the Worker and are **not** proxied to the container. Responses use `GlasshandStatus` from `packages/contracts/src/models.ts`.
 
 | Route | Behaviour |
 |---|---|

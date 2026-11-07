@@ -1,9 +1,9 @@
 // Workspace store: app config, thread list, connected accounts, backend health.
 import { create } from "zustand";
 import type { AppConfig, ConnectedAccount, ThreadSummary } from "@ugecy/contracts";
-import { api, ApiError } from "@/lib/api";
+import { api } from "@/lib/api";
 
-export type Health = "unknown" | "ok" | "offline" | "locked";
+export type Health = "unknown" | "ok" | "offline";
 
 interface WorkspaceState {
   config: AppConfig | null;
@@ -19,8 +19,6 @@ interface WorkspaceState {
   ping: () => Promise<void>;
 }
 
-const healthOf = (err: unknown): Health => (err instanceof ApiError && err.status === 401 ? "locked" : "offline");
-
 export const useWorkspace = create<WorkspaceState>((set, get) => ({
   config: null, threads: [], threadsLoaded: false, accounts: [], health: "unknown",
   setHealth: (health) => set({ health }),
@@ -28,8 +26,8 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   async boot() {
     try {
       set({ config: await api.getConfig(), health: "ok" });
-    } catch (err) {
-      set({ health: healthOf(err), threadsLoaded: true });
+    } catch {
+      set({ health: "offline", threadsLoaded: true });
       return;
     }
     await Promise.all([get().refreshThreads(), get().refreshAccounts()]);
@@ -39,8 +37,8 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
     try {
       const threads = await api.listThreads();
       set({ threads: threads.toSorted((a, b) => b.updated_at.localeCompare(a.updated_at)), threadsLoaded: true });
-    } catch (err) {
-      set({ threadsLoaded: true, health: healthOf(err) });
+    } catch {
+      set({ threadsLoaded: true, health: "offline" });
     }
   },
 
@@ -51,7 +49,6 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   async ping() {
     try {
       const res = await fetch("/api/healthz", { credentials: "same-origin" });
-      if (res.status === 401) return set({ health: "locked" });
       if (!res.ok) return set({ health: "offline" });
       if (get().health !== "ok") { set({ health: "ok" }); void get().boot(); }
     } catch {

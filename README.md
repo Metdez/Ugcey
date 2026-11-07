@@ -18,7 +18,7 @@ docs/              product, architecture, interface, engineering rules
 
 ## Live
 
-- **URL:** https://ugecy.zh-a16.workers.dev. Unlock it once with `/api/edge/unlock?key=<UGECY_ACCESS_KEY>`, which sets a 30-day cookie.
+- **URL:** https://ugecy.zh-a16.workers.dev. The app is public: there is no access key, unlock link or cookie gate.
 - **Models:** Chinese models on Workers AI.
 - **Mock mode:** media, publishing and device run as mocks until their credentials are added (see Deploy).
 - **Real iPhone (Glasshand):**
@@ -66,7 +66,6 @@ D1_ID=... KV_ID=... node scripts/render-config.mjs wrangler.jsonc wrangler.deplo
 pnpm exec wrangler d1 migrations apply ugecy-db --remote --config wrangler.deploy.json
 pnpm build && pnpm exec wrangler deploy --config wrangler.deploy.json
 # 4. Secrets. The optional ones switch providers from mock to live.
-pnpm exec wrangler secret put UGECY_ACCESS_KEY --config wrangler.deploy.json
 pnpm exec wrangler secret put HF_KEY --config wrangler.deploy.json            # Higgsfield "key-id:key-secret"
 pnpm exec wrangler secret put FIRECRAWL_API_KEY --config wrangler.deploy.json # live web search
 ```

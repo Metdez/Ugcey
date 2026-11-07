@@ -33,8 +33,7 @@ async function run(fn: (signal: AbortSignal) => Promise<void>) {
     await fn(ctl.signal);
   } catch (err) {
     if (ctl.signal.aborted) return;
-    if (err instanceof ApiError && err.status === 401) set({ status: "locked" });
-    else if (err instanceof ApiError) set({ status: "error", error: { message: err.message, retryable: err.status >= 500 } });
+    if (err instanceof ApiError) set({ status: "error", error: { message: err.message, retryable: err.status >= 500 } });
     else set({ status: "offline" });
   } finally {
     if (abort === ctl) {
@@ -77,7 +76,7 @@ export const threadActions: ThreadActions = {
       if (st.thread.status === "running") await run((sig) => streams.attach(id, 0, onEvent, sig));
     } catch (err) {
       if (get().threadId !== id) return;
-      set({ status: err instanceof ApiError && err.status === 401 ? "locked" : err instanceof ApiError ? "error" : "offline",
+      set({ status: err instanceof ApiError ? "error" : "offline",
         error: err instanceof ApiError ? { message: err.message, retryable: false } : null });
     }
   },
@@ -87,8 +86,8 @@ export const threadActions: ThreadActions = {
     let id: string;
     try {
       id = await threadActions.ensureThread(text);
-    } catch (err) {
-      return set({ status: err instanceof ApiError && err.status === 401 ? "locked" : "offline" });
+    } catch {
+      return set({ status: "offline" });
     }
     set((s) => ({ messages: [...s.messages, userMessage(text)] }));
     const tid = id;

@@ -1,7 +1,7 @@
 // REST contract between apps/web and the backend. The Worker proxies every /api/* path
 // (except /api/edge/*) to the Python service unchanged. All bodies are JSON.
 // Errors: non-2xx with { "error": { "code": string, "message": string } }.
-// Auth: requests carry the `ugecy_key` cookie (set via /?key=...); 401 => show unlock screen.
+// Auth: none. The app is public; there is no access key or cookie gate.
 import type {
   AppConfig, ApprovalRecord, Asset, AuditEntry, ConnectedAccount, Decision, DeviceStatus,
   FileContent, MemoryFile, Post, ThreadState, ThreadSummary,
