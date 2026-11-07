@@ -89,6 +89,19 @@ async def test_generate_media_flow_and_poller(monkeypatch):
     assert "error" in json.loads(await media.generate_media.ainvoke({"model": "nope", "prompt": "x"}))
 
 
+async def test_estimate_tool_strips_batch_size_for_non_soul(monkeypatch):
+    d = install()
+    seen: list[dict] = []
+
+    async def spy(model, args):
+        seen.append(args)
+        return 0.05
+    monkeypatch.setattr(d.media, "estimate", spy)
+    out = json.loads(await media.estimate_media_cost.ainvoke(
+        {"model": "marketing-studio/image/flare", "args": {"prompt": "x", "batch_size": 1}}))
+    assert out["estimated_usd"] == 0.05 and "batch_size" not in seen[-1] and seen[-1]["prompt"] == "x"
+
+
 async def test_failed_job_marks_asset_failed(monkeypatch):
     d = install()
     monkeypatch.setitem(media.POLL, "first", 0.01)
@@ -103,9 +116,11 @@ def test_tools_registered_with_expected_interrupts(monkeypatch):
         importlib.reload(importlib.import_module(f"ugecy.tools.{m}"))
     T = registry.TOOLS
     assert T["generate_media"].interrupt == registry.APPROVE_EDIT_REJECT and T["generate_media"].side_effect
-    assert T["publish_post"].interrupt == registry.APPROVE_EDIT_REJECT and T["publish_post"].side_effect
-    assert T["device_start_session"].interrupt == registry.APPROVE_REJECT
-    assert T["device_commit"].interrupt == registry.APPROVE_REJECT and T["device_commit"].side_effect
+    # only spending money pauses for approval
+    assert not T["publish_post"].interrupt and T["publish_post"].side_effect
+    assert not T["device_start_session"].interrupt
+    assert not T["device_commit"].interrupt and T["device_commit"].side_effect
+    assert set(registry.interrupt_map()) == {"generate_media"}
     for n in ("list_media_models", "estimate_media_cost", "check_media_job", "list_connected_accounts", "get_post_status",
               "device_status", "device_screenshot", "device_tap", "device_swipe", "device_type", "device_home"):
         assert n in T and not T[n].interrupt

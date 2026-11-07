@@ -1,4 +1,4 @@
-"""Domain publishing tools. publish_post is irreversible: approval-gated, audited, AI-disclosure enforced."""
+"""Domain publishing tools. publish_post is irreversible: no approval step (only paid generation asks), audited, AI-disclosure enforced."""
 from __future__ import annotations
 
 import json
@@ -12,7 +12,7 @@ from ugecy.deps import get_deps
 from ugecy.events import current_thread_id
 from ugecy.integrations.publishing.policy import is_ai_generated
 from ugecy.integrations.unavailable import PUBLISH_OFF
-from ugecy.registry import APPROVE_EDIT_REJECT, register_tool
+from ugecy.registry import register_tool
 
 CAPTION_LIMITS = {"tiktok": 2200, "instagram": 2200, "youtube": 5000, "facebook": 5000}
 
@@ -60,7 +60,7 @@ async def list_connected_accounts() -> str:
 async def publish_post(account_id: str, asset_id: str, caption: str, ai_disclosure: bool,
                        publish_at: str | None = None) -> str:
     """Publish (or schedule, with an ISO publish_at in the future) a completed asset to a connected account.
-    Needs approval. ai_disclosure must be true for AI-generated media; the platform AI label is set from it."""
+    Irreversible, no approval step: only when the operator asked to post. ai_disclosure must be true for AI-generated media; the platform AI label is set from it."""
     d = get_deps()
     thread_id = current_thread_id()
     if d.publisher.mode == "off":
@@ -112,5 +112,5 @@ async def get_post_status(post_id: str) -> str:
 
 
 register_tool(list_connected_accounts, domain="publishing")
-register_tool(publish_post, domain="publishing", interrupt=APPROVE_EDIT_REJECT, side_effect=True)
+register_tool(publish_post, domain="publishing", side_effect=True)  # no approval: only paid generation asks
 register_tool(get_post_status, domain="publishing")

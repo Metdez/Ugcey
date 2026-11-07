@@ -52,8 +52,8 @@ def test_general_purpose_has_no_tools(reg):
     assert gp["tools"] == []
 
 
-def test_interrupt_map_has_media_and_publish(reg):
-    assert {"generate_media", "publish_post"} <= set(registry.interrupt_map())
+def test_interrupt_map_has_only_paid_generation(reg):
+    assert set(registry.interrupt_map()) == {"generate_media"}
 
 
 def test_disabled_agent_is_dropped(reg):

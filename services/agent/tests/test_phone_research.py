@@ -122,7 +122,7 @@ def test_research_analyst_tools(monkeypatch):
             "device_next_post", "device_type", "device_home"}
     assert need <= set(tools) and "device_commit" not in tools
     assert "device_commit" in registry.AGENTS["device-operator"].tools
-    assert registry.TOOLS["device_start_session"].interrupt
+    assert not registry.TOOLS["device_start_session"].interrupt  # only paid generation asks for approval
     assert "phone-research" in registry.AGENTS["research-analyst"].system_prompt
 
 

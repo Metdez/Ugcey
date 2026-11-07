@@ -1,4 +1,4 @@
-"""Domain device tools. Input tools are guarded in code (approved session + step budget), not just by prompt."""
+"""Domain device tools. Input tools are guarded in code (active session + step budget), not just by prompt."""
 from __future__ import annotations
 
 import json
@@ -11,7 +11,7 @@ from ugecy.contracts import AuditEntry, DeviceSessionInfo, DeviceStatus, Source
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id, emit
 from ugecy.integrations.unavailable import DEVICE_OFF, NotConnected
-from ugecy.registry import APPROVE_REJECT, register_tool
+from ugecy.registry import register_tool
 
 # shortcut: session state is module-level memory (single operator, single process); persist it in KV when multi-worker
 _STATE: dict = {"session": None, "last_action": None, "control": "idle", "allowed_apps": [], "purpose": "operate", "observed": 0}
@@ -47,7 +47,7 @@ async def device_status_snapshot() -> DeviceStatus:
 async def _act(tool_name: str, action: dict, detail: str) -> str:
     s: DeviceSessionInfo | None = _STATE["session"]
     if s is None:
-        return "error: no active approved device session; call device_start_session first"
+        return "error: no active device session; call device_start_session first"
     if _STATE["control"] == "human":
         return "error: a human has taken control of the device; stop and wait"
     if s.max_steps and s.steps_used >= s.max_steps:  # max_steps 0 = no cap (research sessions)
@@ -129,7 +129,7 @@ async def device_observe(note: str = "") -> str:
 @tool
 async def device_start_session(goal: str, allowed_apps: list[str] | None = None, max_steps: int = 60,
                                purpose: Literal["research", "operate"] = "operate") -> str:
-    """Start a bounded device-control session for a goal (needs operator approval). Required before tap/swipe/type.
+    """Start a bounded device-control session for a goal (no approval step). Required before tap/swipe/type.
 
     `allowed_apps` optionally records operating scope. purpose="research" is read-only browsing of short-form apps with no step or post cap:
     search queries up to 80 chars, device_commit refused."""
@@ -146,19 +146,19 @@ async def device_start_session(goal: str, allowed_apps: list[str] | None = None,
 
 @tool
 async def device_tap(x: float, y: float) -> str:
-    """Tap at normalized coordinates (0..1). Needs an active approved session."""
+    """Tap at normalized coordinates (0..1). Needs an active session."""
     return await _act("device_tap", {"type": "tap", "x": x, "y": y}, f"tap ({x:.2f},{y:.2f})")
 
 
 @tool
 async def device_swipe(from_x: float, from_y: float, to_x: float, to_y: float) -> str:
-    """Swipe between normalized points. Needs an active approved session."""
+    """Swipe between normalized points. Needs an active session."""
     return await _act("device_swipe", {"type": "swipe", "from_x": from_x, "from_y": from_y, "to_x": to_x, "to_y": to_y}, "swipe")
 
 
 @tool
 async def device_next_post() -> str:
-    """In a short-form feed, swipe up to the next post. Needs an active approved session."""
+    """In a short-form feed, swipe up to the next post. Needs an active session."""
     return await _act("device_next_post", {"type": "swipe", "from_x": 0.5, "from_y": 0.8, "to_x": 0.5, "to_y": 0.25}, "next post")
 
 
@@ -173,7 +173,7 @@ async def device_scroll(direction: str = "down") -> str:
 
 @tool
 async def device_back() -> str:
-    """Go back one screen (iOS edge swipe from the left). Needs an active approved session."""
+    """Go back one screen (iOS edge swipe from the left). Needs an active session."""
     return await _act("device_back", {"type": "swipe", "from_x": 0.02, "from_y": 0.5, "to_x": 0.75, "to_y": 0.5}, "back")
 
 
@@ -198,7 +198,7 @@ async def device_open_url(url: str) -> str:
 
 @tool
 async def device_type(text: str) -> str:
-    """Type printable ASCII text (max 512 chars; in a research session max 80, a search query only). Needs an active approved session."""
+    """Type printable ASCII text (max 512 chars; in a research session max 80, a search query only). Needs an active session."""
     if _STATE["purpose"] == "research" and len(text) > RESEARCH_TYPE_MAX:
         return f"error: research sessions may only type search queries up to {RESEARCH_TYPE_MAX} characters"
     return await _act("device_type", {"type": "type", "text": text}, f"type {len(text)} chars")
@@ -206,13 +206,13 @@ async def device_type(text: str) -> str:
 
 @tool
 async def device_home() -> str:
-    """Press Home. Needs an active approved session."""
+    """Press Home. Needs an active session."""
     return await _act("device_home", {"type": "home"}, "home")
 
 
 @tool
 async def device_commit(intent: str, x: float, y: float) -> str:
-    """Final irreversible tap (intent: post, send, purchase, delete, login, signup or confirm) at normalized x,y. Always needs approval."""
+    """Final irreversible tap (intent: post, send, purchase, delete, login, signup or confirm) at normalized x,y. No approval step: only for an action the operator asked for. Audited."""
     if _STATE["purpose"] == "research" and _STATE["session"] is not None:
         return "error: device_commit is refused in a research session (read-only: no like, follow, comment, post or purchase)"
     if intent not in INTENTS:
@@ -227,7 +227,7 @@ register_tool(device_scroll, domain="device")
 register_tool(device_back, domain="device")
 register_tool(device_screenshot, domain="device")
 register_tool(device_observe, domain="device")
-register_tool(device_start_session, domain="device", interrupt=APPROVE_REJECT)
+register_tool(device_start_session, domain="device")  # no approval: only paid generation asks the operator
 for _t in (device_tap, device_swipe, device_next_post, device_type, device_home):
     register_tool(_t, domain="device", side_effect=True)
-register_tool(device_commit, domain="device", interrupt=APPROVE_REJECT, side_effect=True)
+register_tool(device_commit, domain="device", side_effect=True)

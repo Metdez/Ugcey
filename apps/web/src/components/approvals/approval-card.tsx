@@ -6,7 +6,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 import { threadActions, useThread } from "@/stores/thread-store";
 import type { ApprovalRequest } from "@/types/agent";
-import { allowedDecisions, approveAll, editDecisions, rejectAll } from "./approval-decisions";
+import { allowedDecisions, approveAll, costLabel, editDecisions, rejectAll, requestSummary } from "./approval-decisions";
 import { ApprovalEditForm, initialDraft, type Draft } from "./approval-edit-form";
 import { ApprovalRejectForm } from "./approval-reject-form";
 
@@ -45,7 +45,7 @@ export function ApprovalCard({ approvalId, variant }: { approvalId: string; vari
     const verb = { approved: "Approved", edited: "Approved (edited)", rejected: "Rejected", expired: "Expired" }[rec.status];
     return (
       <p className="py-1 text-[13px] text-muted-foreground">
-        {verb}: {t?.description ?? t?.tool}{n > 1 ? ` (+${n - 1})` : ""}
+        {verb}: {t ? requestSummary(t).title : "request"}{n > 1 ? ` (+${n - 1})` : ""}
         {rec.decided_at && ` · ${new Date(rec.decided_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
       </p>
     );
@@ -70,20 +70,24 @@ export function ApprovalCard({ approvalId, variant }: { approvalId: string; vari
       <div className="flex flex-col gap-3">
         {rec.requests.map((r, i) => {
           const Icon = icon(r.tool);
+          const s = requestSummary(r);
           return (
-            <div key={i} className="flex flex-col gap-2">
+            <div key={i} className="flex flex-col gap-1.5">
               <div className="flex items-start gap-2">
                 <Icon className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <p className={cn("font-semibold", dense ? "text-[13px]" : "text-sm")}>{r.description || r.tool}</p>
-                  <p className="text-xs text-muted-foreground"><span className="font-mono">{r.tool}</span> · {r.agent}</p>
-                </div>
-                {r.estimated_cost_usd != null && <Badge variant="outline" className="tabular-nums">~${r.estimated_cost_usd.toFixed(2)}</Badge>}
+                <p className={cn("min-w-0 flex-1 font-semibold", dense ? "text-[13px]" : "text-sm")}>{s.title}</p>
+                <Badge variant="outline" className="shrink-0 tabular-nums">{costLabel(r.estimated_cost_usd)}</Badge>
               </div>
+              {s.prompt && mode !== "edit" && <p className="line-clamp-2 pl-6 text-[13px] text-muted-foreground">{s.prompt}</p>}
               {mode === "edit"
                 ? <ApprovalEditForm request={r} idx={i} draft={drafts[i] ?? {}} errors={errors}
                     onChange={(k, v) => setDrafts((d) => d.map((x, j) => (j === i ? { ...x, [k]: v } : x)))} />
-                : <ArgsPreview r={r} />}
+                : (
+                  <details className="pl-6 text-xs text-muted-foreground">
+                    <summary className="w-fit cursor-pointer select-none hover:text-foreground">Details</summary>
+                    <div className="pt-2"><ArgsPreview r={r} /></div>
+                  </details>
+                )}
             </div>
           );
         })}

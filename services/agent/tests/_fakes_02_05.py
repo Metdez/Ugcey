@@ -46,7 +46,7 @@ def install_registry(monkeypatch) -> None:
             if tool not in registry.TOOLS:
                 registry.register_tool(
                     fake_tool(tool), domain=SIDE_EFFECT.get(tool, "research"), side_effect=tool in SIDE_EFFECT,
-                    interrupt=registry.APPROVE_EDIT_REJECT if tool in ("generate_media", "publish_post") else None)
+                    interrupt=registry.APPROVE_EDIT_REJECT if tool == "generate_media" else None)
 
 
 class FakeApp:
