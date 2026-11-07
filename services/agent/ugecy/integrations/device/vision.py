@@ -15,9 +15,13 @@ KINDS = {"button", "field", "tab", "icon", "text"}
 PROMPT = (
     "You see a real iPhone screen. Reply with ONLY compact JSON: "
     '{"app": "<foreground app or Home Screen>", "screen": "<one-line description>", '
+    '"keyboard_visible": false, "focused_field": "<label of the text field with the cursor, else empty>", '
+    '"more_below": false, '
     '"elements": [{"label": "<text or name>", "kind": "button|field|tab|icon|text", "x": 0.5, "y": 0.9}]}. '
     "x and y are each element's CENTRE as fractions 0..1 of the image (x from the left, y from the top). "
-    "List at most 25 tappable or relevant elements, no commentary. "
+    "In lists (for example Settings) include EVERY visible row, including a partly visible last row; set more_below true when "
+    "the list clearly continues below the screen. keyboard_visible is true only if an on-screen keyboard is showing. "
+    "List at most 30 tappable or relevant elements, no commentary. "
     "iOS notes: this may be the Home Screen; to open an app press Home, swipe down from mid-screen to open Spotlight, then type the app name; "
     "an AssistiveTouch floating button may cover targets."
 )
@@ -121,7 +125,10 @@ def normalize(text: str) -> str:
             continue
         kind = str(e.get("kind", "text")).lower()
         els.append({"label": str(e.get("label", ""))[:60], "kind": kind if kind in KINDS else "text", "x": round(x, 3), "y": round(y, 3)})
-    out = {"app": str(obj.get("app", ""))[:60], "screen": str(obj.get("screen", ""))[:200], "elements": els[:40]}
+    out = {"app": str(obj.get("app", ""))[:60], "screen": str(obj.get("screen", ""))[:200],
+           "keyboard_visible": str(obj.get("keyboard_visible")).lower() in ("true", "1", "yes"),
+           "focused_field": str(obj.get("focused_field") or "")[:60],
+           "more_below": str(obj.get("more_below")).lower() in ("true", "1", "yes"), "elements": els[:40]}
     return json.dumps(out, separators=(",", ":"), ensure_ascii=False)
 
 

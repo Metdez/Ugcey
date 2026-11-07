@@ -17,6 +17,8 @@ const VHOSTS = [
   "glasshand.internal",
 ];
 
+const RUNTIME_CODE = "2026-11-07.r5";
+
 export class AgentRuntime extends DurableObject<Env> {
   private starting?: Promise<void>;
   private gh: Glasshand;
@@ -43,17 +45,18 @@ export class AgentRuntime extends DurableObject<Env> {
   }
 
   // ---- operator admin RPC (routes in worker/index.ts, behind the cookie gate) ----
-  async runtimeInfo(): Promise<{ running: boolean; image: string | null; info: unknown }> {
+  async runtimeInfo(): Promise<{ code: string; running: boolean; image: string | null; info: unknown }> {
     const c = this.ctx.container!;
     const info = c.running ? await c.inspect().catch(() => null) : null;
-    return { running: c.running, image: c.images.agent ?? null, info };
+    return { code: RUNTIME_CODE, running: c.running, image: c.images.agent ?? null, info };
   }
 
   /** Stop the container so the next request starts a fresh one from the currently deployed image. */
   async restartRuntime(): Promise<{ restarted: boolean }> {
     const c = this.ctx.container!;
-    if (!c.running) return { restarted: false };
-    await c.destroy();
+    if (c.running) await c.destroy();
+    // Reset this DO instance too, so the next request loads the newest deployed code and image map.
+    this.ctx.abort("operator restart");
     return { restarted: true };
   }
 

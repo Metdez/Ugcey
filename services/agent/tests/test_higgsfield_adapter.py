@@ -5,7 +5,11 @@ import httpx
 import pytest
 
 from ugecy.integrations.media.catalog import catalog_models
-from ugecy.integrations.media.higgsfield import HiggsfieldError, HiggsfieldProvider, parse_estimate
+from ugecy.integrations.media.higgsfield import (
+    HiggsfieldError,
+    HiggsfieldProvider,
+    parse_estimate,
+)
 from ugecy.settings import Settings
 
 SEEDANCE_DESC = (

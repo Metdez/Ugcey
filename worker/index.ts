@@ -13,7 +13,13 @@ app.use("/api/*", requireKey);
 app.route("/api/glasshand", glasshand); // before the container proxy, after the cookie gate
 const runtime = (env: Env) => env.AGENT_RUNTIME.get(env.AGENT_RUNTIME.idFromName(env.WORKSPACE_ID));
 app.get("/api/runtime/info", async (c) => c.json(await runtime(c.env).runtimeInfo()));
-app.post("/api/runtime/restart", async (c) => c.json(await runtime(c.env).restartRuntime()));
+app.post("/api/runtime/restart", async (c) => {
+  try {
+    return c.json(await runtime(c.env).restartRuntime());
+  } catch {
+    return c.json({ restarted: true, reset: true }); // ctx.abort() surfaces as an error to the caller
+  }
+});
 app.all("/api/*", (c) => proxyToRuntime(c.req.raw, c.env));
 
 export { AgentRuntime } from "./do/agent-runtime";

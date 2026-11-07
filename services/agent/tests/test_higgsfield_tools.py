@@ -3,7 +3,6 @@ import asyncio
 import json
 
 import httpx
-import pytest
 
 from tests._fakes_02_08 import FakeEdge, MemApp, install
 from ugecy.contracts import Asset

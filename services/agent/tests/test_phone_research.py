@@ -141,3 +141,13 @@ def test_all_skills_frontmatter():
 def test_dwell_range():
     assert asyncio  # sleep is injectable; real default is asyncio.sleep
     assert device.DWELL_S == (2.0, 4.0)
+
+
+def test_vision_normalize_keeps_navigation_hints():
+    import json
+
+    from ugecy.integrations.device.vision import normalize
+
+    out = json.loads(normalize('```json\n{"app":"Settings","screen":"main","keyboard_visible":false,"focused_field":"",'
+                               '"more_below":true,"elements":[{"label":"General","kind":"button","x":0.3,"y":0.95}]}\n```'))
+    assert out["more_below"] is True and out["keyboard_visible"] is False and out["elements"][0]["label"] == "General"

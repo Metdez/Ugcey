@@ -19,13 +19,14 @@ SIDE_EFFECT_TOOLS = {"generate_media", "publish_post", "device_commit", "device_
                      "device_type", "device_start_session"}
 EXPECTED = {
     "research-analyst": {"web_search", "fetch_page", "remember_pattern", "search_patterns", "device_status", "device_start_session",
-                         "device_screenshot", "device_observe", "device_tap", "device_swipe", "device_next_post", "device_type", "device_home"},
+                         "device_screenshot", "device_scroll", "device_back", "device_observe", "device_tap", "device_swipe",
+                         "device_next_post", "device_type", "device_home"},
     "creative-strategist": {"search_patterns"},
     "compliance-critic": {"compliance_check"},
     "production-coordinator": {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
     "publishing-coordinator": {"list_connected_accounts", "publish_post", "get_post_status"},
     "device-operator": {"device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe",
-                        "device_type", "device_home", "device_commit"},
+                        "device_scroll", "device_back", "device_type", "device_home", "device_commit"},
     "analytics-analyst": {"get_post_metrics", "search_patterns", "remember_pattern"},
 }
 

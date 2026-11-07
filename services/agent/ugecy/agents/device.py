@@ -8,7 +8,8 @@ register_agent(AgentModule(
         "Drives the operator's own phone or Mac through the device provider: observe, act, verify, with a final device_commit for irreversible taps. Never creates accounts, handles verification codes or logs in. Use only when an API route does not exist for the task."
     ),
     system_prompt=load_prompt("device-operator"),
-    tools=["device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe", "device_type", "device_home", "device_commit"],
-    model_role="fast",
+    tools=["device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe", "device_scroll",
+           "device_back", "device_type", "device_home", "device_commit"],
+    model_role="research",  # deepseek: device navigation needs real reasoning; glm-flash looped
     skills=["/skills/"],
 ))

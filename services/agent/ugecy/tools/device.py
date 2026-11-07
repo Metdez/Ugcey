@@ -20,8 +20,11 @@ _STATE: dict = {"session": None, "last_action": None, "control": "idle", "allowe
 RESEARCH_STEPS, RESEARCH_POSTS, RESEARCH_TYPE_MAX = 60, 12, 80
 DWELL_S = (2.0, 4.0)  # human pace after a feed swipe
 _sleep: Callable[[float], Awaitable[None]] = asyncio.sleep  # tests inject a fake to run fast
-HINT = ("\nHow to act: pass an element's x,y (0..1, centre) to device_tap; re-describe after every action; "
-        "on control_taken stop; never replay after an ambiguous failure.")
+HINT = ("\nHow to act: pass an element's x,y (0..1, centre) to device_tap; re-describe after every action. "
+        "If your target is not in elements, use device_scroll (more_below=true means the list continues) or device_back; "
+        "never type unless keyboard_visible is true (tap the text field first, then re-describe). "
+        "If the screen did not change after an action, change strategy instead of repeating it. "
+        "On control_taken stop; never replay after an ambiguous failure.")
 INTENTS = {"post", "send", "purchase", "delete"}
 
 
@@ -173,6 +176,21 @@ async def device_next_post() -> str:
 
 
 @tool
+async def device_scroll(direction: str = "down") -> str:
+    """Scroll the current list or page: "down" reveals content further down, "up" goes back toward the top. Needs a session."""
+    if direction not in ("down", "up"):
+        return 'error: direction must be "down" or "up"'
+    a, b = (0.72, 0.32) if direction == "down" else (0.32, 0.72)
+    return await _act("device_scroll", {"type": "swipe", "from_x": 0.5, "from_y": a, "to_x": 0.5, "to_y": b}, f"scroll {direction}")
+
+
+@tool
+async def device_back() -> str:
+    """Go back one screen (iOS edge swipe from the left). Needs an active approved session."""
+    return await _act("device_back", {"type": "swipe", "from_x": 0.02, "from_y": 0.5, "to_x": 0.75, "to_y": 0.5}, "back")
+
+
+@tool
 async def device_type(text: str) -> str:
     """Type printable ASCII text (max 512 chars; in a research session max 80, a search query only). Needs an active approved session."""
     if _STATE["purpose"] == "research" and len(text) > RESEARCH_TYPE_MAX:
@@ -198,6 +216,8 @@ async def device_commit(intent: str, x: float, y: float) -> str:
 
 
 register_tool(device_status, domain="device")
+register_tool(device_scroll, domain="device")
+register_tool(device_back, domain="device")
 register_tool(device_screenshot, domain="device")
 register_tool(device_observe, domain="device")
 register_tool(device_start_session, domain="device", interrupt=APPROVE_REJECT)
