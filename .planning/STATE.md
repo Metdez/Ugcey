@@ -25,3 +25,4 @@ See .planning/research/SUMMARY.md, "Locked decisions" L1–L12.
 - 2026-11-07: Phase 4 (Glasshand) built in parallel and deployed. The connect flow is verified against the live Glasshand API. Final verification is waiting on the operator's rental and approval.
 - 2026-11-07: Phase 06 removed mock mode (web + python), v5 deployed, 3 demo accounts deleted from D1. 20 sample-derived Vectorize patterns remain (auto mode blocked the bulk delete; operator to run it).
 - 2026-11-07: HF_KEY Worker secret set (with operator permission), so Higgsfield is live. A live estimate through the agent returned $0.004 for Soul. The Kling i2v estimate returns null without an image_url; the catalog hint is $0.54.
+- 2026-11-07: Phase 07 added continuous per-agent memory (episodes + lessons, reloaded every run) and stuck detection that sends agents to Firecrawl web_search. Image v17.

@@ -35,6 +35,16 @@ Container egress (internet off) goes only through intercepted hosts, handled by 
   higgsfield / firecrawl / glasshand .internal -> vendor APIs with keys injected at the edge
 ```
 
+## Agent memory and stuck recovery
+
+Every agent, including the orchestrator, runs Deep Agents memory with three middlewares (`services/agent/ugecy/middleware/{memory,stuck}.py`, `services/agent/ugecy/memory/experience.py`):
+
+- `LiveMemoryMiddleware` loads `/memories/AGENTS.md` (shared brand and playbook) and `/memories/agents/<agent>.md` (that agent's lessons) into the system prompt. It reloads on every invocation, so lessons written earlier in a thread are picked up.
+- `ExperienceMiddleware` runs after every subagent task and every orchestrator turn. It appends an episode (task, tools, errors, stuck events, result) to `/memories/episodes/<agent>.md` and has the fast model merge it into the lessons file. This runs in the background and never blocks a run. Agents can also add lessons themselves with `edit_file`.
+- `StuckMiddleware` watches for three things: the same call with the same result three times, three errors in a row, or a phone screen that stays the same while the agent acts on it. When it sees one, it tells the agent, for that model call only, to use `web_search`/`fetch_page` (Firecrawl) and change approach. The orchestrator is told to delegate the lookup instead. It is never a cap or a stop.
+
+All memory files live in the LangGraph Store (mirrored to DO SQLite) and show in the Memory tab.
+
 The contracts that keep modules independent live in `packages/contracts/` (UI events, REST, internal edge API), `services/agent/ugecy/{contracts,interfaces,registry,deps}.py` and `worker/env.ts`. Decisions are recorded in `.planning/research/SUMMARY.md`.
 
 ## Models
