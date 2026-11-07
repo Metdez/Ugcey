@@ -19,7 +19,7 @@ export class EgressGateway extends WorkerEntrypoint<Env, RuntimeProps> {
       case "higgsfield.internal":
       case "firecrawl.internal":
       case "glasshand.internal":
-        return handleVendor(req, this.env);
+        return handleVendor(req, this.env, this.ctx.props);
       default:
         this.env.METRICS.writeDataPoint({ blobs: ["egress_denied", host], doubles: [1], indexes: ["egress"] });
         return errorResponse(403, "egress_denied", host);

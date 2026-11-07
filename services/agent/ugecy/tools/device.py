@@ -13,6 +13,8 @@ from ugecy.registry import APPROVE_REJECT, register_tool
 
 # shortcut: session state is module-level memory (single operator, single process); persist it in KV when multi-worker
 _STATE: dict = {"session": None, "last_action": None, "control": "idle", "allowed_apps": []}
+HINT = ("\nHow to act: pass an element's x,y (0..1, centre) to device_tap; re-describe after every action; "
+        "on control_taken stop; never replay after an ambiguous failure.")
 INTENTS = {"post", "send", "purchase", "delete"}
 
 
@@ -23,7 +25,7 @@ def reset_state() -> None:
 async def _audit(tool_name: str, status: str, detail: str) -> None:
     d = get_deps()
     await d.app.add_audit(AuditEntry(id=uuid4().hex, thread_id=current_thread_id(), actor="agent", action="device_action",
-                                     tool=tool_name, status=status, mode=d.modes.device, detail=detail[:500]))  # type: ignore[arg-type]
+                                     tool=tool_name, status=status, mode=d.device.mode, detail=detail[:500]))  # type: ignore[arg-type]
 
 
 async def device_status_snapshot() -> DeviceStatus:
@@ -32,7 +34,7 @@ async def device_status_snapshot() -> DeviceStatus:
         devices = await d.device.list_devices()
     except Exception:  # noqa: BLE001
         devices = []
-    return DeviceStatus(provider=d.device.name, mode=d.modes.device, devices=devices, session=_STATE["session"],
+    return DeviceStatus(provider=d.device.name, mode=d.device.mode, devices=devices, session=_STATE["session"],
                         control=_STATE["control"], last_action=_STATE["last_action"])
 
 
@@ -52,7 +54,7 @@ async def _act(tool_name: str, action: dict, detail: str) -> str:
         await _audit(tool_name, "error", f"{detail}: {type(e).__name__}")
         return f"error: device send failed ({type(e).__name__}); take a screenshot before retrying, never blindly replay"
     _STATE["last_action"] = f"{detail}: {'ok' if r['ok'] else r['error']}"
-    if r.get("error") == "control_taken":
+    if (r.get("error_code") or r.get("error")) == "control_taken":
         _STATE["control"] = "human"
     await _audit(tool_name, "ok" if r["ok"] else "error", _STATE["last_action"])
     return json.dumps({**r, "steps_left": s.max_steps - s.steps_used - 1})
@@ -66,15 +68,18 @@ async def device_status() -> str:
 
 @tool
 async def device_screenshot() -> str:
-    """Describe what is currently on the device screen (screen name and tappable targets with normalized x,y)."""
+    """Describe the device screen: JSON with app, screen and elements (label, kind, normalized x,y). Call before and after every action."""
     d = get_deps()
     devices = await d.device.list_devices()
     if not devices:
         return "error: no ready device"
-    text = await d.device.describe(devices[0].id)
+    try:
+        text = await d.device.describe(devices[0].id)
+    except Exception as e:  # noqa: BLE001
+        return f"error: screen capture/vision failed ({type(e).__name__}); retry device_screenshot"
     _STATE["last_action"] = "screenshot"
     await _audit("device_screenshot", "ok", text[:200])
-    return text
+    return text + HINT
 
 
 @tool

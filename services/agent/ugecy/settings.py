@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     hf_key: str | None = Field(default=None, validation_alias="HF_KEY")
     hf_api_key_secret: str | None = Field(default=None, validation_alias="HF_API_KEY_SECRET")
     firecrawl_api_key: str | None = Field(default=None, validation_alias="FIRECRAWL_API_KEY")
+    glasshand_token: str | None = Field(default=None, validation_alias="GLASSHAND_TOKEN")  # local dev only
+    glasshand_rental_id: str | None = Field(default=None, validation_alias="GLASSHAND_RENTAL_ID")  # local dev only
 
     # edge-mode capability flags set by the AgentRuntime DO from the Worker's secrets
     has_higgsfield: bool = False

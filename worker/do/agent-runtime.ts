@@ -2,6 +2,8 @@
 // All container-API calls live in the small helpers at the bottom so an API change stays local.
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "../env";
+import { Glasshand } from "../glasshand/core";
+import { sqlStore } from "../glasshand/store";
 
 const PORT = 8000;
 const IDLE_MS = 30 * 60_000;
@@ -17,12 +19,14 @@ const VHOSTS = [
 
 export class AgentRuntime extends DurableObject<Env> {
   private starting?: Promise<void>;
+  private gh: Glasshand;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     ctx.storage.sql.exec(
       "CREATE TABLE IF NOT EXISTS kv (ns TEXT NOT NULL, key TEXT NOT NULL, value BLOB, updated_at INTEGER, PRIMARY KEY (ns, key))",
     );
+    this.gh = new Glasshand(sqlStore(ctx.storage));
     // The inactivity timeout is lost when the DO restarts; re-arm it for a surviving container.
     if (ctx.container?.running) void ctx.blockConcurrencyWhile(() => ctx.container!.setInactivityTimeout(IDLE_MS));
   }
@@ -76,6 +80,14 @@ export class AgentRuntime extends DurableObject<Env> {
     ).rowsWritten;
   }
 
+  // ---- Glasshand connection (tokens live only here; see worker/glasshand/core.ts) ----
+  glasshandConnect() { return this.gh.connect(); }
+  glasshandStatus() { return this.gh.status(); }
+  glasshandSelect(rentalId: string) { return this.gh.select(rentalId); }
+  glasshandDisconnect() { return this.gh.disconnect(); }
+  glasshandState() { return this.gh.state(); }
+  glasshandToken(stale?: string) { return this.gh.token(stale); }
+
   // ---- container lifecycle ----
   private async ensureReady(): Promise<void> {
     if (!this.ctx.container?.running) await this.startContainer();
@@ -106,7 +118,7 @@ export class AgentRuntime extends DurableObject<Env> {
         UGECY_WORKSPACE_ID: e.WORKSPACE_ID,
         UGECY_HAS_HIGGSFIELD: e.HF_KEY ? "true" : "false",
         UGECY_HAS_FIRECRAWL: e.FIRECRAWL_API_KEY ? "true" : "false",
-        UGECY_HAS_GLASSHAND: e.GLASSHAND_TOKEN ? "true" : "false",
+        UGECY_HAS_GLASSHAND: "true", // connection is checked live via glasshand.internal/_ugecy/status,
         UGECY_DATA_DIR: "/tmp/ugecy",
       },
       labels: { app: "ugecy" },

@@ -1,11 +1,13 @@
 // higgsfield/firecrawl/glasshand .internal: authenticated passthrough. Secrets never reach the container.
-import type { Env } from "../env";
+import type { Env, RuntimeProps } from "../env";
+import { glasshandAllowed } from "../glasshand/allow";
+import { handleGlasshand } from "../glasshand/egress";
 import { errorResponse } from "./llm";
 
 interface Vendor {
   base: string;
   auth: (env: Env) => string | undefined;
-  allowed: (path: string) => boolean;
+  allowed: (path: string, method?: string) => boolean;
 }
 
 const under = (path: string, prefix: string) => path === prefix || path.startsWith(prefix + "/");
@@ -23,13 +25,15 @@ export const VENDORS: Record<string, Vendor> = {
   },
   "glasshand.internal": {
     base: "https://api.glasshand.com",
-    auth: (e) => (e.GLASSHAND_TOKEN ? `Bearer ${e.GLASSHAND_TOKEN}` : undefined),
-    allowed: (p) => under(p, "/v1/rentals"),
+    auth: () => undefined, // token comes from the AgentRuntime DO, see handleGlasshand
+    allowed: glasshandAllowed,
   },
 };
 
-export async function handleVendor(req: Request, env: Env): Promise<Response> {
+export async function handleVendor(req: Request, env: Env, props: RuntimeProps): Promise<Response> {
   const u = new URL(req.url);
+  if (u.hostname === "glasshand.internal")
+    return handleGlasshand(req, env.AGENT_RUNTIME.get(env.AGENT_RUNTIME.idFromString(props.runtimeId)));
   const v = VENDORS[u.hostname];
   if (!v) return errorResponse(403, "egress_denied", u.hostname);
   if (!v.allowed(u.pathname)) return errorResponse(403, "path_not_allowed", u.pathname);

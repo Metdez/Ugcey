@@ -31,7 +31,8 @@ IMPLEMENTATIONS: dict[str, dict[str, str]] = {
                  "mock": "ugecy.integrations.research.mock:MockResearchProvider"},
     "media": {"live": "ugecy.integrations.media.higgsfield:HiggsfieldProvider",
               "mock": "ugecy.integrations.media.mock:MockMediaProvider"},
-    "device": {"live": "ugecy.integrations.device.glasshand:GlasshandProvider",
+    "device": {"auto": "ugecy.integrations.device.auto:AutoDeviceProvider",
+               "live": "ugecy.integrations.device.glasshand:GlasshandProvider",
                "mock": "ugecy.integrations.device.mock:MockDeviceProvider"},
     "publisher": {"mock": "ugecy.integrations.publishing.mock:MockPublisher"},
     "analytics": {"mock": "ugecy.integrations.publishing.analytics:MockAnalytics"},
@@ -87,7 +88,7 @@ def build_deps(settings: Settings | None = None) -> Deps:
         settings=s, modes=m,
         kv=_load("kv", infra, s), app=_load("app", infra, s), edge=_load("edge", infra, s),
         research=_load("research", m.research, s), media=_load("media", m.media, s),
-        device=_load("device", m.device, s), publisher=_load("publisher", "mock", s),
+        device=_load("device", "auto" if s.device_provider == "auto" else m.device, s), publisher=_load("publisher", "mock", s),
         analytics=_load("analytics", "mock", s),
     )
 

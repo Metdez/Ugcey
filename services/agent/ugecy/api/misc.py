@@ -1,6 +1,7 @@
 """Config, health, device and the plain AppStore reads (assets, approvals, audit, accounts, posts)."""
 from __future__ import annotations
 
+import httpx
 from fastapi import APIRouter, Request, Response
 
 from ugecy import registry
@@ -89,5 +90,8 @@ async def device_screenshot(request: Request) -> Response:
     devices = await deps_of(request).device.list_devices()
     if not devices:
         raise ApiError(404, "no_device", "no device available")
-    jpeg = await deps_of(request).device.screenshot(devices[0].id)
+    try:
+        jpeg = await deps_of(request).device.screenshot(devices[0].id)  # already cropped to the viewport
+    except httpx.HTTPError as e:
+        raise ApiError(503, "screenshot_unavailable", f"device capture failed ({type(e).__name__}); retry") from e
     return Response(jpeg, media_type="image/jpeg", headers={"Cache-Control": "no-store"})

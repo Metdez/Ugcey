@@ -15,7 +15,7 @@ async def test_glasshand_list_screenshot_send():
     def handler(req: httpx.Request) -> httpx.Response:
         seen.append(req)
         p = req.url.path
-        if p == "/rentals":
+        if p == "/v1/rentals":
             return httpx.Response(200, json={"items": [
                 {"id": "r1", "kind": "iphone", "name": "SE", "status": "active", "deviceReady": True},
                 {"id": "r2", "kind": "iphone", "name": "x", "status": "provisioning", "deviceReady": False}]})
@@ -26,7 +26,7 @@ async def test_glasshand_list_screenshot_send():
         return httpx.Response(200, json={"v": 1, "type": "result", "requestId": "q", "ok": False, "error": {"code": "control_taken"}})
 
     p = GlasshandProvider(Settings(internal_mode="edge"), transport=httpx.MockTransport(handler))
-    assert [d.id for d in await p.list_devices()] == ["r1"]
+    assert [d.id for d in await p.list_devices() if d.ready] == ["r1"]
     assert Image.open(io.BytesIO(await p.screenshot("r1"))).size == (50, 60)
     r = await p.send("r1", {"type": "tap", "x": 0.5, "y": 0.5}, idempotency_key="k")
     assert r["error"] == "control_taken" and not r["ok"]
