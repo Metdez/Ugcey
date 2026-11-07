@@ -50,8 +50,6 @@ async def _act(tool_name: str, action: dict, detail: str) -> str:
         return "error: no active approved device session; call device_start_session first"
     if _STATE["control"] == "human":
         return "error: a human has taken control of the device; stop and wait"
-    if s.steps_used >= s.max_steps:
-        return f"error: step budget exhausted ({s.max_steps}); start a new session"
     d = get_deps()
     _STATE["session"] = s.model_copy(update={"steps_used": s.steps_used + 1})
     try:
@@ -65,7 +63,7 @@ async def _act(tool_name: str, action: dict, detail: str) -> str:
     if (r.get("error_code") or r.get("error")) == "control_taken":
         _STATE["control"] = "human"
     await _audit(tool_name, "ok" if r["ok"] else "error", _STATE["last_action"])
-    return json.dumps({**r, "steps_left": s.max_steps - s.steps_used - 1})
+    return json.dumps({**r, "steps_used": s.steps_used + 1})
 
 
 @tool
@@ -100,8 +98,6 @@ async def device_observe(note: str = "") -> str:
     devices = await d.device.list_devices()
     if not devices:
         return f"error: {DEVICE_OFF}"
-    if _STATE["purpose"] == "research" and _STATE["session"] is not None and _STATE["observed"] >= RESEARCH_POSTS:
-        return f"error: post limit reached ({RESEARCH_POSTS} per research session); write your pattern cards"
     try:
         post = await getattr(d.device, "observe")(devices[0].id)  # noqa: B009
     except NotConnected as e:
@@ -139,7 +135,7 @@ async def device_start_session(goal: str, allowed_apps: list[str] | None = None,
     devices = await d.device.list_devices()
     if not devices:
         return f"error: {DEVICE_OFF}"
-    sess = DeviceSessionInfo(id=uuid4().hex[:12], device_id=devices[0].id, goal=goal, steps_used=0, max_steps=RESEARCH_STEPS if purpose == "research" else max(1, min(max_steps, 200)))
+    sess = DeviceSessionInfo(id=uuid4().hex[:12], device_id=devices[0].id, goal=goal, steps_used=0, max_steps=max(1, max_steps))
     apps = list(allowed_apps or [])
     _STATE.update(session=sess, control="agent", allowed_apps=apps, last_action="session started", purpose=purpose, observed=0)
     await _audit("device_start_session", "ok", f"goal={goal!r} apps={apps} purpose={purpose} max_steps={sess.max_steps}")

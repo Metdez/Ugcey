@@ -12,7 +12,7 @@ from ugecy.contracts import Source
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id, emit
 from ugecy.integrations.unavailable import SEARCH_OFF, NotConnected
-from ugecy.tools.source_policy import policy_error, take_budget
+from ugecy.tools.source_policy import policy_error
 
 _BLOCKED_SUFFIXES = (".internal", ".local", ".localhost", ".lan", ".home.arpa")
 
@@ -86,7 +86,7 @@ async def fetch_page(url: str) -> str:
     operator is permitted to view; private, login-gated, internal or local addresses are refused.
     Returns metadata JSON then the first 8000 characters of markdown.
     """
-    err = check_public_url(url) or policy_error(url) or take_budget(current_thread_id())
+    err = check_public_url(url) or policy_error(url)
     if err:
         return json.dumps({"error": err, "url": url})
     try:

@@ -45,13 +45,13 @@ def test_normalize_post_parses_metrics():
 async def test_research_session_guards(monkeypatch):
     _, slept, _ = install(monkeypatch)
     s = await start(max_steps=5)
-    assert s["max_steps"] == 60  # research budget is fixed
+    assert s["max_steps"] == 5  # informational only; no cap is enforced
     assert "refused" in await call(device.device_commit, intent="post", x=0.5, y=0.5)
     assert "80" in await call(device.device_type, text="x" * 81)
     assert json.loads(await call(device.device_type, text="x" * 80))["ok"]
     for _ in range(59):
         await call(device.device_home)
-    assert "budget" in await call(device.device_home)
+    assert json.loads(await call(device.device_home))["ok"]  # no step cap
     # operate sessions keep the old rules
     await start("operate", max_steps=2)
     assert json.loads(await call(device.device_type, text="x" * 200))["ok"]
@@ -92,7 +92,7 @@ async def test_observe_needs_a_post_and_limits(monkeypatch):
     await tap(0.5, 0.26)
     for _ in range(12):
         assert "error" not in json.loads(await call(device.device_observe))
-    assert "limit" in await call(device.device_observe)
+    assert "limit" not in await call(device.device_observe)  # no post cap
     assert (await call(device.device_next_post)).startswith("{")
 
 

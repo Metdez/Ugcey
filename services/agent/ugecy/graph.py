@@ -82,7 +82,7 @@ def build_agent(deps: Deps, models: dict[str, BaseChatModel] | None = None):
         skills=["/skills/"], memory=["/memories/AGENTS.md"],
         checkpointer=deps.checkpointer, store=deps.store,
     )
-    return agent.with_config({"recursion_limit": 400})
+    return agent.with_config({"recursion_limit": 100_000})
 
 
 async def seed_store(store: Any, workspace_id: str) -> None:

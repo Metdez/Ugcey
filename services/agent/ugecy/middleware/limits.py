@@ -1,8 +1,7 @@
-"""Run-cost guards from langchain (verified present in 1.4.9): call cap, retry, model fallback."""
+"""Resilience middleware: retry and model fallback. No call or run caps (operator decision)."""
 from __future__ import annotations
 
 from langchain.agents.middleware import (
-    ModelCallLimitMiddleware,
     ModelFallbackMiddleware,
     ModelRetryMiddleware,
 )
@@ -14,7 +13,6 @@ from ugecy.settings import Settings
 
 def limit_middleware(settings: Settings, fallback: BaseChatModel, run_limit: int | None = None) -> list[AgentMiddleware]:
     return [
-        ModelCallLimitMiddleware(run_limit=run_limit or settings.max_model_calls_per_run, exit_behavior="end"),
         ModelRetryMiddleware(max_retries=2, backoff_factor=2.0),
         ModelFallbackMiddleware(fallback),
     ]
