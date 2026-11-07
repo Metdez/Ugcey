@@ -27,7 +27,7 @@ An operator types a product and a goal. The agent then produces evidence-backed,
 - [ ] Persistent memory: brand voice, pattern library, campaign playbooks (skills) that survive restarts
 - [ ] Chinese models on Cloudflare Workers AI with a per-role routing table
 - [ ] Deployed on Cloudflare (Worker + Static Assets + Container + D1 + KV + Queues + AI) with a public URL
-- [ ] Mock mode: the whole loop is demoable when an integration has no credentials
+- [x] No mock data: unconnected capabilities report "off" with a clear connect instruction (operator directive, phase 06)
 
 ### Out of Scope
 
