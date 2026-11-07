@@ -23,7 +23,8 @@ from ugecy.persistence._sqlite import SqliteDB, db_path
 from ugecy.settings import Settings
 
 SCHEMA = Path(__file__).with_name("schema.sql")
-REPO_MIGRATION = Path(__file__).resolve().parents[4] / "migrations" / "0001_init.sql"  # absent in the container
+_UP = Path(__file__).resolve().parents
+REPO_MIGRATION = (_UP[4] / "migrations" / "0001_init.sql") if len(_UP) > 4 else Path("/nonexistent")  # absent in the container
 
 
 class SqlExecutor(Protocol):

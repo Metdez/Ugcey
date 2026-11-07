@@ -15,13 +15,27 @@ Use LangChain Deep Agents as the orchestration layer: specialist agents, persist
 
 - Research analyst: evidence-backed pattern discovery.
 - Creative strategist: original briefs and scripts from findings.
+- Compliance critic: rubric scoring, FTC `#ad`, AI-label and claim checks before generation or publishing.
 - Production coordinator: Higgsfield asset jobs and review status.
 - Publishing coordinator: approved platform connections, schedules, and logs.
 - Device operator: Glasshand sessions and action receipts.
+- Analytics analyst: post metrics, winners/losers, and playbook updates to memory (approval-gated).
 
-Each module exposes a narrow contract, can be enabled or removed independently, and never bypasses approval, permission, or audit boundaries.
+Each module exposes a narrow contract, can be enabled or removed independently, and never bypasses approval, permission, or audit boundaries. To add or remove a module, add or remove its import in `services/agent/ugecy/modules.py`, or disable it at runtime with `UGECY_DISABLED_AGENTS` or `UGECY_DISABLED_TOOLS`.
 
-I want you to add more. This is just a general idea. This is completely flexible. 
+## As built (v1)
+
+```
+Browser (React SPA) ── /api/* ──> Worker `ugecy` (access-key cookie gate, Hono)
+                                   └─> AgentRuntime Durable Object ──> Python container :8000 (FastAPI + deepagents)
+Container egress (internet off) goes only through intercepted hosts, handled by EgressGateway in the Worker:
+  llm.internal       -> env.AI (Workers AI: GLM-5.3, DeepSeek-V4.1-flash, Qwen3.8, GLM-4.7-flash)
+  state.internal     -> DO SQLite (LangGraph checkpointer and store mirrors, which survive restarts)
+  bindings.internal  -> D1, Browser Run, Vectorize, Queues (Stream ingest), Workflows (scheduled publish), Analytics Engine
+  higgsfield / firecrawl / glasshand .internal -> vendor APIs with keys injected at the edge
+```
+
+The contracts that keep modules independent live in `packages/contracts/` (UI events, REST, internal edge API), `services/agent/ugecy/{contracts,interfaces,registry,deps}.py` and `worker/env.ts`. Decisions are recorded in `.planning/research/SUMMARY.md`.
 
 ## Models
 
