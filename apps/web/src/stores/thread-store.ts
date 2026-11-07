@@ -50,6 +50,8 @@ const userMessage = (text: string): UiMessage => ({
   parts: [{ type: "text", text }], status: "complete",
 });
 
+let creatingThread: Promise<string> | null = null;
+
 export const threadActions: ThreadActions = {
   async openThread(id) {
     abort?.abort();
@@ -96,11 +98,17 @@ export const threadActions: ThreadActions = {
   async ensureThread(titleSource) {
     const existing = get().threadId;
     if (existing) return existing;
-    const title = clip(titleSource.trim(), 60) || "New chat";
-    const id = (await api.createThread(title)).id;
-    set({ threadId: id, title });
-    setThreadParam(id, "replace");
-    return id;
+    // Concurrent callers (two photos picked at once, or send during the first upload) share one creation.
+    creatingThread ??= (async () => {
+      const title = clip(titleSource.trim(), 60) || "New chat";
+      const id = (await api.createThread(title)).id;
+      if (!get().threadId) {
+        set({ threadId: id, title });
+        setThreadParam(id, "replace");
+      }
+      return id;
+    })().finally(() => { creatingThread = null; });
+    return creatingThread;
   },
 
   async stop() {

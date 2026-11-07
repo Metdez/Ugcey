@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/lib/api";
-import { threadActions } from "@/stores/thread-store";
+import { threadActions, useThread } from "@/stores/thread-store";
 
 export type ProductPhoto = { key: string; name: string; assetId?: string; url?: string | null; error?: string };
 
@@ -21,6 +21,14 @@ const productPhotoLine = (photos: ProductPhoto[]) => {
 export function useProductPhotos(titleHint: () => string) {
   const [photos, setPhotos] = useState<ProductPhoto[]>([]);
   const input = useRef<HTMLInputElement>(null);
+  // Photos belong to the chat they were uploaded to: clear them when the user switches to another chat
+  // (but not when the first upload itself just created this chat).
+  const threadId = useThread((s) => s.threadId);
+  const lastThread = useRef(threadId);
+  useEffect(() => {
+    if (lastThread.current && lastThread.current !== threadId) setPhotos([]);
+    lastThread.current = threadId;
+  }, [threadId]);
   const patch = (key: string, p: Partial<ProductPhoto>) =>
     setPhotos((list) => list.map((x) => (x.key === key ? { ...x, ...p } : x)));
 

@@ -44,12 +44,13 @@ def _merged_args(model: str, prompt: str, args: dict | None, chained: dict | Non
 
 
 def end_frame_key(model: str) -> str:
-    """Provider field for a fixed last frame: Kling calls it last_image_url, Seedance and Wan image-to-video end_image_url."""
-    if model.startswith("kling-video/"):
+    """Provider field for a fixed last frame, only for endpoints verified to take one: Kling image-to-video calls it
+    last_image_url, Seedance 2.5 image-to-video end_image_url. Everything else (Wan, stills, text-to-video) raises."""
+    if model.startswith("kling-video/") and model.endswith("/image-to-video"):
         return "last_image_url"
-    if model.endswith("/image-to-video"):
+    if model == "bytedance/seedance-2.5/image-to-video":
         return "end_image_url"
-    raise ValueError(f"{model} does not take an end frame; use a Kling or Seedance image-to-video endpoint")
+    raise ValueError(f"{model} does not take an end frame; use a Kling or Seedance 2.5 image-to-video endpoint")
 
 
 async def _chain_args(image_asset_id: str | None, reference_asset_ids: list[str] | None, *, estimate: bool = False,
@@ -192,7 +193,7 @@ class _GenerateIn(BaseModel):
     args: dict | None = Field(default=None, description="extra model args (duration, aspect_ratio, resolution...)")
     image_asset_id: str | None = Field(default=None, description="completed image asset to animate; becomes image_url (Seedance/Kling/Wan image-to-video)")
     reference_asset_ids: list[str] | None = Field(default=None, description="completed image assets used as image_urls (Marketing Studio product photos, Seedance reference-to-video)")
-    end_image_asset_id: str | None = Field(default=None, description="completed image asset the clip must end on; becomes last_image_url (Kling) or end_image_url (Seedance/Wan image-to-video)")
+    end_image_asset_id: str | None = Field(default=None, description="completed image asset the clip must end on; becomes last_image_url (Kling image-to-video) or end_image_url (Seedance 2.5 image-to-video); no other models")
     brief_path: str | None = None
 
 

@@ -1,16 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { handleUploadRelay, MAX_UPLOAD_BYTES, uploadTarget } from "../egress/upload-relay";
 
-const BUCKET = "https://fnf-api-input-prod-20250414194641741400000002.s3.amazonaws.com/in/p.png?X-Amz-Signature=abc";
+const BUCKET = "https://fnf-api-input-prod-20250414194641741400000002.s3.amazonaws.com/in/p.png?X-Amz-Credential=c&X-Amz-Signature=abc";
 const relay = (to: string) => `http://hfupload.internal/?to=${encodeURIComponent(to)}`;
 
 describe("upload relay target", () => {
   it("accepts only Higgsfield's input bucket over https", () => {
     expect(uploadTarget(relay(BUCKET))).toBeInstanceOf(URL);
-    expect(uploadTarget(relay("http://fnf-api-input-prod-1.s3.amazonaws.com/x"))).toMatch(/https/);
+    expect(uploadTarget(relay(BUCKET.replace("https:", "http:")))).toMatch(/https/);
     expect(uploadTarget(relay("https://evil.s3.amazonaws.com/x"))).toMatch(/not allowed/);
-    expect(uploadTarget(relay("https://fnf-api-input-prod-1.s3.amazonaws.com.evil.com/x"))).toMatch(/not allowed/);
-    expect(uploadTarget(relay("https://user:pw@fnf-api-input-prod-1.s3.amazonaws.com/x"))).toMatch(/credentials/);
+    // a lookalike bucket someone else could register must not pass
+    expect(uploadTarget(relay("https://fnf-api-input-prod-1.s3.amazonaws.com/x?X-Amz-Credential=c&X-Amz-Signature=s"))).toMatch(/not allowed/);
+    expect(uploadTarget(relay(BUCKET.replace(".com/", ".com.evil.com/")))).toMatch(/not allowed/);
+    expect(uploadTarget(relay(BUCKET.replace("https://", "https://user:pw@")))).toMatch(/credentials/);
+    expect(uploadTarget(relay(BUCKET.split("?")[0]))).toMatch(/signed/);
     expect(uploadTarget("http://hfupload.internal/")).toMatch(/missing/);
   });
 });
@@ -29,6 +32,7 @@ describe("upload relay", () => {
     expect(res.status).toBe(200);
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe(BUCKET);
+    expect(init.redirect).toBe("manual");
     const h = new Headers(init.headers);
     expect(h.get("authorization")).toBeNull();
     expect(h.get("cookie")).toBeNull();

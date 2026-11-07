@@ -7,7 +7,7 @@ description: "How to turn an approved UGC script into a Higgsfield ad that looks
 Every rule here comes from a test or an official guide (ByteDance's Seedance 2.5 prompt guide, Higgsfield's own skills and API docs, side-by-side runs on 2026-11-07). Follow them literally.
 
 ## 1. Plan: one still, one multi-shot clip
-A 15 s ad is 3 shots of about 5 s, generated in ONE call with the cuts inside it. Tested: both Kling 3.0 multi-shot and Seedance 2.5 timed shots cut within half a second of the requested times and kept the same person, outfit and bottle across all three shots. This is cheaper and more consistent than separate clips that must be joined.
+A 15 s ad is 3 shots of about 5 s, generated in ONE call with the cuts inside it. Tested: Seedance 2.5 timed shots cut within half a second of the requested times in every run and kept the same person, outfit and product; Kling 3.0 multi-shot did in some runs but ignored the cuts in another (section 3). This is cheaper and more consistent than separate clips that must be joined.
 - Translate the script; do not copy camera-crew details (frame rates, lenses, takes). Merge beats into 3 shots for 15 s (5 or 6 for 30 s).
 - One setting, one subject action and at most one camera move per shot.
 - The first shot starts from the still, so the still must show the person, product and backdrop of shot 1.
@@ -66,9 +66,9 @@ Rules for both:
 - Give shot 1 an action the still already sets up (hold, lift, bring closer). Kling cut our first agent-written shot to 1.75 s when its action (pressing a dropper with a thumb) did not fit the still.
 
 ## 6. Arguments and chaining
-- Everything except `model`, `prompt`, `kind`, `image_asset_id`, `reference_asset_ids` and `end_image_asset_id` goes inside `args`. Top-level extras are dropped.
+- Everything except `model`, `prompt`, `kind`, `image_asset_id`, `reference_asset_ids`, `end_image_asset_id` and `brief_path` goes inside `args`. Top-level extras are dropped.
 - `end_image_asset_id` becomes Kling's `last_image_url` or Seedance's `end_image_url` automatically; only image-to-video endpoints take it.
-- Kling: `args: {"duration": 15, "sound": "on", "multi_shots": true, "multi_prompt": [...]}`. Seedance: `args: {"duration": 15, "resolution": "720p", "generate_audio": true}`.
+- Kling: `args: {"duration": 15, "sound": "on", "multi_shots": true, "multi_prompt": [...]}`. Seedance: `args: {"duration": 15, "resolution": "480p", "generate_audio": true}` for previews ("720p" only when the operator asks for the final).
 - Generate the clip only after `check_media_job` reports every still it uses completed, and pass them as `image_asset_id` (and `end_image_asset_id`). Use asset ids exactly as tools return them; never invent one and never pass an empty id.
 
 ## 7. Check every prompt before submitting

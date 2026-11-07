@@ -6,6 +6,7 @@ import base64
 import binascii
 import uuid
 
+import httpx
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
@@ -51,7 +52,7 @@ async def upload_product_photo(request: Request, thread_id: str, body: UploadReq
         url = await deps.media.upload(data, ctype)
     except NotConnected as e:
         raise ApiError(503, "media_off", str(e)) from None
-    except RuntimeError as e:  # edge mode without a relay, or storage refused the file
+    except (RuntimeError, httpx.HTTPError, KeyError) as e:  # relay or storage refused, network error, bad response
         raise ApiError(502, "upload_failed", str(e)) from None
 
     name = body.filename.strip()[:120] or "product photo"

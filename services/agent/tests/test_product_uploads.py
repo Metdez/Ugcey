@@ -144,9 +144,11 @@ async def test_end_frame_rejected_for_models_without_one_and_uploads_chain_as_re
     rec = Recorder()
     d = install(media=HiggsfieldProvider(Settings(internal_mode="local", hf_key="id:secret"), transport=httpx.MockTransport(rec)))
     _still(d, "last", "https://cdn.example/last.png")
-    out = json.loads(await media.generate_media.ainvoke({"model": "higgsfield-ai/soul/v2/standard", "prompt": "p",
-                                                         "kind": "image", "end_image_asset_id": "last"}))
-    assert "does not take an end frame" in out["error"] and not rec.submits
+    for model in ("higgsfield-ai/soul/v2/standard", "alibaba/wan-3.0/image-to-video"):  # Wan has no verified end-frame field
+        out = json.loads(await media.generate_media.ainvoke({"model": model, "prompt": "p", "kind": "image",
+                                                             "image_asset_id": "last", "end_image_asset_id": "last"}))
+        assert "does not take an end frame" in out["error"], model
+    assert not rec.submits
     d.app.assets["up"] = Asset(id="up", thread_id="t", kind="image", status="completed", provider="upload", model="upload",
                                prompt="lipstick.png", url="https://cdn.example/in/p.webp", mode="live")
     out = json.loads(await media.generate_media.ainvoke({"model": "marketing-studio/image", "prompt": "p", "kind": "image",
