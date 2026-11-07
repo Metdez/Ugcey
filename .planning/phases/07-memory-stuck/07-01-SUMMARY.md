@@ -20,3 +20,5 @@
 ## Verification
 - pytest: 160 passed, 1 skipped. ruff clean.
 - Deployed as image v17.
+- Live check on v17: a web-only research run wrote all four files (`agents/` and `episodes/` for research-analyst and the orchestrator).
+- Deviation: the lessons GLM-4.7-flash wrote for the orchestrator were made up (models, dates and languages that appear nowhere in the run). Lesson merging moved to GLM-5.3 (the critic role), the prompt now requires lessons to be grounded in the run record, and the bad file was reset. Redeployed as v18.

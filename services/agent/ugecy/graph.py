@@ -64,7 +64,7 @@ def _memory_middleware(deps: Deps, models: dict[str, BaseChatModel], backend: An
                        has_lookup: bool) -> list[Any]:
     """Per-agent Deep Agents memory (shared AGENTS.md + own lessons), automatic recording, stuck recovery."""
     return [LiveMemoryMiddleware(backend=backend, sources=memory_sources(agent)),
-            ExperienceMiddleware(agent, deps.store, models["fast"], deps.settings.workspace_id),
+            ExperienceMiddleware(agent, deps.store, models["critic"], deps.settings.workspace_id),  # GLM-5.3: flash invented lessons
             StuckMiddleware(has_lookup=has_lookup)]
 
 

@@ -156,7 +156,7 @@ async def test_end_to_end_stuck_nudge_memory_and_reload(reg):
     models = fake_models(fake_model(
         AIMessage(content="", tool_calls=[{"name": "task", "id": "k1", "args": {
             "description": "Open TikTok search", "subagent_type": "research-analyst"}}]), "Delegated."))
-    models["research"], models["fast"] = research, fake_model(*["- Tapping Search again does nothing; search first"] * 4)
+    models["research"], models["critic"] = research, fake_model(*["- Tapping Search again does nothing; search first"] * 4)
     await deps.store.aput(NS, "/agents/research-analyst.md", {"content": "- LESSON-ONE", "encoding": "utf-8"})
     agent = build_agent(deps, models)
     await agent.ainvoke({"messages": [{"role": "user", "content": "go"}]}, {"configurable": {"thread_id": "e2e"}},

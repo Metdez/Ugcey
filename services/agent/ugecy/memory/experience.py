@@ -1,7 +1,7 @@
 """Continuous agent memory, recorded automatically after every subagent task and orchestrator turn.
 
 - Episodic: /memories/episodes/<agent>.md holds dated run records (task, tools, errors, stuck events, result).
-- Semantic: /memories/agents/<agent>.md holds the lessons list. The fast model merges each new episode into it,
+- Semantic: /memories/agents/<agent>.md holds the lessons list. The critic model (GLM-5.3) merges each new episode into it,
   and LiveMemoryMiddleware loads it into that agent's system prompt on its next run.
 
 Recording runs in the background and never delays or fails a run.
@@ -34,6 +34,9 @@ Update the agent's lessons from the new run record. Lessons are short, specific,
 - what worked (exact navigation paths, tool argument patterns, sources that had good data);
 - what failed and the fix that worked (or what to try next time);
 - tool and app quirks, and operator preferences shown in the task.
+Every new lesson must be directly supported by the run record: never invent tools, models, sites, dates, \
+languages or preferences that the record does not show. Prefer one precise lesson over several generic ones; \
+a routine successful run usually adds at most one lesson, or none.
 Keep useful old lessons, merge duplicates, rewrite ones the new evidence corrects, drop ones it disproves.
 At most {keep} bullets, each one line under 200 characters, most useful first.
 Never write passwords, verification codes, API keys, tokens, email addresses, phone numbers or other personal data.
