@@ -3,7 +3,13 @@ import re
 import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 
-from tests._fakes_02_05 import FakeApp, fake_deps, fake_models, fake_model, install_registry
+from tests._fakes_02_05 import (
+    FakeApp,
+    fake_deps,
+    fake_model,
+    fake_models,
+    install_registry,
+)
 from ugecy import registry
 from ugecy.deps import set_deps
 from ugecy.graph import RunContext, _subagents, build_agent, seed_store
@@ -68,7 +74,8 @@ async def test_graph_runs_with_todos_and_context(reg):
 
 async def test_audit_writes_entry_and_survives_failure(reg):
     class Req:
-        tool_call = {"name": "generate_media", "args": {"prompt": "x" * 500}, "id": "1"}
+        def __init__(self):
+            self.tool_call = {"name": "generate_media", "args": {"prompt": "x" * 500}, "id": "1"}
 
     async def handler(_):
         return ToolMessage(content="ok", tool_call_id="1")
@@ -103,8 +110,8 @@ def test_skill_frontmatter_is_valid():
     assert len(skills) == 6
     for d in skills:
         head = d.joinpath("SKILL.md").read_text("utf-8").split("---")[1]
-        assert re.search(rf"^name: {d.name}$", head, re.M)
-        assert len(re.search(r"^description: (.+)$", head, re.M).group(1)) <= 1024
+        assert re.search(rf"^name: {d.name}$", head, re.MULTILINE)
+        assert len(re.search(r"^description: (.+)$", head, re.MULTILINE).group(1)) <= 1024
 
 
 async def test_orchestrator_can_delegate_to_registered_subagent(reg):

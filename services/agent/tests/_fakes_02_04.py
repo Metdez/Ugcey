@@ -9,7 +9,13 @@ from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 
 from ugecy.contracts import (
-    ApprovalRecord, Asset, AuditEntry, ConnectedAccount, Post, Source, ThreadSummary,
+    ApprovalRecord,
+    Asset,
+    AuditEntry,
+    ConnectedAccount,
+    Post,
+    Source,
+    ThreadSummary,
 )
 
 
@@ -104,21 +110,21 @@ class MemAppStore:
 
 
 # ---- app wiring helpers --------------------------------------------------------------------
-import json  # noqa: E402
-import sys  # noqa: E402
-import types  # noqa: E402
-from dataclasses import dataclass  # noqa: E402
+import json
+import sys
+import types
+from dataclasses import dataclass
 
-import httpx  # noqa: E402
-from deepagents import create_deep_agent  # noqa: E402
-from langchain_core.tools import tool  # noqa: E402
-from langgraph.checkpoint.memory import InMemorySaver  # noqa: E402
-from langgraph.store.memory import InMemoryStore  # noqa: E402
+import httpx
+from deepagents import create_deep_agent
+from langchain_core.tools import tool
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.memory import InMemoryStore
 
-from ugecy.contracts import DeviceInfo, ProviderModes  # noqa: E402
-from ugecy.deps import Deps  # noqa: E402
-from ugecy.main import create_app  # noqa: E402
-from ugecy.settings import Settings  # noqa: E402
+from ugecy.contracts import DeviceInfo, ProviderModes
+from ugecy.deps import Deps
+from ugecy.main import create_app
+from ugecy.settings import Settings
 
 
 @dataclass

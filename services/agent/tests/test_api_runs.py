@@ -1,7 +1,7 @@
 import asyncio
 
 import pytest
-from _fakes_02_04 import CALLS, ScriptedModel, call, install_fake_graph, make_agent, make_client, sse
+from _fakes_02_04 import CALLS, call, install_fake_graph, make_agent, make_client, sse
 from langchain_core.messages import AIMessage
 
 from ugecy.contracts import ThreadSummary
@@ -179,10 +179,6 @@ async def test_disconnect_does_not_cancel_run():
 
 
 async def test_model_error_becomes_error_events():
-    class Boom(ScriptedModel):
-        def _stream(self, *a, **kw):
-            raise RuntimeError("upstream 429")
-
     agent = make_agent(simple_script())
     agent.astream = lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("upstream 429"))  # sync raise on call
     client, deps = make_client(agent)

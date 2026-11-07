@@ -37,7 +37,8 @@ def _default_context(workspace_id: str, thread_id: str) -> Any:
     # 02-05 owns ugecy.graph; imported late so this module loads without it
     from ugecy.graph import RunContext
 
-    return RunContext(workspace_id=workspace_id, thread_id=thread_id)
+    fields = {"workspace_id": workspace_id, "thread_id": thread_id}  # 02-05 may omit thread_id
+    return RunContext(**{k: v for k, v in fields.items() if k in RunContext.__dataclass_fields__})
 
 
 class RunManager:
