@@ -31,3 +31,4 @@ packages = ["ugecy"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
+markers = ["live: makes real network calls (run with UGECY_LIVE=1)"]
