@@ -1,5 +1,6 @@
 import { Check, Loader2, TriangleAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { StopAgentButton } from "./stop-agent-button";
 import type { SubagentRunView } from "@/types/agent";
 import { agentColor, duration } from "../inspector/lib";
 import { useFlash } from "../inspector/hooks";
@@ -13,6 +14,7 @@ export function StatusIcon({ status }: { status: SubagentRunView["status"] }) {
 export function SubagentRunCard({ run, focused, onOpen }: { run: SubagentRunView; focused: boolean; onOpen: () => void }) {
   const flash = useFlash(focused);
   return (
+    <div className="relative">
     <button
       ref={flash.ref as React.Ref<HTMLButtonElement>}
       onClick={onOpen}
@@ -30,5 +32,7 @@ export function SubagentRunCard({ run, focused, onOpen }: { run: SubagentRunView
         {run.model && <Badge variant="outline" className="font-mono">{run.model.split("/").pop()}</Badge>}
       </span>
     </button>
+    {run.status === "running" && <StopAgentButton callId={run.id} label={run.name} className="absolute bottom-2 right-2" />}
+    </div>
   );
 }

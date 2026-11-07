@@ -45,7 +45,8 @@ export interface PutMemoryRequest {
  *  POST   /api/threads/:id/resume ResumeRequest-> text/event-stream of UiEvent
  *  GET    /api/threads/:id/stream?since=<seq>  -> text/event-stream: replays buffered events of the
  *                                                 active/last run with seq > since, then live (reconnect)
- *  POST   /api/threads/:id/cancel              -> { ok: boolean }
+ *  POST   /api/threads/:id/cancel              -> { ok: boolean }  (stops the whole run)
+ *  POST   /api/threads/:id/subagents/:call_id/stop -> { ok: boolean }  (stops one running subagent; run continues)
  *  GET    /api/threads/:id/files?path=/a.md    -> FileContent
  *  GET    /api/memories                        -> MemoryFile[]
  *  PUT    /api/memories   PutMemoryRequest     -> MemoryFile

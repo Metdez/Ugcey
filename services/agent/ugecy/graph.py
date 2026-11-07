@@ -19,6 +19,7 @@ from ugecy.llm.routing import models_for
 from ugecy.middleware.audit import AuditMiddleware
 from ugecy.middleware.compat import CompatMiddleware
 from ugecy.middleware.limits import limit_middleware
+from ugecy.middleware.stop import StopMiddleware
 
 GENERAL_PURPOSE_PROMPT = (
     "You are a read-only helper. Search, read and summarize files in the virtual filesystem and return "
@@ -33,7 +34,8 @@ class RunContext:
 
 
 def _middleware(deps: Deps, models: dict[str, BaseChatModel], run_limit: int | None = None) -> list[Any]:
-    return [AuditMiddleware(), *limit_middleware(deps.settings, models["fallback"], run_limit), CompatMiddleware()]
+    return [StopMiddleware(), AuditMiddleware(), *limit_middleware(deps.settings, models["fallback"], run_limit),
+            CompatMiddleware()]
 
 
 def _subagents(deps: Deps, models: dict[str, BaseChatModel]) -> list[dict[str, Any]]:

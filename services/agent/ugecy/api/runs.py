@@ -99,6 +99,15 @@ async def reconnect(request: Request, thread_id: str, since: int = 0,
     return sse_response(runs_of(request), run, since)
 
 
+@router.post("/{thread_id}/subagents/{call_id}/stop")
+async def stop_subagent(request: Request, thread_id: str, call_id: str) -> dict[str, bool]:
+    """Stop one running subagent (by its `task` call id); the rest of the run continues."""
+    from ugecy.middleware.stop import request_stop
+
+    request_stop(thread_id, call_id)
+    return {"ok": True}
+
+
 @router.post("/{thread_id}/cancel")
 async def cancel_run(request: Request, thread_id: str) -> dict[str, bool]:
     return {"ok": await runs_of(request).cancel(thread_id)}
