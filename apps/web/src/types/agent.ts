@@ -78,6 +78,7 @@ export interface ThreadSnapshot {
 export interface ThreadActions {
   openThread(id: string | null): Promise<void>; // null = new empty chat
   send(text: string): Promise<void>; // creates the thread if needed
+  ensureThread(title: string): Promise<string>; // current thread id, creating the thread first if there is none
   stop(): Promise<void>;
   decide(interruptId: string, decisions: Decision[]): Promise<void>;
   refreshAssets(): Promise<void>;

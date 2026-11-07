@@ -111,10 +111,29 @@ class HiggsfieldProvider:
             if not key:
                 raise RuntimeError("Higgsfield key missing (set HF_KEY or HF_API_KEY_SECRET) or set media_provider=off")
             headers["Authorization"] = f"Key {key}"
+        self._edge, self._transport = edge, transport
         self._client = httpx.AsyncClient(
             base_url="http://higgsfield.internal" if edge else "https://api.higgsfield.ai",
             headers=headers, timeout=30.0, transport=transport,
         )
+
+    async def upload(self, data: bytes, content_type: str) -> str:
+        """Upload an input file (a product photo) and return the public URL models can read.
+        Step 1 asks Higgsfield for a presigned URL; step 2 PUTs the bytes to storage with a separate client that
+        carries no Higgsfield credentials (the docs forbid sending them to the presigned host)."""
+        meta = (await self._request("POST", "/files/generate-upload-url", json={"content_type": content_type})).json()
+        headers = {str(k): str(v) for k, v in (meta.get("upload_headers") or {}).items()}
+        headers.setdefault("Content-Type", content_type)
+        # Edge: the container has no internet, so the Worker's hfupload.internal relay forwards the PUT to the
+        # presigned host (Higgsfield's input bucket only, no credentials). Local: PUT straight to storage.
+        target, params = meta["upload_url"], None
+        if self._edge:
+            target, params = "http://hfupload.internal/", {"to": meta["upload_url"]}
+        async with httpx.AsyncClient(timeout=120.0, transport=self._transport) as storage:
+            resp = await storage.put(target, params=params, content=data, headers=headers)
+        if resp.status_code >= 400:
+            raise RuntimeError(f"upload to Higgsfield storage failed: HTTP {resp.status_code}")
+        return str(meta["public_url"])
 
     def models(self, kind: str | None = None) -> list[dict[str, Any]]:
         return catalog_models(kind)

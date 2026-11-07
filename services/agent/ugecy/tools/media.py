@@ -43,10 +43,22 @@ def _merged_args(model: str, prompt: str, args: dict | None, chained: dict | Non
     return {**(spec["defaults"] if spec else {}), **(args or {}), **(chained or {}), "prompt": prompt}
 
 
-async def _chain_args(image_asset_id: str | None, reference_asset_ids: list[str] | None, *, estimate: bool = False) -> dict:
-    """Completed asset ids -> provider URLs (image_url / image_urls). Raises ValueError with an agent-readable reason.
-    estimate=True tolerates unresolved assets (the approval card still needs a price)."""
+def end_frame_key(model: str) -> str:
+    """Provider field for a fixed last frame, only for endpoints verified to take one: Kling image-to-video calls it
+    last_image_url, Seedance 2.5 image-to-video end_image_url. Everything else (Wan, stills, text-to-video) raises."""
+    if model.startswith("kling-video/") and model.endswith("/image-to-video"):
+        return "last_image_url"
+    if model == "bytedance/seedance-2.5/image-to-video":
+        return "end_image_url"
+    raise ValueError(f"{model} does not take an end frame; use a Kling or Seedance 2.5 image-to-video endpoint")
+
+
+async def _chain_args(image_asset_id: str | None, reference_asset_ids: list[str] | None, *, estimate: bool = False,
+                      end_image_asset_id: str | None = None, model: str = "") -> dict:
+    """Completed asset ids -> provider URLs (image_url / image_urls / the model's end-frame field). Raises ValueError
+    with an agent-readable reason. estimate=True tolerates unresolved assets (the approval card still needs a price)."""
     d = get_deps()
+    end_key = end_frame_key(model) if end_image_asset_id else ""
 
     async def url_of(asset_id: str) -> str:
         a = await d.app.get_asset(asset_id)
@@ -61,7 +73,8 @@ async def _chain_args(image_asset_id: str | None, reference_asset_ids: list[str]
         return a.url
 
     out: dict = {}
-    for key, ids in (("image_url", [image_asset_id] if image_asset_id else []), ("image_urls", reference_asset_ids or [])):
+    for key, ids in (("image_url", [image_asset_id] if image_asset_id else []), ("image_urls", reference_asset_ids or []),
+                     (end_key, [end_image_asset_id] if end_image_asset_id else [])):
         urls = []
         for i in ids:
             try:
@@ -71,7 +84,7 @@ async def _chain_args(image_asset_id: str | None, reference_asset_ids: list[str]
                     raise
                 urls.append(_PLACEHOLDER_URL)
         if urls:
-            out[key] = urls[0] if key == "image_url" else urls
+            out[key] = urls if key == "image_urls" else urls[0]
     return out
 
 
@@ -79,7 +92,8 @@ async def estimate_for_approval(args: dict) -> float | None:
     """Called by the approval layer (02-04) with the pending generate_media args (works for any catalog model, chained or not)."""
     try:
         model = args["model"]
-        chained = await _chain_args(args.get("image_asset_id"), args.get("reference_asset_ids"), estimate=True)
+        chained = await _chain_args(args.get("image_asset_id"), args.get("reference_asset_ids"), estimate=True,
+                                    end_image_asset_id=args.get("end_image_asset_id"), model=model)
         return await get_deps().media.estimate(model, _merged_args(model, str(args.get("prompt", "")), args.get("args"), chained))
     except Exception:  # noqa: BLE001
         return None
@@ -178,7 +192,8 @@ class _GenerateIn(BaseModel):
     kind: str = "video"
     args: dict | None = Field(default=None, description="extra model args (duration, aspect_ratio, resolution...)")
     image_asset_id: str | None = Field(default=None, description="completed image asset to animate; becomes image_url (Seedance/Kling/Wan image-to-video)")
-    reference_asset_ids: list[str] | None = Field(default=None, description="completed image assets used as image_urls (Seedance reference-to-video)")
+    reference_asset_ids: list[str] | None = Field(default=None, description="completed image assets used as image_urls (Marketing Studio product photos, Seedance reference-to-video)")
+    end_image_asset_id: str | None = Field(default=None, description="completed image asset the clip must end on; becomes last_image_url (Kling image-to-video) or end_image_url (Seedance 2.5 image-to-video); no other models")
     brief_path: str | None = None
 
 
@@ -200,10 +215,11 @@ async def estimate_media_cost(model: str, args: dict | None = None) -> str:
 @tool(args_schema=_GenerateIn)
 async def generate_media(model: str, prompt: str, kind: str = "video", args: dict | None = None,
                          image_asset_id: str | None = None, reference_asset_ids: list[str] | None = None,
-                         brief_path: str | None = None) -> str:
+                         end_image_asset_id: str | None = None, brief_path: str | None = None) -> str:
     """Generate an image/video/audio asset with a catalog model (costs money; needs approval).
     Returns the asset id and status; the file arrives asynchronously (use check_media_job).
-    Videos for UGC should be 9:16. For image-to-video pass image_asset_id (a completed still); for
+    Videos for UGC should be 9:16. For image-to-video pass image_asset_id (a completed still) and optionally
+    end_image_asset_id (a completed still the clip ends on); for Marketing Studio product photos or
     reference-to-video pass reference_asset_ids. Optional brief_path points at the creative brief file."""
     d = get_deps()
     if d.media.mode == "off":
@@ -213,7 +229,8 @@ async def generate_media(model: str, prompt: str, kind: str = "video", args: dic
         return json.dumps({"error": f"unknown model {model!r}; call list_media_models"})
     thread_id = current_thread_id()
     try:
-        full = _merged_args(model, prompt, args, await _chain_args(image_asset_id, reference_asset_ids))
+        full = _merged_args(model, prompt, args, await _chain_args(
+            image_asset_id, reference_asset_ids, end_image_asset_id=end_image_asset_id, model=model))
     except ValueError as e:
         return json.dumps({"error": str(e)})
     missing = [r for r in spec.get("requires", []) if not full.get(r)]

@@ -38,6 +38,9 @@ class OffMediaProvider:
     async def get(self, job_id: str) -> MediaJob:
         raise NotConnected(MEDIA_OFF)
 
+    async def upload(self, data: bytes, content_type: str) -> str:
+        raise NotConnected(MEDIA_OFF)
+
 
 class OffDeviceProvider:
     name = "glasshand"

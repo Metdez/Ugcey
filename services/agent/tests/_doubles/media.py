@@ -77,3 +77,7 @@ class FakeMediaProvider:
             return MediaJob(job_id=job_id, status="nsfw", error="fake nsfw injected")
         # shortcut: video output is the SVG poster only (no bundled mp4 without new deps); add a real clip when a player needs it
         return MediaJob(job_id=job_id, status="completed", outputs=[{"url": placeholder_svg(j["kind"], j["model"], j["prompt"]), "kind": j["kind"]}])
+
+    async def upload(self, data: bytes, content_type: str) -> str:
+        """Fake storage: echoes the bytes back as a data URI (no network)."""
+        return f"data:{content_type};base64," + b64encode(data).decode()

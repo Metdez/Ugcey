@@ -50,6 +50,8 @@ const userMessage = (text: string): UiMessage => ({
   parts: [{ type: "text", text }], status: "complete",
 });
 
+let creatingThread: Promise<string> | null = null;
+
 export const threadActions: ThreadActions = {
   async openThread(id) {
     abort?.abort();
@@ -82,20 +84,31 @@ export const threadActions: ThreadActions = {
 
   async send(text) {
     if (get().status === "streaming" || get().status === "connecting") return;
-    let id = get().threadId;
+    let id: string;
     try {
-      if (!id) {
-        const title = clip(text.trim(), 60);
-        id = (await api.createThread(title)).id;
-        set({ threadId: id, title });
-        setThreadParam(id, "replace");
-      }
+      id = await threadActions.ensureThread(text);
     } catch (err) {
       return set({ status: err instanceof ApiError && err.status === 401 ? "locked" : "offline" });
     }
     set((s) => ({ messages: [...s.messages, userMessage(text)] }));
     const tid = id;
     await run((sig) => streams.run(tid, text, onEvent, sig));
+  },
+
+  async ensureThread(titleSource) {
+    const existing = get().threadId;
+    if (existing) return existing;
+    // Concurrent callers (two photos picked at once, or send during the first upload) share one creation.
+    creatingThread ??= (async () => {
+      const title = clip(titleSource.trim(), 60) || "New chat";
+      const id = (await api.createThread(title)).id;
+      if (!get().threadId) {
+        set({ threadId: id, title });
+        setThreadParam(id, "replace");
+      }
+      return id;
+    })().finally(() => { creatingThread = null; });
+    return creatingThread;
   },
 
   async stop() {
