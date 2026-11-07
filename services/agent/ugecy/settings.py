@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     disabled_tools: str = ""
     max_model_calls_per_run: int = 80
     max_model_calls_per_subagent: int = 30
+    max_model_calls_research: int = 200  # research-analyst; LangGraph run limits do not reach subagents
     llm_timeout_s: float = 180.0
 
     @property

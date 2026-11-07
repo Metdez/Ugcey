@@ -200,7 +200,7 @@ export interface DeviceStatus {
   provider: string; // "glasshand"
   mode: Mode;
   devices: DeviceInfo[];
-  session: { id: string; device_id: string; goal: string; steps_used: number; max_steps: number } | null;
+  session: { id: string; device_id: string; goal: string; steps_used: number; max_steps: number /* 0 = no cap (research) */ } | null;
   control: "agent" | "human" | "idle";
   last_action: string | null;
 }

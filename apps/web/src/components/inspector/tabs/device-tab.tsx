@@ -38,7 +38,7 @@ export default function DeviceTab() {
       {s ? (
         <section className="flex flex-col gap-1 rounded-lg border p-2.5 text-xs">
           <p className="text-[13px]">{s.goal}</p>
-          <p className="tabular-nums text-muted-foreground">Steps {s.steps_used}/{s.max_steps}</p>
+          <p className="tabular-nums text-muted-foreground">Steps {s.steps_used}{s.max_steps ? `/${s.max_steps}` : ""}</p>
         </section>
       ) : <EmptyState icon={Smartphone}>No device session. The device operator asks for approval before it connects.</EmptyState>}
       <section className="flex flex-col gap-1.5">

@@ -45,13 +45,12 @@ def test_normalize_post_parses_metrics():
 async def test_research_session_guards(monkeypatch):
     _, slept, _ = install(monkeypatch)
     s = await start(max_steps=5)
-    assert s["max_steps"] == 60  # research budget is fixed
+    assert s["max_steps"] == 0  # research sessions have no step cap
     assert "refused" in await call(device.device_commit, intent="post", x=0.5, y=0.5)
     assert "80" in await call(device.device_type, text="x" * 81)
     assert json.loads(await call(device.device_type, text="x" * 80))["ok"]
-    for _ in range(59):
-        await call(device.device_home)
-    assert "budget" in await call(device.device_home)
+    for _ in range(120):  # well past the old 60-step cap
+        assert "budget" not in await call(device.device_home)
     # operate sessions keep the old rules
     await start("operate", max_steps=2)
     assert json.loads(await call(device.device_type, text="x" * 200))["ok"]
@@ -83,16 +82,15 @@ async def test_fake_feed_navigation_and_observe(monkeypatch):
     assert not slept and json.loads(await call(device.device_observe))["creator"] == "@fake.gymbro_dan"
 
 
-async def test_observe_needs_a_post_and_limits(monkeypatch):
+async def test_observe_needs_a_post_and_has_no_post_cap(monkeypatch):
     d, _, _ = install(monkeypatch)
     await start()
     assert "no post" in (await call(device.device_observe))
     assert not d.app.sources
     await open_tiktok()
     await tap(0.5, 0.26)
-    for _ in range(12):
+    for _ in range(25):  # well past the old 12-post cap
         assert "error" not in json.loads(await call(device.device_observe))
-    assert "limit" in await call(device.device_observe)
     assert (await call(device.device_next_post)).startswith("{")
 
 

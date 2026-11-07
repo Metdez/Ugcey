@@ -49,7 +49,7 @@ def _subagents(deps: Deps, models: dict[str, BaseChatModel]) -> list[dict[str, A
             "name": agent.name, "description": agent.description, "system_prompt": agent.system_prompt,
             "tools": registry.tools_for(agent, s.disabled("tools")),  # always explicit: no inherited tools
             "model": models.get(agent.model_role, models["fast"]),
-            "middleware": _middleware(deps, models, s.max_model_calls_per_subagent),
+            "middleware": _middleware(deps, models, s.max_model_calls_research if agent.long_running else s.max_model_calls_per_subagent),
         }
         if agent.skills:
             spec["skills"] = agent.skills

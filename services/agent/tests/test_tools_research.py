@@ -157,13 +157,14 @@ def test_source_policy_blocks_scraping_routes():
         assert policy_error(ok) is None, ok
 
 
-def test_fetch_budget():
+def test_no_fetch_budget_and_no_model_call_cap_for_research():
+    from ugecy.agents import research  # noqa: F401  (registers the module)
+    from ugecy.registry import AGENTS
     from ugecy.tools import source_policy as sp
 
-    sp._calls.clear()
-    assert all(sp.take_budget("t1") is None for _ in range(sp.FETCH_BUDGET))
-    assert sp.take_budget("t1") is not None
-    assert sp.take_budget("t2") is None
+    assert not hasattr(sp, "take_budget") and not hasattr(sp, "FETCH_BUDGET")
+    assert AGENTS["research-analyst"].long_running
+    assert not any(a.long_running for n, a in AGENTS.items() if n != "research-analyst")
 
 
 def test_all_skills_have_valid_frontmatter():
