@@ -34,7 +34,7 @@ class AgentModule:
     model_role: str = "fast"  # key in settings model routing: orchestrator|research|creative|critic|fast|vision
     skills: list[str] = field(default_factory=list)  # backend paths, e.g. ["/skills/"]
     enabled: bool = True
-    uncapped: bool = False  # no model-call cap for this subagent (research runs as long as it needs)
+    long_running: bool = False  # higher model-call cap (settings.max_model_calls_research); still stops cleanly
 
 
 TOOLS: dict[str, ToolSpec] = {}

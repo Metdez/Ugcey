@@ -163,8 +163,8 @@ def test_no_fetch_budget_and_no_model_call_cap_for_research():
     from ugecy.tools import source_policy as sp
 
     assert not hasattr(sp, "take_budget") and not hasattr(sp, "FETCH_BUDGET")
-    assert AGENTS["research-analyst"].uncapped
-    assert not any(a.uncapped for n, a in AGENTS.items() if n != "research-analyst")
+    assert AGENTS["research-analyst"].long_running
+    assert not any(a.long_running for n, a in AGENTS.items() if n != "research-analyst")
 
 
 def test_all_skills_have_valid_frontmatter():

@@ -11,6 +11,6 @@ register_agent(AgentModule(
     tools=["web_search", "fetch_page", "remember_pattern", "search_patterns", "device_status", "device_start_session", "device_screenshot", "device_scroll", "device_back",
            "device_observe", "device_tap", "device_swipe", "device_next_post", "device_type", "device_home"],
     model_role="research",
-    uncapped=True,  # no model-call cap: research runs until the task is done
+    long_running=True,  # 200-call ceiling instead of 30: stops cleanly and returns what it has
     skills=["/skills/"],
 ))
