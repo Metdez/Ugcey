@@ -1,6 +1,8 @@
 """Config, health, device and the plain AppStore reads (assets, approvals, audit, accounts, posts)."""
 from __future__ import annotations
 
+import asyncio
+
 import httpx
 from fastapi import APIRouter, Request, Response
 
@@ -50,8 +52,18 @@ async def config(request: Request) -> AppConfig:
                         model=s.model_orchestrator, tools=[])]
     agents += [AgentInfo(name=a.name, description=a.description, model=s.model_for(a.model_role), tools=a.tools,
                          enabled=a.enabled and a.name not in disabled) for a in registry.AGENTS.values()]
-    return AppConfig(version=s.version, modes=deps.modes, models=models, agents=agents,
+    return AppConfig(version=s.version, modes=await _live_modes(deps), models=models, agents=agents,
                      starter_prompts=STARTER_PROMPTS)
+
+
+async def _live_modes(deps):
+    """Device and publishing follow the iPhone at request time: publishing runs through the connected phone."""
+    try:
+        ready = any(d.ready for d in await asyncio.wait_for(deps.device.list_devices(), 8))
+    except Exception:  # noqa: BLE001 unreachable device = off
+        ready = False
+    phone = "live" if ready else "off"
+    return deps.modes.model_copy(update={"device": phone, "publishing": phone})
 
 
 @router.get("/api/assets")

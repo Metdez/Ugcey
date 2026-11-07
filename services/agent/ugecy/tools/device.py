@@ -198,6 +198,25 @@ async def device_back() -> str:
 
 
 @tool
+async def device_open_url(url: str) -> str:
+    """Open a public https URL in Safari on the iPhone (Home, Spotlight, type the URL, Enter). Use it to bring an
+    approved Higgsfield asset URL onto the phone so it can be saved to Photos and posted. Needs a session (3 steps)."""
+    if not url.startswith("https://") or len(url) > 500 or not url.isascii() or any(c.isspace() for c in url):
+        return "error: url must be an ASCII https URL without spaces, at most 500 characters"
+    if _STATE["purpose"] == "research":
+        return "error: device_open_url is for operate sessions (publishing), not research"
+    for tool_name, action, detail in (
+        ("device_home", {"type": "home"}, "home"),
+        ("device_swipe", {"type": "swipe", "from_x": 0.5, "from_y": 0.35, "to_x": 0.5, "to_y": 0.75}, "spotlight"),
+        ("device_type", {"type": "type", "text": url + "\n"}, f"open url ({len(url)} chars)"),
+    ):
+        out = await _act(tool_name, action, detail)
+        if out.startswith("error"):
+            return out
+    return "ok: URL submitted in Spotlight; call device_screenshot to confirm Safari opened it"
+
+
+@tool
 async def device_type(text: str) -> str:
     """Type printable ASCII text (max 512 chars; in a research session max 80, a search query only). Needs an active approved session."""
     if _STATE["purpose"] == "research" and len(text) > RESEARCH_TYPE_MAX:
@@ -223,6 +242,7 @@ async def device_commit(intent: str, x: float, y: float) -> str:
 
 
 register_tool(device_status, domain="device")
+register_tool(device_open_url, domain="device", side_effect=True)
 register_tool(device_scroll, domain="device")
 register_tool(device_back, domain="device")
 register_tool(device_screenshot, domain="device")
