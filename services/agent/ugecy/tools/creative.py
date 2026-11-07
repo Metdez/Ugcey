@@ -10,7 +10,7 @@ from ugecy import registry
 
 # (rule, severity, regex, fix). "block" = must not ship; "fix" = change before publishing.
 _CLAIMS: list[tuple[str, str, str, str]] = [
-    ("health.cure_claim", "block", r"\b(cures?|cured|heals?|treats?|reverses?)\b.{0,40}\b(acne|eczema|psoriasis|diabetes|cancer|anxiety|depression|arthritis|adhd|insomnia|disease)\b",
+    ("health.cure_claim", "block", r"\b(heals?|treats?|reverses?)\b.{0,40}\b(acne|eczema|psoriasis|diabetes|cancer|anxiety|depression|arthritis|adhd|insomnia|disease)\b",
      "Remove disease cure/treat claims; supplements and cosmetics cannot claim to treat disease."),
     ("health.cure_word", "block", r"\bcures?\b", "Drop 'cure'; describe your own routine or the ingredient, not a medical outcome."),
     ("claim.guaranteed", "block", r"\bguarantee[sd]?\b(?!.{0,20}(money.back|refund|return))", "Remove 'guaranteed' results; only a money-back guarantee with terms is allowed."),

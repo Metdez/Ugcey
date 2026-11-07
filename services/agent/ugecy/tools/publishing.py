@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from langchain_core.tools import tool
@@ -44,7 +44,7 @@ async def run_publish_job(post_id: str) -> dict:
     asset = await d.app.get_asset(post.asset_id) if post.asset_id else None
     try:
         res = await d.publisher.publish(post, asset)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         await d.app.upsert_post(post.model_copy(update={"status": "failed"}))
         await _audit("publish", "error", f"post {post_id}: {e}", post.thread_id)
         return {"status": "failed", "error": str(e)}
@@ -75,7 +75,7 @@ async def publish_post(account_id: str, asset_id: str, caption: str, ai_disclosu
         except ValueError:
             return json.dumps({"error": f"publish_at is not ISO-8601: {publish_at!r}"})
         if when.tzinfo is None:
-            when = when.replace(tzinfo=timezone.utc)
+            when = when.replace(tzinfo=UTC)
     err = (
         f"unknown account {account_id}" if acct is None
         else f"unknown asset {asset_id}" if asset is None
@@ -87,7 +87,7 @@ async def publish_post(account_id: str, asset_id: str, caption: str, ai_disclosu
     if err:
         await _audit("publish", "rejected", err, thread_id)
         return json.dumps({"error": err})
-    future = when is not None and when > datetime.now(timezone.utc)
+    future = when is not None and when > datetime.now(UTC)
     edge = d.settings.internal_mode == "edge"
     post = Post(id=f"post_{uuid4().hex[:12]}", thread_id=thread_id, account_id=account_id, asset_id=asset_id, caption=caption,
                 ai_disclosure=ai_disclosure, status="scheduled" if future else "draft", mode=d.modes.publishing,

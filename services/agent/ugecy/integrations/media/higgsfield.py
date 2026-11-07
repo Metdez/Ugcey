@@ -37,7 +37,7 @@ def map_outputs(body: dict[str, Any]) -> list[dict[str, str]]:
 def _detail(resp: httpx.Response) -> str:
     try:
         d = resp.json().get("detail", resp.text)
-    except Exception:
+    except Exception:  # noqa: BLE001
         return resp.text[:200]
     return (d.get("message") or str(d)) if isinstance(d, dict) else str(d)[:200]
 

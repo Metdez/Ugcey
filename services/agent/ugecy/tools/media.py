@@ -39,7 +39,7 @@ async def estimate_for_approval(args: dict) -> float | None:
     try:
         model = args["model"]
         return await get_deps().media.estimate(model, _merged_args(model, str(args.get("prompt", "")), args.get("args")))
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -67,7 +67,7 @@ async def _poll(asset_id: str, thread_id: str | None) -> None:
                         ing = await d.edge.media_ingest(asset_id, url, out["kind"])
                         url = ing.get("playback_url") or ing.get("url") or url
                         thumb = ing.get("thumbnail_url") or (url if out["kind"] == "image" else None)
-                    except Exception as e:  # keep the provider URL; it dies in 7 days, so say so
+                    except Exception as e:  # keep the provider URL; it dies in 7 days, so say so  # noqa: BLE001
                         await _audit("media_ingest", "error", f"{type(e).__name__}: ingest failed, provider url expires", thread_id, "generate_media")
                         thumb = url if out["kind"] == "image" else None
                 else:
@@ -82,7 +82,7 @@ async def _poll(asset_id: str, thread_id: str | None) -> None:
         if asset and asset.status not in _TERMINAL:
             await _save(asset.model_copy(update={"status": "failed"}))
             await _audit("media_job", "error", "poll timed out", thread_id, "generate_media")
-    except Exception as e:  # never let a background poller die silently
+    except Exception as e:  # never let a background poller die silently  # noqa: BLE001
         asset = await d.app.get_asset(asset_id)
         if asset and asset.status not in _TERMINAL:
             await _save(asset.model_copy(update={"status": "failed"}))
@@ -120,7 +120,7 @@ async def generate_media(model: str, prompt: str, kind: str = "video", args: dic
     key = uuid4().hex  # server-generated; the provider dedupes retries on it
     try:
         job = await d.media.submit(model, full, idempotency_key=key)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         await _audit("media_job", "error", f"submit failed: {type(e).__name__}: {e}", thread_id, "generate_media")
         return json.dumps({"error": f"submit failed: {e}"})
     asset = asset.model_copy(update={"job_id": job.job_id, "status": "queued" if job.status in ("queued", "in_progress") else job.status})  # type: ignore[arg-type]

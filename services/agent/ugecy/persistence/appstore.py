@@ -3,19 +3,25 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol
 
 import httpx
 from pydantic import BaseModel
 
 from ugecy.contracts import (
-    ApprovalRecord, Asset, AuditEntry, ConnectedAccount, Post, Source, ThreadSummary, now_iso,
+    ApprovalRecord,
+    Asset,
+    AuditEntry,
+    ConnectedAccount,
+    Post,
+    Source,
+    ThreadSummary,
+    now_iso,
 )
 from ugecy.internal import post_json
 from ugecy.persistence._sqlite import SqliteDB, db_path
 from ugecy.settings import Settings
 
-M = TypeVar("M", bound=BaseModel)
 SCHEMA = Path(__file__).with_name("schema.sql")
 REPO_MIGRATION = Path(__file__).resolve().parents[4] / "migrations" / "0001_init.sql"  # absent in the container
 
@@ -60,7 +66,7 @@ def _dump(m: BaseModel) -> list[Any]:
     return out
 
 
-def _load(model: type[M], row: dict[str, Any]) -> M:
+def _load[M: BaseModel](model: type[M], row: dict[str, Any]) -> M:
     row = dict(row)
     if "requests" in row:
         row["requests"] = json.loads(row["requests"])
@@ -75,11 +81,11 @@ class SqlAppStore:
 
     async def init(self) -> None: ...
 
-    async def _get(self, model: type[M], table: str, pk: str, value: str) -> M | None:
+    async def _get[M: BaseModel](self, model: type[M], table: str, pk: str, value: str) -> M | None:
         rows = await self.db.query(f"SELECT * FROM {table} WHERE {pk}=?", [value])
         return _load(model, rows[0]) if rows else None
 
-    async def _list(self, model: type[M], table: str, order: str, where: str = "", params: list[Any] | None = None,
+    async def _list[M: BaseModel](self, model: type[M], table: str, order: str, where: str = "", params: list[Any] | None = None,
                     limit: int | None = None) -> list[M]:
         sql = f"SELECT * FROM {table} {where} ORDER BY {order}" + (f" LIMIT {int(limit)}" if limit else "")
         return [_load(model, r) for r in await self.db.query(sql, params or [])]

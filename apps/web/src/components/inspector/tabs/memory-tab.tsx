@@ -3,6 +3,7 @@ import { MemoryAdd } from "@/components/memory/memory-add";
 import { MemoryRow } from "@/components/memory/memory-row";
 import { api } from "@/lib/api";
 import { EmptyState } from "../empty";
+import { usePoll } from "../hooks";
 
 export default function MemoryTab() {
   const { data, error, refresh } = usePoll(() => api.listMemories(), 30_000);

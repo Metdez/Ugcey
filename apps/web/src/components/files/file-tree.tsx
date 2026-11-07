@@ -4,7 +4,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useFlash } from "../inspector/hooks";
 import { groupFiles } from "../inspector/lib";
 
-function Leaf({ entry, name, selected, onSelect }: { entry: FileEntry; name: string; selected: boolean; onSelect: () => void }) {
+function Leaf({ name, selected, onSelect }: { name: string; selected: boolean; onSelect: () => void }) {
   const flash = useFlash(selected);
   return (
     <button
@@ -30,7 +30,7 @@ export function FileTree({ files, selected, onSelect }: { files: FileEntry[]; se
           </CollapsibleTrigger>
           <CollapsibleContent className="pl-3">
             {g.files.map(({ entry, name }) => (
-              <Leaf key={entry.path} entry={entry} name={name} selected={selected === entry.path} onSelect={() => onSelect(entry.path)} />
+              <Leaf key={entry.path} name={name} selected={selected === entry.path} onSelect={() => onSelect(entry.path)} />
             ))}
           </CollapsibleContent>
         </Collapsible>

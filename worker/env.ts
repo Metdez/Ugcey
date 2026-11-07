@@ -11,6 +11,7 @@ export interface Env {
   PUBLISH_WF: Workflow<PublishParams>; // ugecy-publish
   BROWSER: Fetcher; // Browser Run
   METRICS: AnalyticsEngineDataset; // ugecy_events
+  STREAM?: StreamBinding; // Cloudflare Stream (copy-from-URL ingest); absent => keep original URLs
   AGENT_RUNTIME: DurableObjectNamespace<AgentRuntime>;
 
   // vars
@@ -22,6 +23,13 @@ export interface Env {
   HF_KEY?: string; // Higgsfield "key-id:key-secret"
   FIRECRAWL_API_KEY?: string;
   GLASSHAND_TOKEN?: string;
+}
+
+/** Minimal surface of the Stream binding we use (copy-from-URL). */
+export interface StreamBinding {
+  upload(url: string, opts?: { meta?: Record<string, string> }): Promise<{
+    uid?: string; id?: string; hlsPlaybackUrl?: string; thumbnail?: string; [k: string]: unknown;
+  }>;
 }
 
 export interface PublishParams {
