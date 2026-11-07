@@ -174,10 +174,22 @@ describe("relay pipe", () => {
     let closed: [number?, string?] | null = null;
     return {
       sent, get closed() { return closed; }, emit: (t: string, e: any) => l[t]?.forEach((f) => f(e)),
-      send: (d: unknown) => void sent.push(d), close: (c?: number, r?: string) => void (closed = [c, r]),
+      send: (d: unknown) => void sent.push(d),
+      close: (c?: number, r?: string) => {
+        if (c !== undefined && c !== 1000 && (c < 3000 || c > 4999)) throw new Error(`InvalidAccessError: close code ${c}`); // as workerd and browsers do
+        closed = [c, r];
+      },
       addEventListener: (t: string, f: (e: any) => void) => void (l[t] ??= []).push(f),
     };
   }
+  it("closes the other side with a sendable code when either side errors", () => {
+    const up = fake(), cl = fake();
+    pipe(up, cl);
+    up.emit("error", {});
+    expect(cl.closed).toEqual([4502, "upstream error"]); // the browser learns, falls back and reconnects
+    cl.emit("error", {});
+    expect(up.closed).toEqual([1000, "client error"]); // no orphaned control session upstream
+  });
   it("acks frames, forwards hello/error as JSON and JPEGs as binary, closes both ways, ignores client", () => {
     const up = fake(), cl = fake();
     pipe(up, cl);
