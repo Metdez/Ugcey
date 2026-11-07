@@ -4,7 +4,7 @@ import type { Env } from "../env";
 export const CHAT_MODELS = new Set([
   "@cf/zai-org/glm-5.3",
   "@cf/zai-org/glm-4.7-flash",
-  "@cf/deepseek-ai/deepseek-v4.1-flash-1017",
+  "openai/gpt-5.6-terra",
   "@cf/qwen/qwen3.8-27b",
   "@cf/openai/gpt-oss-120b",
 ]);

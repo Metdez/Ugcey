@@ -16,7 +16,7 @@ CF_BASE_URL = "https://api.cloudflare.com/client/v4/accounts/{account}/ai/v1"
 # context window by model id; summarization triggers at 85% of it. 1M windows are capped at 200k.
 CONTEXT_TOKENS: dict[str, int] = {
     "@cf/zai-org/glm-5.3": 200_000,
-    "@cf/deepseek-ai/deepseek-v4.1-flash-1017": 200_000,
+    "openai/gpt-5.6-terra": 400_000,
     "@cf/qwen/qwen3.8-27b": 262_144,
     "@cf/zai-org/glm-4.7-flash": 131_072,
 }
@@ -26,7 +26,7 @@ DEFAULT_CONTEXT = 131_072
 MODEL_KWARGS: dict[str, dict[str, Any]] = {
     "@cf/zai-org/glm-5.3": {"reasoning_effort": "high"},
     "@cf/zai-org/glm-4.7-flash": {"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}},
-    "@cf/deepseek-ai/deepseek-v4.1-flash-1017": {"reasoning_effort": "high"},
+    "openai/gpt-5.6-terra": {"reasoning_effort": "medium", "streaming": False, "stream_usage": False},  # CF streams Responses-format SSE for openai/*
     "@cf/qwen/qwen3.8-27b": {"reasoning_effort": "medium"},
 }
 

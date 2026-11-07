@@ -13,7 +13,7 @@ from ugecy.contracts import Asset, AuditEntry
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id, emit
 from ugecy.integrations.unavailable import MEDIA_OFF
-from ugecy.registry import APPROVE_EDIT_REJECT, register_tool
+from ugecy.registry import register_tool
 
 # poll backoff: first delay, factor, max delay, overall cap (seconds). Tests shrink these.
 POLL = {"first": 2.0, "factor": 1.5, "max": 10.0, "cap": 900.0}
@@ -248,5 +248,5 @@ async def check_media_job(asset_id: str) -> str:
 
 register_tool(list_media_models, domain="media")
 register_tool(estimate_media_cost, domain="media")
-register_tool(generate_media, domain="media", interrupt=APPROVE_EDIT_REJECT, side_effect=True)
+register_tool(generate_media, domain="media", side_effect=True)
 register_tool(check_media_job, domain="media")

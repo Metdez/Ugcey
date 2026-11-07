@@ -22,7 +22,7 @@ Talking-head lip-sync is not in the API catalog. Use Seedance with `generate_aud
 
 ## Workflow and cost discipline
 1. Still first (Soul or Marketing Studio) to lock the look; then `generate_media(model=<i2v>, image_asset_id=<still>)`. Stills are cheap; video re-rolls are not.
-2. Estimate before every submit. Defaults: batch_size 1, 5 s, 720p, 9:16. Longer, 1080p and extra variants only after the operator approves the draft.
+2. Estimate before every submit and mention it in the report (no approval wait). Defaults: batch_size 1, 5 s, 720p, 9:16. Move to longer, 1080p and extra variants once the draft works.
 3. One clip per shot (4-8 s), assembled later. Short clips drift less.
 4. Seedance/Kling i2v keep the still's framing, so make the still vertical 9:16 from the start.
 

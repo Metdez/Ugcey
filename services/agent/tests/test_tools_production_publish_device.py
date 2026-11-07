@@ -90,8 +90,8 @@ async def test_operate_session_does_not_require_predeclared_apps():
     device.reset_state()
     session = json.loads(await device.device_start_session.ainvoke({"goal": "sign in to the operator's account"}))
     assert session["max_steps"] == 60
-    result = await device.device_commit.ainvoke({"intent": "confirm", "x": 2, "y": 0})
-    assert "intent must" not in result
+    assert "intent must" in await device.device_commit.ainvoke({"intent": "confirm", "x": 0.5, "y": 0.5})
+    assert "intent must" not in await device.device_confirm.ainvoke({"intent": "login", "x": 0.5, "y": 0.5})
 
 
 def device_err(s: str) -> bool:

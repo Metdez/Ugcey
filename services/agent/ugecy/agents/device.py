@@ -9,7 +9,7 @@ register_agent(AgentModule(
     ),
     system_prompt=load_prompt("device-operator"),
     tools=["device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe", "device_scroll",
-           "device_back", "device_open_url", "device_type", "device_home", "device_commit"],
-    model_role="research",  # deepseek: device navigation needs real reasoning; glm-flash looped
+           "device_back", "device_open_url", "device_type", "device_home", "device_confirm", "device_commit"],
+    model_role="research",  # GPT-5.6 Terra drives the phone
     skills=["/skills/"],
 ))

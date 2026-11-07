@@ -44,7 +44,7 @@ class ResponsesVision:
     async def ainvoke(self, messages: list[dict[str, Any]]) -> Any:
         try:
             return SimpleNamespace(content=await self._call(messages))
-        except Exception:
+        except Exception:  # noqa: BLE001 any transport/model error: retry once
             if self.fallback is None:  # no other model: retry the same model once
                 return SimpleNamespace(content=await self._call(messages))
             return await self.fallback.ainvoke(messages)

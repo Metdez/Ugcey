@@ -102,9 +102,10 @@ def test_tools_registered_with_expected_interrupts(monkeypatch):
     for m in ("media", "publishing", "device"):
         importlib.reload(importlib.import_module(f"ugecy.tools.{m}"))
     T = registry.TOOLS
-    assert T["generate_media"].interrupt == registry.APPROVE_EDIT_REJECT and T["generate_media"].side_effect
+    assert not T["generate_media"].interrupt and T["generate_media"].side_effect  # no approval (operator decision)
     assert T["publish_post"].interrupt == registry.APPROVE_EDIT_REJECT and T["publish_post"].side_effect
-    assert T["device_start_session"].interrupt == registry.APPROVE_REJECT
+    assert not T["device_start_session"].interrupt
+    assert not T["device_confirm"].interrupt
     assert T["device_commit"].interrupt == registry.APPROVE_REJECT and T["device_commit"].side_effect
     for n in ("list_media_models", "estimate_media_cost", "check_media_job", "list_connected_accounts", "get_post_status",
               "device_status", "device_screenshot", "device_tap", "device_swipe", "device_type", "device_home"):

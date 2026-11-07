@@ -61,16 +61,20 @@ export class AgentRuntime extends DurableObject<Env> {
   }
 
   // ---- state.internal RPC (values cross RPC as base64 strings) ----
-  kvGet(ns: string, prefix: string): { key: string; value_b64: string }[] {
-    const rows = this.ctx.storage.sql
-      .exec<{ key: string; value: ArrayBuffer }>(
-        "SELECT key, value FROM kv WHERE ns = ? AND substr(key, 1, ?) = ? ORDER BY key",
-        ns,
-        prefix.length,
-        prefix,
-      )
-      .toArray();
-    return rows.map((r) => ({ key: r.key, value_b64: toB64(r.value) }));
+  /** One page of keys (> after) under prefix, capped by bytes so a large thread never exhausts DO memory. */
+  kvGet(ns: string, prefix: string, after = "", maxBytes = 2_000_000): { items: { key: string; value_b64: string }[]; next: string | null } {
+    const cur = this.ctx.storage.sql.exec<{ key: string; value: ArrayBuffer }>(
+      "SELECT key, value FROM kv WHERE ns = ? AND substr(key, 1, ?) = ? AND key > ? ORDER BY key",
+      ns, prefix.length, prefix, after,
+    );
+    const items: { key: string; value_b64: string }[] = [];
+    let bytes = 0;
+    for (const r of cur) {
+      items.push({ key: r.key, value_b64: toB64(r.value) });
+      bytes += r.value.byteLength;
+      if (bytes >= maxBytes) return { items, next: r.key };
+    }
+    return { items, next: null };
   }
 
   kvPut(ns: string, items: { key: string; value_b64: string }[]): number {

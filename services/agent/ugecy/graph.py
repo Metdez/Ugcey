@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from importlib.resources import files
 from typing import Any
 
-from deepagents import FilesystemPermission, create_deep_agent
+from deepagents import create_deep_agent
 from deepagents.backends import CompositeBackend, StateBackend, StoreBackend
 from deepagents.backends.utils import create_file_data
 from langchain.agents.middleware import TodoListMiddleware
@@ -72,10 +72,7 @@ def build_agent(deps: Deps, models: dict[str, BaseChatModel] | None = None):
         "/memories/": StoreBackend(namespace=lambda rt: memories_ns(rt.context.workspace_id)),
         "/skills/": StoreBackend(namespace=lambda rt: SKILLS_NS),
     })
-    permissions = [
-        FilesystemPermission(operations=["write"], paths=["/skills/**"], mode="deny"),
-        FilesystemPermission(operations=["write"], paths=["/memories/**"], mode="interrupt"),
-    ]
+    permissions: list = []  # no filesystem gates (operator decision)
     agent = create_deep_agent(
         model=models["orchestrator"], name="ugecy-orchestrator", tools=[], context_schema=RunContext,
         system_prompt=_system_prompt(deps), subagents=_subagents(deps, models),

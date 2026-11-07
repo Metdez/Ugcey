@@ -1,19 +1,19 @@
 ---
 name: phone-research
-description: "Research short-form UGC on a real iPhone (Glasshand) in read-only mode: open TikTok, Instagram Reels or YouTube Shorts via Spotlight, search a niche, observe up to 12 posts at human pace, read metrics, stop on login walls or captchas, and turn observations into outlier-based pattern cards. Use whenever the research-analyst has a ready Glasshand device (read-only research on the real phone only)."
+description: "Research short-form UGC on a real iPhone (Glasshand) in read-only mode: open TikTok, Instagram Reels or YouTube Shorts via Spotlight, search a niche, observe posts at human pace, read metrics, report login walls or captchas, and turn observations into outlier-based pattern cards. Use whenever the research-analyst has a ready Glasshand device (read-only research on the real phone only)."
 ---
 # Phone research playbook
 
 ## Preconditions
 - `device_status`: provider glasshand, mode live, a device with ready true. Mode off = no phone: tell the operator to connect Glasshand in the Device tab.
-- `device_start_session(goal, allowed_apps, purpose="research")` once; the operator approves. There is no step or post cap; stop when you have enough evidence.
+- `device_start_session(goal, allowed_apps, purpose="research")` once; it runs immediately. Stop when you have enough evidence.
 
 ## Read-only rules
 Allowed: Home, swipe, tap to open search, results and posts, type a search query (80 characters at most), screenshot, observe.
 Never: like, follow, comment, share, save, DM, post, buy, log in, sign up, enter codes, change settings, open notifications or messages. `device_commit` is refused. Do not tap the Like/Comment/Share/Save column; read its numbers instead.
 
-## Stop conditions (stop, report, do not work around)
-Login wall or "Log in to continue", captcha or puzzle, age gate, verification code, "unusual activity" or "try again later", account or permission prompt, a human taking control (`control_taken`). Report the screen description and what was collected so far.
+## Blockers (report, do not work around)
+Login wall or "Log in to continue", captcha or puzzle, age gate, verification code, "unusual activity" or "try again later", account prompt, a human taking control (`control_taken`). Report the screen description and what was collected so far.
 
 ## Navigation
 `device_next_post` does not add a delay. Take one action, then `device_screenshot`, then the next. If a tap misses twice, go Home and re-orient instead of guessing coordinates.
@@ -30,7 +30,7 @@ Login wall or "Log in to continue", captcha or puzzle, age gate, verification co
 `device_observe` returns numbers (1.2M = 1200000, 45.3K = 45300). Missing = absent key, write `unknown`. Never estimate. Views on the grid and the post may differ slightly; keep the post value. Record the query, the app and the tab you used (Top, Videos, Reels).
 
 ## How many and what to record
-Per query observe 4 to 8 posts, max 12 per session, over 2 to 3 query variants (product word, problem word, "ugc ad" or "review"). For each post keep: creator, hook_guess (paraphrase), on_screen_text, caption, metrics, audio, format_guess, is_ad, `device://` source URL, rank in results. Flag `is_ad` posts separately: sponsored creative is a different baseline from organic.
+Per query observe several posts over 2 to 3 query variants (product word, problem word, "ugc ad" or "review"). For each post keep: creator, hook_guess (paraphrase), on_screen_text, caption, metrics, audio, format_guess, is_ad, `device://` source URL, rank in results. Flag `is_ad` posts separately: sponsored creative is a different baseline from organic.
 
 ## From observations to pattern cards
 1. Baseline: you cannot see the account's last 20 posts cheaply. Use the median views of the posts you observed in the same query as the baseline and say so (`baseline.method = observed-query-median`). Outlier ratio = views / that median; 3x outlier, 10x strong. If you opened a profile and saw a median, use it instead.

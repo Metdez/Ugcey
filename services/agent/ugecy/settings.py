@@ -41,8 +41,8 @@ class Settings(BaseSettings):
 
     # model routing (Workers AI ids; see .planning/research/MODELS.md). No Anthropic models.
     model_orchestrator: str = "@cf/zai-org/glm-5.3"
-    model_research: str = "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
-    model_creative: str = "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
+    model_research: str = "openai/gpt-5.6-terra"  # latest Terra on Workers AI (GPT-6 Terra not available)
+    model_creative: str = "openai/gpt-5.6-terra"
     model_critic: str = "@cf/zai-org/glm-5.3"
     model_fast: str = "@cf/zai-org/glm-4.7-flash"
     model_vision: str = "openai/gpt-6-luna"  # the ONLY screen-reading model (operator decision): 7/7 icons, avg err 0.016, 6.8s

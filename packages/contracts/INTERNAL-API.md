@@ -30,7 +30,7 @@ A vendor host whose secret is missing returns `503 {"error":{"code":"not_configu
 
 | Path | Body | Response |
 |---|---|---|
-| `/kv/get` | `{ns, prefix}` | `{items:[{key, value_b64}]}` (all keys starting with prefix, sorted by key) |
+| `/kv/get` | `{ns, prefix, after?}` | `{items:[{key, value_b64}], next}`: one page (≤ ~2 MB) of keys > `after`, sorted; repeat with `after=next` until `next` is null |
 | `/kv/put` | `{ns, items:[{key, value_b64}]}` | `{ok:true, count}` (upsert, atomic per call) |
 | `/kv/delete` | `{ns, prefix}` | `{ok:true, deleted}` |
 

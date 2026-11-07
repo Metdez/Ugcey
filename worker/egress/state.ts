@@ -5,7 +5,7 @@ import { errorResponse } from "./llm";
 export async function handleState(req: Request, env: Env, props: RuntimeProps): Promise<Response> {
   if (req.method !== "POST") return errorResponse(405, "method_not_allowed", "POST only");
   const path = new URL(req.url).pathname;
-  let b: { ns?: unknown; prefix?: unknown; items?: unknown };
+  let b: { ns?: unknown; prefix?: unknown; items?: unknown; after?: unknown };
   try {
     b = await req.json();
   } catch {
@@ -15,7 +15,7 @@ export async function handleState(req: Request, env: Env, props: RuntimeProps): 
   const rt = env.AGENT_RUNTIME.get(env.AGENT_RUNTIME.idFromString(props.runtimeId));
   if (path === "/kv/get" || path === "/kv/delete") {
     if (typeof b.prefix !== "string") return errorResponse(400, "bad_request", "prefix required");
-    if (path === "/kv/get") return Response.json({ items: await rt.kvGet(b.ns, b.prefix) });
+    if (path === "/kv/get") return Response.json(await rt.kvGet(b.ns, b.prefix, typeof b.after === "string" ? b.after : ""));
     return Response.json({ ok: true, deleted: await rt.kvDelete(b.ns, b.prefix) });
   }
   if (path === "/kv/put") {

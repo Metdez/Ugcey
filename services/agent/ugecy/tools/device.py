@@ -21,7 +21,8 @@ HINT = ("\nHow to act: pass an element's x,y (0..1, centre) to device_tap; re-de
         "tap the text field first, then re-describe before typing. "
         "If the screen did not change after an action, change strategy instead of repeating it. "
         "On control_taken stop; never replay after an ambiguous failure.")
-INTENTS = {"post", "send", "purchase", "delete", "login", "signup", "confirm"}
+INTENTS = {"post", "purchase"}  # need operator approval
+CONFIRM_INTENTS = {"send", "delete", "login", "signup", "confirm"}  # run immediately
 
 
 def reset_state() -> None:
@@ -210,7 +211,8 @@ async def device_home() -> str:
 
 @tool
 async def device_commit(intent: str, x: float, y: float) -> str:
-    """Final irreversible tap (intent: post, send, purchase, delete, login, signup or confirm) at normalized x,y. Always needs approval."""
+    """Final tap that POSTS content (intent "post") or PAYS/BUYS (intent "purchase") at normalized x,y. Needs operator approval.
+    For any other final tap (send, delete, login, signup, confirm) use device_confirm instead."""
     if _STATE["purpose"] == "research" and _STATE["session"] is not None:
         return "error: device_commit is refused in a research session (read-only: no like, follow, comment, post or purchase)"
     if intent not in INTENTS:
@@ -219,13 +221,22 @@ async def device_commit(intent: str, x: float, y: float) -> str:
     return out
 
 
+@tool
+async def device_confirm(intent: str, x: float, y: float) -> str:
+    """Final tap for send, delete, login, signup or confirm at normalized x,y. Runs immediately (no approval)."""
+    if intent not in CONFIRM_INTENTS:
+        return f"error: intent must be one of {sorted(CONFIRM_INTENTS)}; posting and purchases use device_commit"
+    return await _act("device_confirm", {"type": "tap", "x": x, "y": y}, f"CONFIRM {intent} ({x:.2f},{y:.2f})")
+
+
 register_tool(device_status, domain="device")
 register_tool(device_open_url, domain="device", side_effect=True)
 register_tool(device_scroll, domain="device")
 register_tool(device_back, domain="device")
 register_tool(device_screenshot, domain="device")
 register_tool(device_observe, domain="device")
-register_tool(device_start_session, domain="device", interrupt=APPROVE_REJECT)
+register_tool(device_start_session, domain="device")
 for _t in (device_tap, device_swipe, device_next_post, device_type, device_home):
     register_tool(_t, domain="device", side_effect=True)
 register_tool(device_commit, domain="device", interrupt=APPROVE_REJECT, side_effect=True)
+register_tool(device_confirm, domain="device", side_effect=True)

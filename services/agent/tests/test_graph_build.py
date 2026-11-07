@@ -26,7 +26,8 @@ EXPECTED = {
     "production-coordinator": {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
     "publishing-coordinator": {"list_connected_accounts", "publish_post", "get_post_status"},
     "device-operator": {"device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe",
-                        "device_scroll", "device_back", "device_open_url", "device_type", "device_home", "device_commit"},
+                        "device_scroll", "device_back", "device_open_url", "device_type", "device_home", "device_confirm",
+                        "device_commit"},
     "analytics-analyst": {"get_post_metrics", "search_patterns", "remember_pattern"},
 }
 
