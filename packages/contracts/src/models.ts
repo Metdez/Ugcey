@@ -203,3 +203,24 @@ export interface DeviceStatus {
   control: "agent" | "human" | "idle";
   last_action: string | null;
 }
+
+// ---- Glasshand (real iPhone) connection: handled by the Worker, see packages/contracts/GLASSHAND.md ----
+export interface GlasshandRental {
+  id: string;
+  name: string;
+  kind: "iphone" | "mac";
+  status: string; // awaiting_payment | provisioning | active | grace | ending | refunding | failed | ended
+  deviceReady: boolean;
+}
+
+export interface GlasshandStatus {
+  state: "disconnected" | "pending" | "connected" | "denied" | "expired" | "error";
+  user_code?: string; // shown to the operator while pending
+  verification_uri?: string;
+  verification_uri_complete?: string; // open in a new tab to approve
+  expires_at?: string; // ISO, pending code expiry
+  interval?: number; // seconds between status polls while pending
+  message?: string;
+  rentals?: GlasshandRental[]; // when connected
+  selected_rental_id?: string | null;
+}
