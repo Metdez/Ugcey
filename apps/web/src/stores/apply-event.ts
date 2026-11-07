@@ -73,11 +73,10 @@ export function applyEvent(s: ThreadSnapshot, e: UiEvent): ThreadSnapshot {
     case "reasoning.delta": {
       if (isSub(e)) {
         if (e.type === "reasoning.delta") return s;
-        return ensureSub(s, e, e.parent_call_id!, {})[0] && {
-          ...s, subagents: { ...s.subagents, [e.parent_call_id!]: {
-            ...ensureSub(s, e, e.parent_call_id!, {})[0].subagents[e.parent_call_id!],
-            text: (s.subagents[e.parent_call_id!]?.text ?? "") + e.text } },
-        };
+        const pid = e.parent_call_id!;
+        const [s2] = ensureSub(s, e, pid, {});
+        const sub = s2.subagents[pid];
+        return { ...s2, subagents: { ...s2.subagents, [pid]: { ...sub, text: sub.text + e.text } } };
       }
       [s, id] = ensureMsg(s, e, e.message_id);
       return appendText(s, id, e.type === "message.delta" ? "text" : "reasoning", e.text);
