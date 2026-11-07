@@ -55,4 +55,22 @@ describe("GlasshandLive", () => {
     expect(badge()).toBe("SNAPSHOTS");
     expect(screen.getByRole("status").textContent).toMatch(/capture unavailable/);
   });
+
+  it("a reconnect clears a pause, so the stream comes back live with its button", async () => {
+    render(<GlasshandLive rentalId="r1" />);
+    const frame = async (s: FakeSocket) => { await act(async () => { s.emit(new Uint8Array([0xff, 0xd8]).buffer); await Promise.resolve(); }); };
+    act(() => FakeSocket.last.emit(HELLO));
+    await frame(FakeSocket.last);
+    tick(1000);
+    act(() => { screen.getByRole("button", { name: /pause stream/i }).click(); });
+    const first = FakeSocket.last;
+    act(() => { first.onclose?.(); });
+    tick(2000);
+    expect(FakeSocket.last).not.toBe(first);
+    act(() => FakeSocket.last.emit(HELLO));
+    await frame(FakeSocket.last);
+    tick(1000);
+    expect(badge()).toMatch(/^LIVE · \d fps$/);
+    expect(screen.getByRole("button", { name: /pause stream/i })).toBeTruthy();
+  });
 });

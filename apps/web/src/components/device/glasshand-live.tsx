@@ -71,6 +71,7 @@ export function GlasshandLive({ rentalId }: { rentalId: string }) {
       const fail = () => {
         if (stopped || ws !== s) return;
         ws = null; geo = null; helloAt = null; lastFrameAt = null; capture = true;
+        paused.current = false; setPaused(false); // a reconnect starts a fresh stream; a stale pause would hide it
         timer = setTimeout(open, BACKOFF[Math.min(attempt++, BACKOFF.length - 1)]);
       };
       s.onerror = fail;
