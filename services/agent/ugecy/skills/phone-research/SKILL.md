@@ -6,7 +6,7 @@ description: "Research short-form UGC on a real iPhone (Glasshand) in read-only 
 
 ## Preconditions
 - `device_status`: provider glasshand, mode live, a device with ready true. Mode off = no phone: tell the operator to connect Glasshand in the Device tab.
-- `device_start_session(goal, allowed_apps, purpose="research")` once; the operator approves. Budget is 60 steps and 12 observed posts.
+- `device_start_session(goal, allowed_apps, purpose="research")` once; the operator approves. There is no step or post cap; keep going until the evidence is strong and varied.
 
 ## Read-only rules
 Allowed: Home, swipe, tap to open search, results and posts, type a search query (80 characters at most), screenshot, observe.
@@ -30,7 +30,7 @@ Login wall or "Log in to continue", captcha or puzzle, age gate, verification co
 `device_observe` returns numbers (1.2M = 1200000, 45.3K = 45300). Missing = absent key, write `unknown`. Never estimate. Views on the grid and the post may differ slightly; keep the post value. Record the query, the app and the tab you used (Top, Videos, Reels).
 
 ## How many and what to record
-Per query observe 4 to 8 posts, max 12 per session, over 2 to 3 query variants (product word, problem word, "ugc ad" or "review"). For each post keep: creator, hook_guess (paraphrase), on_screen_text, caption, metrics, audio, format_guess, is_ad, `device://` source URL, rank in results. Flag `is_ad` posts separately: sponsored creative is a different baseline from organic.
+Per query observe 4 to 8 posts, across as many query variants as the evidence needs (product word, problem word, "ugc ad" or "review"). For each post keep: creator, hook_guess (paraphrase), on_screen_text, caption, metrics, audio, format_guess, is_ad, `device://` source URL, rank in results. Flag `is_ad` posts separately: sponsored creative is a different baseline from organic.
 
 ## From observations to pattern cards
 1. Baseline: you cannot see the account's last 20 posts cheaply. Use the median views of the posts you observed in the same query as the baseline and say so (`baseline.method = observed-query-median`). Outlier ratio = views / that median; 3x outlier, 10x strong. If you opened a profile and saw a median, use it instead.

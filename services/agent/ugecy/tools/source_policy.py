@@ -6,7 +6,6 @@ Single public video URLs on those platforms are allowed (the provider reads oEmb
 """
 from __future__ import annotations
 
-import time
 from urllib.parse import urlparse
 
 # host suffixes that are never fetched
@@ -28,9 +27,6 @@ BLOCKED_PATHS = {
     "instagram.com": ("/explore", "/api/", "/graphql"),
     "facebook.com": ("/search", "/api/", "/graphql"),
 }
-FETCH_BUDGET = 12  # fetch_page calls per thread per window
-WINDOW_S = 15 * 60
-_calls: dict[str, list[float]] = {}
 
 
 def _match(host: str, suffix: str) -> bool:
@@ -53,16 +49,3 @@ def policy_error(url: str) -> str | None:
 def _is_profile(path: str) -> bool:
     parts = [x for x in path.split("/") if x]
     return len(parts) == 1 and parts[0].startswith("@")
-
-
-def take_budget(thread_id: str | None) -> str | None:
-    """Consume one fetch for the thread; return an error once the window budget is spent."""
-    key = thread_id or "_"
-    now = time.monotonic()
-    recent = [t for t in _calls.get(key, []) if now - t < WINDOW_S]
-    if len(recent) >= FETCH_BUDGET:
-        _calls[key] = recent
-        return (f"fetch budget reached ({FETCH_BUDGET} pages per {WINDOW_S // 60} min for this thread). "
-                "Work with what you have and write your findings now.")
-    _calls[key] = [*recent, now]
-    return None

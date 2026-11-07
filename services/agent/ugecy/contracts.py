@@ -206,7 +206,7 @@ class DeviceSessionInfo(BaseModel):
     device_id: str
     goal: str
     steps_used: int
-    max_steps: int
+    max_steps: int  # 0 = no cap (research sessions)
 
 
 class DeviceStatus(BaseModel):
