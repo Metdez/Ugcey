@@ -43,6 +43,8 @@ export interface PutMemoryRequest {
  *  DELETE /api/threads/:id                     -> { ok: true }
  *  POST   /api/threads/:id/runs   RunRequest   -> text/event-stream of UiEvent
  *  POST   /api/threads/:id/resume ResumeRequest-> text/event-stream of UiEvent
+ *  GET    /api/threads/:id/stream?since=<seq>  -> text/event-stream: replays buffered events of the
+ *                                                 active/last run with seq > since, then live (reconnect)
  *  POST   /api/threads/:id/cancel              -> { ok: boolean }
  *  GET    /api/threads/:id/files?path=/a.md    -> FileContent
  *  GET    /api/memories                        -> MemoryFile[]
