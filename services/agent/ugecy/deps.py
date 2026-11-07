@@ -8,7 +8,13 @@ from typing import Any
 
 from ugecy.contracts import ProviderModes
 from ugecy.interfaces import (
-    AnalyticsProvider, AppStore, DeviceProvider, EdgeBindings, KVStore, MediaProvider, Publisher,
+    AnalyticsProvider,
+    AppStore,
+    DeviceProvider,
+    EdgeBindings,
+    KVStore,
+    MediaProvider,
+    Publisher,
     ResearchProvider,
 )
 from ugecy.settings import Settings, get_settings

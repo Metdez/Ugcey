@@ -4,7 +4,7 @@ Change both files together. Field names are snake_case on the wire.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -13,7 +13,7 @@ Mode = Literal["live", "mock"]
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class ProviderModes(BaseModel):

@@ -1,6 +1,7 @@
 """Live research provider: Firecrawl v2 search + oEmbed/Browser Run fetch. Falls back to labelled samples."""
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 from urllib.parse import urlparse
 
@@ -71,10 +72,8 @@ class WebResearchProvider:
         # shortcut: in edge mode external hosts are unreachable from the container, so oEmbed needs an
         # edge route (v2). Until then edge mode uses browser_markdown for every URL.
         if not self.edge and platform in OEMBED:
-            try:
+            with contextlib.suppress(httpx.HTTPError, ValueError):  # else fall through to browser path
                 return await self._oembed(url, platform)
-            except (httpx.HTTPError, ValueError):
-                page = None  # fall through to the browser path
         page = await get_deps().edge.browser_markdown(url)
         return {"url": url, "title": page.get("title", ""), "platform": platform,
                 "markdown": (page.get("markdown") or "")[:MAX_MD], "metrics": {}}

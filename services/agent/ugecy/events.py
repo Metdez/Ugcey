@@ -18,13 +18,13 @@ def emit(event_type: str, **fields: Any) -> None:
         raise ValueError(f"unknown custom event type: {event_type}")
     try:
         writer = get_stream_writer()
-    except RuntimeError:  # not inside a runnable context
+        writer({"type": event_type, **fields})
+    except (RuntimeError, KeyError):  # not inside a runnable context / no stream configured
         return
-    writer({"type": event_type, **fields})
 
 
 def current_thread_id() -> str | None:
     try:
         return get_config().get("configurable", {}).get("thread_id")
-    except RuntimeError:
+    except (RuntimeError, KeyError):
         return None

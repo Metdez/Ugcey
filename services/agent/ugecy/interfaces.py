@@ -10,7 +10,15 @@ from typing import Any, Literal, Protocol
 from pydantic import BaseModel, Field
 
 from ugecy.contracts import (
-    ApprovalRecord, Asset, AuditEntry, ConnectedAccount, DeviceInfo, Mode, Post, Source, ThreadSummary,
+    ApprovalRecord,
+    Asset,
+    AuditEntry,
+    ConnectedAccount,
+    DeviceInfo,
+    Mode,
+    Post,
+    Source,
+    ThreadSummary,
 )
 
 # LangGraph Store namespaces (values are deepagents FileData dicts:

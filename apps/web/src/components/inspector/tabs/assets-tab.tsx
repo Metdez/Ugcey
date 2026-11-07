@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import { AssetThumb } from "@/components/chat";
 import { api } from "@/lib/api";
 import { useThread } from "@/stores/thread-store";
-import { useUi } from "@/stores/ui-store";
 import { Chips } from "../chips";
 import { EmptyState } from "../empty";
 import { usePoll } from "../hooks";
@@ -16,7 +15,6 @@ const STATUSES = [
 
 export default function AssetsTab() {
   const threadAssets = useThread((s) => s.assets);
-  const openLightbox = useUi((s) => s.openLightbox);
   const { data: remote } = usePoll(() => api.listAssets(), 15_000);
   const [kind, setKind] = useState<(typeof KINDS)[number]["value"]>("all");
   const [status, setStatus] = useState<(typeof STATUSES)[number]["value"]>("all");
@@ -37,11 +35,7 @@ export default function AssetsTab() {
       {assets.length ? (
         <ul className="grid grid-cols-2 gap-2">
           {assets.map((a) => (
-            <li key={a.id}>
-              <button className="block w-full rounded-lg text-left focus-visible:ring-2 focus-visible:ring-ring" onClick={() => openLightbox(a.id)} aria-label={`Open ${a.kind}`}>
-                <AssetThumb assetId={a.id} size="md" />
-              </button>
-            </li>
+            <li key={a.id}><AssetThumb assetId={a.id} size="md" /></li>
           ))}
         </ul>
       ) : <p className="text-xs text-muted-foreground">No assets match these filters.</p>}

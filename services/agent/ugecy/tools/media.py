@@ -6,6 +6,7 @@ import json
 from uuid import uuid4
 
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 
 from ugecy.contracts import Asset, AuditEntry
 from ugecy.deps import get_deps
@@ -26,7 +27,10 @@ async def _audit(action: str, status: str, detail: str, thread_id: str | None, t
 
 async def _save(asset: Asset) -> None:
     await get_deps().app.upsert_asset(asset)
-    emit("asset.updated", asset=asset.model_dump(mode="json"))
+    try:
+        emit("asset.updated", asset=asset.model_dump(mode="json"))
+    except (RuntimeError, KeyError):  # no stream writer: tests, or a poller outliving its run
+        pass
 
 
 def _merged_args(model: str, prompt: str, args: dict | None) -> dict:
@@ -89,20 +93,33 @@ async def _poll(asset_id: str, thread_id: str | None) -> None:
         await _audit("media_job", "error", f"poller crashed: {type(e).__name__}", thread_id, "generate_media")
 
 
+class _EstimateIn(BaseModel):
+    model: str
+    args: dict | None = Field(default=None, description="generation args, include prompt")
+
+
+class _GenerateIn(BaseModel):
+    model: str = Field(description="endpoint_id from list_media_models")
+    prompt: str
+    kind: str = "video"
+    args: dict | None = Field(default=None, description="extra model args (duration, aspect_ratio, image_url...)")
+    brief_path: str | None = None
+
+
 @tool
 async def list_media_models(kind: str | None = None) -> str:
     """List available media generation models (image/video/audio) with defaults. Optional kind filter."""
     return json.dumps(get_deps().media.models(kind))
 
 
-@tool
+@tool(args_schema=_EstimateIn)
 async def estimate_media_cost(model: str, args: dict | None = None) -> str:
     """Estimate USD cost of a media generation for a model endpoint_id and its args (include prompt)."""
     est = await get_deps().media.estimate(model, args or {})
     return json.dumps({"model": model, "estimated_usd": est})
 
 
-@tool
+@tool(args_schema=_GenerateIn)
 async def generate_media(model: str, prompt: str, kind: str = "video", args: dict | None = None,
                          brief_path: str | None = None) -> str:
     """Generate an image/video/audio asset with a catalog model (costs money; needs approval).
