@@ -22,13 +22,15 @@
    - `in_progress` uses `CircleDotIcon` with `status="running"`.
    - `completed` uses `CircleCheckIcon`.
    - These are the same statuses as `stream.values.todos` from `@langchain/react` `useStream`. No mapping layer is needed.
-4. **The interrupt contract is fixed by LangChain.**
+4. **The interrupt contract is fixed by LangChain** (verified by running it in DEEPAGENTS.md §7).
    - **Interrupt payload:** `{action_requests:[{name,args,description}], review_configs:[{action_name, allowed_decisions}]}`.
    - **Resume:** `Command(resume={"decisions":[...]})`, with one decision per action and in the same order.
    - **Decision shapes (from deep-agents-ui `ToolApprovalInterrupt`):**
      - `{type:"approve"}`
      - `{type:"edit", edited_action:{name,args}}`
      - `{type:"reject", message}`
+     - `{type:"respond", message}`: the human answers instead of the tool (`request_operator_input`)
+   - Concurrent interrupts resume keyed by interrupt id; subagent interrupts bubble up to the root with the same id.
    - shadcn's Confirmation pattern only covers approve and deny, so we extend it with Edit and Reject-with-reason.
 5. **Every serious agent product shows the run in two places.** There is a compact inline trace in the chat, plus a persistent side panel. Examples: Manus "Manus's Computer", Devin "Worklog / Desktop", ChatGPT deep research "Activity | 23 Sources", Cursor "Setup/Git/Desktop/Terminal" and NotebookLM "Sources | Chat | Studio". This confirms the chat + right inspector design.
 6. **Approvals in good products happen inline in the chat, not in modals.**
@@ -125,9 +127,10 @@ Links use the form `https://mobbin.com/screens/<id>` unless marked *flow* or *se
 | AI SDK Elements (elements.ai-sdk.dev) | **Deprecated end of Nov 2026** (site banner) | Registry `npx ai-elements@latest add` | Superseded by the shadcn row above | Reject |
 | assistant-ui | MIT, ~9.9k★ (adminlte 2026 roundup); production users include LangChain | Runtime owns thread state (`@assistant-ui/react`); LangGraph via `useExternalStoreRuntime` (BaseMessage → ThreadMessageLike) | Strong, but a second state owner duplicates our snapshot store. The runtime is a heavy dependency for custom inspector views | Reject as core; fallback only |
 | prompt-kit (ibelick) | MIT; shadcn registry | Copy-in | Overlaps with first-party shadcn patterns now | Reject (borrow ideas only) |
-| langchain-ai/deep-agents-ui | MIT, ~1.7k★, last commit May 14 2026; Next.js app | Full app (ChatInterface, TasksFilesSidebar, SubAgentIndicator, ToolCallBox, ToolApprovalInterrupt, FileViewDialog) | Reference for Deep Agents state shapes and HITL decision payloads; Next.js, not Vite | Reference; port logic deliberately, with attribution |
+| langchain-ai/deep-agents-ui | MIT, ~1.7k★, last commit May 14 2026, **archived 2026-06-28** (DEEPAGENTS.md); Next.js app | Full app (ChatInterface, TasksFilesSidebar, SubAgentIndicator, ToolCallBox, ToolApprovalInterrupt, FileViewDialog) | Reference for Deep Agents state shapes and HITL decision payloads; Next.js, not Vite | Reference; port logic deliberately, with attribution |
 | langchain-ai/agent-chat-ui | MIT, ~3.3k★, updated Nov 3 2026; Next.js | Full app; artifact side panel via `thread.meta.artifact` | Reference for message hiding (`langsmith:nostream`, `do-not-render-` prefix) and the auth/passthrough warning | Reference only |
-| **@langchain/react `useStream`** | MIT (langgraphjs); official | Hook: `stream.messages`, `stream.values.todos`, `stream.subagents`, interrupts, submit/stop | Official Deep Agents frontend API. Wrapped behind our `AgentClient` adapter so a mock or Worker gateway can replace it | **Adopt (behind an adapter)** |
+| **Transport: Cloudflare Agents SDK `useAgent`** (CLOUDFLARE.md §0.7) | MIT (cloudflare/agents) | WebSocket and state sync to the per-thread `ChatSession` DO (`/agents/chat-session/:threadId`); event protocol in `shared/events.ts` (backend WP4) | Platform default chosen by the Cloudflare researcher; same-origin Worker, so no CORS and no exposed keys | **Adopt as live adapter (behind `AgentClient`)** |
+| `@langchain/react` `useStream` | MIT (langgraphjs); official | `stream.values.todos`, `stream.subagents`, interrupts; accepts a custom `transport` (DEEPAGENTS.md §8) | Official Deep Agents frontend API; the reference for mapping state | Alternative adapter; reuse its field semantics |
 | **Streamdown** (vercel/streamdown) | Apache-2.0 (check `package.json` at install) | Drop-in react-markdown for streaming; plugins code/math/mermaid | Recommended by the shadcn Message pattern | **Adopt** |
 
 ### Decision
@@ -139,7 +142,7 @@ Links use the form `https://mobbin.com/screens/<id>` unless marked *flow* or *se
    - `react-resizable-panels` v4 (via `resizable`)
    - `streamdown`
    - `lucide-react`
-   - `@langchain/react`
+   - `agents` (Cloudflare Agents SDK, `useAgent`)
    - `zustand` (UI and thread store)
    - `react-router` (3 routes)
 3. **Why copy-in over a runtime library.** The code is ours (an AGENTS.md requirement). There is no hidden state owner. The rule of 500 lines or fewer per file stays enforceable. When shadcn patterns change, we migrate with `npx shadcn@latest add --diff`.
@@ -157,7 +160,11 @@ Links use the form `https://mobbin.com/screens/<id>` unless marked *flow* or *se
 
 ## 4. Open assumptions
 
-1. **Backend surface.** The Python Deep Agents service exposes a LangGraph-compatible Agent Server API (threads, runs, stream, interrupts). Store-backed long-term memory, audit events, assets and accounts come from REST endpoints owned by the architecture researchers. The UI codes against the `AgentClient` interface in `UI-SPEC.md` §3 and ships with a mock adapter.
+1. **Backend surface (aligned with CLOUDFLARE.md and DEEPAGENTS.md).**
+   - Live updates come over the `ChatSession` DO WebSocket (`useAgent`); events are defined in `shared/events.ts`.
+   - REST lives under `/api/*` (health is `/api/health`, approvals are `/api/approvals`).
+   - `/memories/**` lives in the LangGraph Store, not in `files`, and writes to it are approval-gated.
+   - The UI codes against the `AgentClient` interface (`UI-SPEC.md` §2) and ships a mock adapter, so the transport choice is isolated in WP-A.
 2. **Glasshand stream transport is unknown.** It could be WebRTC, HLS or MJPEG. The Device tab takes `streamUrl` + `streamKind` and degrades to action receipts only.
 3. **Higgsfield job progress.** We assume polled status (`queued|generating|ready|failed`, optional `progress`).
 4. **Mock mode signal.** The backend reports per-integration `mode: "live"|"mock"` on `/health`. The frontend's mock adapter also counts as mock mode.

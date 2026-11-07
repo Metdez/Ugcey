@@ -1,3 +1,12 @@
 .env
 .env.*
 !.env.example
+
+node_modules
+dist
+.wrangler
+__pycache__
+.venv
+.pytest_cache
+*.pyc
+.DS_Store
