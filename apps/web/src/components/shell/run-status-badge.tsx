@@ -12,6 +12,5 @@ export function RunStatusBadge() {
     return <Badge className="gap-1.5 bg-warning/12 text-warning"><StatusDot tone="warning" />Needs approval</Badge>;
   if (status === "error") return <Badge className="gap-1.5 bg-destructive/12 text-destructive"><StatusDot tone="error" />Error</Badge>;
   if (status === "offline") return <Badge variant="outline" className="gap-1.5"><StatusDot tone="muted" />Offline</Badge>;
-  if (status === "locked") return <Badge variant="outline" className="gap-1.5"><StatusDot tone="warning" />Locked</Badge>;
   return <Badge variant="outline" className="gap-1.5 text-muted-foreground"><StatusDot tone="muted" />Idle</Badge>;
 }

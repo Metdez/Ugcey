@@ -1,8 +1,7 @@
-import { useState, type FormEvent } from "react";
-import { Lock, PlugZap, WifiOff } from "lucide-react";
+import { useState } from "react";
+import { PlugZap, WifiOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { notConnected } from "@/lib/not-connected";
 import { useThread } from "@/stores/thread-store";
 import { useUi } from "@/stores/ui-store";
@@ -11,41 +10,16 @@ import { useWorkspace } from "@/stores/workspace-store";
 const DISMISS_KEY = "ugecy.notConnectedDismissed";
 const wasDismissed = () => { try { return sessionStorage.getItem(DISMISS_KEY) === "1"; } catch { return false; } };
 
-function UnlockForm() {
-  const [key, setKey] = useState("");
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (key.trim()) location.href = `/api/edge/unlock?key=${encodeURIComponent(key.trim())}`;
-  };
-  return (
-    <form onSubmit={submit} className="mt-2 flex max-w-sm gap-2">
-      <Input type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)}
-        placeholder="Access key" aria-label="Access key" className="h-8" />
-      <Button type="submit" size="sm" disabled={!key.trim()}>Unlock</Button>
-    </form>
-  );
-}
-
 export function SystemBanners() {
   const health = useWorkspace((s) => s.health);
   const modes = useWorkspace((s) => s.config?.modes);
   const missing = modes ? notConnected(modes) : [];
   const status = useThread((s) => s.status);
   const [dismissed, setDismissed] = useState(wasDismissed);
-  const locked = health === "locked" || status === "locked";
-  const offline = !locked && (health === "offline" || status === "offline");
+  const offline = health === "offline" || status === "offline";
 
   return (
     <div className="flex flex-col gap-2 empty:hidden [&:not(:empty)]:p-3 [&:not(:empty)]:pb-0">
-      {locked && (
-        <Alert className="border-warning/30 bg-warning/12 text-warning">
-          <Lock />
-          <AlertDescription className="text-foreground">
-            This workspace is locked. Enter the access key to continue.
-            <UnlockForm />
-          </AlertDescription>
-        </Alert>
-      )}
       {offline && (
         <Alert variant="destructive" role="alert">
           <WifiOff />

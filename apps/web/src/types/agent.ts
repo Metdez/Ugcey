@@ -9,7 +9,7 @@ export type * from "@ugecy/contracts";
 export type InspectorTab =
   | "plan" | "agents" | "files" | "memory" | "sources" | "assets" | "approvals" | "audit" | "device";
 
-export type RunStatus = "idle" | "connecting" | "streaming" | "interrupted" | "error" | "offline" | "locked";
+export type RunStatus = "idle" | "connecting" | "streaming" | "interrupted" | "error" | "offline";
 
 export interface ToolCallView {
   id: string;

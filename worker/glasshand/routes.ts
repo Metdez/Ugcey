@@ -1,4 +1,4 @@
-// /api/glasshand/*: handled in the Worker (behind the ugecy_key gate), never proxied to the container.
+// /api/glasshand/*: handled in the Worker, never proxied to the container.
 import { Hono } from "hono";
 import type { Env } from "../env";
 import { streamRoute } from "./relay";

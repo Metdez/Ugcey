@@ -26,7 +26,7 @@ Each module exposes a narrow contract, can be enabled or removed independently, 
 ## As built (v1)
 
 ```
-Browser (React SPA) ── /api/* ──> Worker `ugecy` (access-key cookie gate, Hono)
+Browser (React SPA) ── /api/* ──> Worker `ugecy` (Hono, public, no access key)
                                    └─> AgentRuntime Durable Object ──> Python container :8000 (FastAPI + deepagents)
 Container egress (internet off) goes only through intercepted hosts, handled by EgressGateway in the Worker:
   llm.internal       -> env.AI (Workers AI: GLM-5.3, DeepSeek-V4.1-flash, Qwen3.8, GLM-4.7-flash)

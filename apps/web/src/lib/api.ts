@@ -1,4 +1,4 @@
-// Typed REST client for packages/contracts/src/api.ts. Same-origin; cookie auth.
+// Typed REST client for packages/contracts/src/api.ts. Same-origin; no auth.
 import type {
   AppConfig, ApprovalRecord, Asset, AuditEntry, ConnectedAccount, Decision, DeviceStatus,
   FileContent, MemoryFile, Post, ThreadState, ThreadSummary, UiEvent,
