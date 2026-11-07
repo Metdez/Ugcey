@@ -36,4 +36,4 @@ TikTok about 15 posts per day per creator, 6 requests per minute; unaudited apps
 3. Caption: disclosure first, 1 to 4 relevant hashtags, no banned claims.
 4. `ai_disclosure=true` for AI media. Paid or gifted: `#ad`.
 5. Schedule off-peak overlap with existing posts; do not post duplicates across accounts at the same minute.
-6. After posting, call `get_post_status` and report the result. Direct API publishing is not connected: when `publish_post` says so, hand the post to the device-operator to publish from the iPhone (with approvals).
+6. After posting, call `get_post_status` and report the result. Direct API publishing is not connected: when `publish_post` says so, hand the post to the device-operator to publish from the iPhone.

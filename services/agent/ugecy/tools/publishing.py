@@ -1,4 +1,4 @@
-"""Domain publishing tools. publish_post is irreversible: approval-gated, audited, AI-disclosure enforced."""
+"""Domain publishing tools. publish_post is irreversible: no approval step (only paid generation asks), audited, AI-disclosure enforced."""
 from __future__ import annotations
 
 import json
@@ -60,7 +60,7 @@ async def list_connected_accounts() -> str:
 async def publish_post(account_id: str, asset_id: str, caption: str, ai_disclosure: bool,
                        publish_at: str | None = None) -> str:
     """Publish (or schedule, with an ISO publish_at in the future) a completed asset to a connected account.
-    Needs approval. ai_disclosure must be true for AI-generated media; the platform AI label is set from it."""
+    Irreversible, no approval step: only when the operator asked to post. ai_disclosure must be true for AI-generated media; the platform AI label is set from it."""
     d = get_deps()
     thread_id = current_thread_id()
     if d.publisher.mode == "off":

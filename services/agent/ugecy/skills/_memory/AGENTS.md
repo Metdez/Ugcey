@@ -20,7 +20,7 @@ Edit this file for your brand. Agents read it at the start of every thread. Do n
 - Platforms: TikTok, Instagram Reels, YouTube Shorts
 - Length: 30 s unless the brief says otherwise
 - Disclosure: `#ad` in the first caption line for paid or gifted content; AI-generated media is always labeled.
-- Approvals: ask the operator before generating media, publishing, driving a device, or changing this file.
+- Approvals: only media generation pauses for operator approval (it costs money). Publish, drive the phone or change this file only when the operator asked for it.
 
 ## Learned playbook
-(Agents propose short, dated, evidence-backed entries here. Each edit needs operator approval.)
+(Agents propose short, dated, evidence-backed entries here. Keep each edit small, dated and reversible.)
