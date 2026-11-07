@@ -36,7 +36,30 @@ export function cropRect(g: Geometry, bmpW: number, bmpH: number): [number, numb
   return [x, y, Math.max(1, Math.min(v.width, bmpW - x)), Math.max(1, Math.min(v.height, bmpH - y))];
 }
 
-export type ViewState = "disconnected" | "pending" | "connected" | "failed";
+/** No frame this long after the socket says hello: fall back to snapshots. */
+export const FIRST_FRAME_MS = 3000;
+/** Frames stopped this long: fall back to snapshots until they resume. */
+export const STALE_FRAME_MS = 5000;
+
+export type FeedMode = "connecting" | "live" | "snapshots";
+export interface FeedInput {
+  /** When the relay's hello arrived, or null while the socket is not live. */
+  helloAt: number | null;
+  lastFrameAt: number | null;
+  /** false once Glasshand reports `capture_status` unavailable. */
+  captureAvailable: boolean;
+  paused: boolean;
+  now: number;
+}
+/** Show the live canvas only while it is actually receiving frames; otherwise polled snapshots. */
+export function feedMode({ helloAt, lastFrameAt, captureAvailable, paused, now }: FeedInput): FeedMode {
+  if (helloAt === null || !captureAvailable) return "snapshots";
+  if (lastFrameAt !== null && (paused || now - lastFrameAt < STALE_FRAME_MS)) return "live";
+  if (lastFrameAt === null && now - helloAt < FIRST_FRAME_MS) return "connecting";
+  return "snapshots";
+}
+
+export type ViewState ="disconnected" | "pending" | "connected" | "failed";
 export function viewState(s: GlasshandStatus | null | undefined): ViewState {
   switch (s?.state) {
     case "pending": return "pending";

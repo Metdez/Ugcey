@@ -21,11 +21,12 @@ These routes are handled inside the Worker and are **not** proxied to the contai
 | `POST /api/glasshand/disconnect` | Deletes all stored tokens and pending state. Returns `{state:"disconnected"}`. |
 | `GET /api/glasshand/stream` (WebSocket upgrade) | A read-only live view of the selected rental. Details in the next section. |
 
-**Relay protocol for `GET /api/glasshand/stream`.** The Worker fetches the `controlUrl` from `GET /rentals/{id}/connection` and opens it as an outbound WebSocket with `Authorization: Bearer <token>`. The token is never put in the URL.
+**Relay protocol for `GET /api/glasshand/stream`.** (Source: https://glasshand.com/agents.md, "For a live stream".) The Worker fetches the `controlUrl` from `GET /rentals/{id}/connection` and opens it as an outbound WebSocket with `Authorization: Bearer <token>`. The token is never put in the URL. The upstream socket's `binaryType` must be set to `"arraybuffer"`: workerd defaults it to `"blob"`, and `send(Blob)` goes out as the text `"[object Blob]"`, so the browser never receives a frame.
 - **Upstream messages:**
   - `hello` (JSON with geometry): forward to the client as `{type:"hello", geometry}`.
-  - `{v:1,type:"frame",frameId,...}`, followed immediately by a binary JPEG: reply upstream at once with `{v:1,type:"frame_ack",frameId}` (at most 4 unacked frames are allowed), then forward the **binary JPEG** to the client.
-  - Any `error` JSON: forward it as `{type:"error", message}`.
+  - `{v:1,type:"frame",frameId,...}`, followed immediately by a binary JPEG: forward the **binary JPEG** to the client, then reply upstream with `{v:1,type:"frame_ack",frameId}` (at most 4 unacked frames are allowed). A header whose JPEG never arrives is acked when the next header comes.
+  - `capture_status` (`available` or `capture.available` false means no frames): forward as `{type:"capture_status", available}`.
+  - Any `error` JSON (`message` or `error.message`): forward it as `{type:"error", message}`.
 - **Client messages:** ignored, because viewers are read-only. A human takes over only through `https://app.glasshand.com`.
 - **Closing:** if either side closes, close the other. Not connected, or no rental selected, means close with code 4401 or 4404 and a reason.
 - **Frames:** each binary frame is the **full HDMI image**. The client crops it to `geometry.viewport` (pixel rect `{x,y,width,height}` within `{width,height}`) when drawing.

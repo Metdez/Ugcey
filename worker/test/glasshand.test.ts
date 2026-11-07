@@ -195,6 +195,42 @@ describe("relay pipe", () => {
     up.emit("close", { code: 4000, reason: "x" });
     expect(cl.closed).toEqual([4000, "x"]);
   });
+
+  it("asks upstream for ArrayBuffers (workerd's default Blob was sent to the browser as the text '[object Blob]')", () => {
+    const up: ReturnType<typeof fake> & { binaryType?: "blob" | "arraybuffer" } = fake();
+    pipe(up, fake());
+    expect(up.binaryType).toBe("arraybuffer");
+  });
+
+  it("still forwards a Blob frame as binary, in order with the messages after it", async () => {
+    const up = fake(), cl = fake();
+    pipe(up, cl);
+    up.emit("message", { data: JSON.stringify({ v: 1, type: "frame", frameId: 1 }) });
+    up.emit("message", { data: new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])]) });
+    up.emit("message", { data: JSON.stringify({ type: "error", error: { message: "capture lost" } }) });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(cl.sent).toHaveLength(2);
+    expect(cl.sent[0]).toBeInstanceOf(ArrayBuffer);
+    expect([...new Uint8Array(cl.sent[0] as ArrayBuffer)]).toEqual([0xff, 0xd8, 0xff, 0xd9]);
+    expect(cl.sent[1]).toBe(JSON.stringify({ type: "error", message: "capture lost" }));
+    expect(up.sent).toEqual([JSON.stringify({ v: 1, type: "frame_ack", frameId: 1 })]);
+  });
+
+  it("acks after the JPEG, never leaves a header unacked, and forwards capture_status", () => {
+    const up = fake(), cl = fake();
+    pipe(up, cl);
+    up.emit("message", { data: JSON.stringify({ v: 1, type: "frame", frameId: 1 }) });
+    expect(up.sent).toEqual([]); // not before its JPEG arrives
+    up.emit("message", { data: JSON.stringify({ v: 1, type: "frame", frameId: 2 }) }); // JPEG for 1 never came
+    up.emit("message", { data: new Uint8Array([1]).buffer });
+    expect(up.sent.map((s) => JSON.parse(s as string).frameId)).toEqual([1, 2]);
+    up.emit("message", { data: JSON.stringify({ type: "capture_status", capture: { available: false } }) });
+    up.emit("message", { data: JSON.stringify({ type: "capture_status", available: true }) });
+    expect(cl.sent.slice(-2)).toEqual([
+      JSON.stringify({ type: "capture_status", available: false }),
+      JSON.stringify({ type: "capture_status", available: true }),
+    ]);
+  });
 });
 
 import { isGlasshandUrl } from "../glasshand/relay";
