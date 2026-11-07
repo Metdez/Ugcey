@@ -82,20 +82,25 @@ export const threadActions: ThreadActions = {
 
   async send(text) {
     if (get().status === "streaming" || get().status === "connecting") return;
-    let id = get().threadId;
+    let id: string;
     try {
-      if (!id) {
-        const title = clip(text.trim(), 60);
-        id = (await api.createThread(title)).id;
-        set({ threadId: id, title });
-        setThreadParam(id, "replace");
-      }
+      id = await threadActions.ensureThread(text);
     } catch (err) {
       return set({ status: err instanceof ApiError && err.status === 401 ? "locked" : "offline" });
     }
     set((s) => ({ messages: [...s.messages, userMessage(text)] }));
     const tid = id;
     await run((sig) => streams.run(tid, text, onEvent, sig));
+  },
+
+  async ensureThread(titleSource) {
+    const existing = get().threadId;
+    if (existing) return existing;
+    const title = clip(titleSource.trim(), 60) || "New chat";
+    const id = (await api.createThread(title)).id;
+    set({ threadId: id, title });
+    setThreadParam(id, "replace");
+    return id;
   },
 
   async stop() {

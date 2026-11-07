@@ -29,6 +29,13 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
   return res.json() as Promise<T>;
 }
 
+async function fileToBase64(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
 const q = (params: Record<string, string | number | undefined | null>) => {
   const s = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null) s.set(k, String(v));
@@ -47,6 +54,11 @@ export const api = {
   listMemories: () => req<MemoryFile[]>("GET", "/api/memories"),
   putMemory: (path: string, content: string) => req<MemoryFile>("PUT", "/api/memories", { path, content }),
   listAssets: (threadId?: string) => req<Asset[]>("GET", `/api/assets${q({ thread_id: threadId })}`),
+  /** Attach a product photo (JPEG, PNG or WebP, at most 10 MB) to a thread; returns the stored image Asset. */
+  uploadProductPhoto: async (threadId: string, file: File) =>
+    req<Asset>("POST", `/api/threads/${threadId}/uploads`, {
+      filename: file.name, content_type: file.type, data_base64: await fileToBase64(file),
+    }),
   listApprovals: (status?: string) => req<ApprovalRecord[]>("GET", `/api/approvals${q({ status })}`),
   listAudit: (threadId?: string, limit = 100) =>
     req<AuditEntry[]>("GET", `/api/audit${q({ thread_id: threadId, limit })}`),

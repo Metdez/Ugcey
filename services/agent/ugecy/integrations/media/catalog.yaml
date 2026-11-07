@@ -15,6 +15,12 @@ models:
     use: Product-in-hand or product ad still from real product photos (image_urls, product photo first, creator still second). Default whenever the operator supplied product photos.
     defaults: {aspect_ratio: "9:16", resolution: 1k, quality: medium}
     cost_hint: "about $0.03 at 1k medium, $0.21 at 2k high"
+  - endpoint_id: marketing-studio/image/flare
+    kind: image
+    label: Marketing Studio 2.5 Flare product still
+    use: 'Default first-frame and end-frame still whenever the operator supplied product photos (reference_asset_ids: product photos first, then the creator still for the end frame). In our test it reproduced the printed wordmark exactly from a 350 px photo, was the fastest of the three Marketing Studio versions (about 25 s) and looked most like a phone photo.'
+    defaults: {aspect_ratio: "9:16", resolution: 2k, quality: high, enhance_prompt: false}
+    cost_hint: "about $0.05 per 2k high still"
   - endpoint_id: higgsfield/ads-studio/v1.0
     kind: image
     label: Ads Studio from product images

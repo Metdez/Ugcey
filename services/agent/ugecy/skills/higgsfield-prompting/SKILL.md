@@ -22,11 +22,19 @@ A 15 s ad is 3 shots of about 5 s, generated in ONE call with the cuts inside it
 | Need | endpoint_id |
 |---|---|
 | First-frame still without product photos | `higgsfield-ai/soul/v2/standard` |
-| First-frame still with the real product (operator supplied photos) | `marketing-studio/image` with `image_urls` (product photo first, creator still second) |
+| First-frame still with the real product (operator supplied photos) | `marketing-studio/image/flare` with `reference_asset_ids` = the product photo ids (section 3a) |
+| End-frame still with the real product, legible | `marketing-studio/image/flare` with `reference_asset_ids` = the product photo ids, then the first-frame still (section 3a) |
 | Preview, iteration or anything generated live | `kling-video/v3.0/std/image-to-video` with `multi_shots` (720p, about 3.5 min and $1.60 for 15 s) |
 | Final ad | `bytedance/seedance-2.5/image-to-video` with timed shots in the prompt (720p, about $6.90 for 15 s; slowest) |
 
 Do not use Wan as a draft for Seedance or Kling: it does not predict them. Do not use reference-to-video unless you hold completed reference assets.
+
+## 3a. With product photos
+The operator's photos are the only reliable source of the real label: generated labels come out as garbled text (tested), and ByteDance's guide says exact label text needs a supplied image. Product photos arrive as asset ids ("Product photos attached: ..."); pass them as `reference_asset_ids`, never as URLs.
+1. **First-frame still**, `marketing-studio/image/flare`, `args: {"enhance_prompt": false, "aspect_ratio": "9:16", "resolution": "2k", "quality": "high"}`. Prompt: the shot 1 pose with the creator holding "the product from the reference image", label facing the camera, "the product exactly as in the reference image", then backdrop, light and phone-photo style as in section 4. Do not describe the label wording. Tested: Flare, Sunburst and 2.0 Alpha all reproduced a printed wordmark exactly; Flare was fastest and most phone-like.
+2. **End-frame still**, same endpoint and args, after the first still is completed. `reference_asset_ids` = the product photo ids first, then the first-frame still id (without the person reference it drew a different woman). Prompt: "the same woman from the last reference image" holds "the product from the first reference image" upright and close to the lens, filling the centre of the frame, label facing the camera and sharp; she is softly out of focus behind it, same outfit, backdrop and light.
+3. **Clip**: `image_asset_id` = first-frame still, `end_image_asset_id` = end-frame still. The last shot's action must lead into that frame ("she brings the product close to the lens and holds it still"). Shots in between keep the product at arm's length or farther, label toward the camera; never a close-up of small text, never a rotation.
+Not yet verified on our pipeline: how exactly Kling multi-shot lands on the end frame. Say so in your reply.
 
 ## 4. Still prompt (Soul)
 Shape, about 40 to 80 words, plain sentences, no motion words:
@@ -55,9 +63,10 @@ Rules for both:
 - Give shot 1 an action the still already sets up (hold, lift, bring closer). Kling cut our first agent-written shot to 1.75 s when its action (pressing a dropper with a thumb) did not fit the still.
 
 ## 6. Arguments and chaining
-- Everything except `model`, `prompt`, `kind`, `image_asset_id` and `reference_asset_ids` goes inside `args`. Top-level extras are dropped.
+- Everything except `model`, `prompt`, `kind`, `image_asset_id`, `reference_asset_ids` and `end_image_asset_id` goes inside `args`. Top-level extras are dropped.
+- `end_image_asset_id` becomes Kling's `last_image_url` or Seedance's `end_image_url` automatically; only image-to-video endpoints take it.
 - Kling: `args: {"duration": 15, "sound": "on", "multi_shots": true, "multi_prompt": [...]}`. Seedance: `args: {"duration": 15, "resolution": "720p", "generate_audio": true}`.
-- Generate the clip only after `check_media_job` reports the still completed, and pass it as `image_asset_id`. Use asset ids exactly as tools return them; never invent one and never pass an empty id.
+- Generate the clip only after `check_media_job` reports every still it uses completed, and pass them as `image_asset_id` (and `end_image_asset_id`). Use asset ids exactly as tools return them; never invent one and never pass an empty id.
 
 ## 7. Check every prompt before submitting
 - No contradictions (for example "fingertips" and "no hands").

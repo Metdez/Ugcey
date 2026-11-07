@@ -16,6 +16,8 @@ from ugecy.integrations.media.catalog import catalog_models
 from ugecy.interfaces import MediaJob
 from ugecy.settings import Settings
 
+EDGE_UPLOAD_UNSUPPORTED = ("Product photo upload is not available on the deployed app yet: the Worker must relay the "
+                           "upload to Higgsfield storage. It works when the agent runs locally.")
 _MAX_RETRY_WAIT_S = 30.0
 _ATTEMPTS = 3
 _STATUSES = {"queued", "in_progress", "completed", "failed", "nsfw", "canceled"}
@@ -111,10 +113,28 @@ class HiggsfieldProvider:
             if not key:
                 raise RuntimeError("Higgsfield key missing (set HF_KEY or HF_API_KEY_SECRET) or set media_provider=off")
             headers["Authorization"] = f"Key {key}"
+        self._edge, self._transport = edge, transport
         self._client = httpx.AsyncClient(
             base_url="http://higgsfield.internal" if edge else "https://api.higgsfield.ai",
             headers=headers, timeout=30.0, transport=transport,
         )
+
+    async def upload(self, data: bytes, content_type: str) -> str:
+        """Upload an input file (a product photo) and return the public URL models can read.
+        Step 1 asks Higgsfield for a presigned URL; step 2 PUTs the bytes to storage with a separate client that
+        carries no Higgsfield credentials (the docs forbid sending them to the presigned host)."""
+        if self._edge:
+            # The container has no internet: only *.internal hosts pass the Worker's EgressGateway, and the presigned
+            # storage host is not one of them, so the Worker would have to relay this upload.
+            raise RuntimeError(EDGE_UPLOAD_UNSUPPORTED)
+        meta = (await self._request("POST", "/files/generate-upload-url", json={"content_type": content_type})).json()
+        headers = {str(k): str(v) for k, v in (meta.get("upload_headers") or {}).items()}
+        headers.setdefault("Content-Type", content_type)
+        async with httpx.AsyncClient(timeout=120.0, transport=self._transport) as storage:
+            resp = await storage.put(meta["upload_url"], content=data, headers=headers)
+        if resp.status_code >= 400:
+            raise RuntimeError(f"upload to Higgsfield storage failed: HTTP {resp.status_code}")
+        return str(meta["public_url"])
 
     def models(self, kind: str | None = None) -> list[dict[str, Any]]:
         return catalog_models(kind)
