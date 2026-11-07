@@ -46,6 +46,17 @@ function refused(code: number, reason: string): Response {
   return new Response(null, { status: 101, webSocket: client });
 }
 
+/** The bearer token may only ever be sent to Glasshand's own hosts over TLS. */
+export function isGlasshandUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    const host = u.hostname.toLowerCase();
+    return (u.protocol === "wss:" || u.protocol === "https:") && (host === "glasshand.com" || host.endsWith(".glasshand.com"));
+  } catch {
+    return false;
+  }
+}
+
 async function connectionUrl(rt: GlasshandRuntime, rentalId: string, f: typeof fetch): Promise<{ controlUrl: string; token: string } | null> {
   let token = await rt.glasshandToken();
   for (let i = 0; token && i < 2; i++) {
@@ -57,7 +68,7 @@ async function connectionUrl(rt: GlasshandRuntime, rentalId: string, f: typeof f
     }
     if (!r.ok) return null;
     const j = (await r.json()) as { controlUrl?: string };
-    return j.controlUrl ? { controlUrl: j.controlUrl, token } : null;
+    return j.controlUrl && isGlasshandUrl(j.controlUrl) ? { controlUrl: j.controlUrl, token } : null;
   }
   return null;
 }

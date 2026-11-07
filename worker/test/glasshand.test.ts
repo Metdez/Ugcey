@@ -196,3 +196,14 @@ describe("relay pipe", () => {
     expect(cl.closed).toEqual([4000, "x"]);
   });
 });
+
+import { isGlasshandUrl } from "../glasshand/relay";
+describe("relay host pinning", () => {
+  it("only allows TLS Glasshand hosts", () => {
+    expect(isGlasshandUrl("wss://api.glasshand.com/v1/rentals/x/control")).toBe(true);
+    expect(isGlasshandUrl("wss://control.glasshand.com/x")).toBe(true);
+    expect(isGlasshandUrl("ws://api.glasshand.com/x")).toBe(false);
+    expect(isGlasshandUrl("wss://glasshand.com.evil.net/x")).toBe(false);
+    expect(isGlasshandUrl("wss://evil.net/glasshand.com")).toBe(false);
+  });
+});

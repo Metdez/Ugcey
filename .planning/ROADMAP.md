@@ -7,6 +7,7 @@ The work runs in three phases. Phase 1 laid the foundation and froze the contrac
 - [x] **Phase 1: Foundation**: scaffold the monorepo and write the shared contracts.
 - [x] **Phase 2: Parallel build**: ten disjoint work packages (3 web, 5 Python, 2 edge).
 - [x] **Phase 3: Integrate & ship**: wire everything up, bootstrap Cloudflare, deploy, smoke-test, and hand over the URL.
+- [x] **Phase 4: Glasshand live iPhone**: OAuth device flow, token store, stream relay, vision grounding and the connect UI (see phases/04-glasshand).
 
 ## Phase Details
 

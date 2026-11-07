@@ -21,6 +21,12 @@ docs/              product, architecture, interface, engineering rules
 - **URL:** https://ugecy.zh-a16.workers.dev. Unlock it once with `/api/edge/unlock?key=<UGECY_ACCESS_KEY>`, which sets a 30-day cookie.
 - **Models:** Chinese models on Workers AI.
 - **Mock mode:** media, publishing and device run as mocks until their credentials are added (see Deploy).
+- **Real iPhone (Glasshand):**
+  1. Open the Device tab and click **Connect Glasshand**.
+  2. Open the approval page and enter the code Glasshand emails you.
+  3. Pick your rented iPhone.
+
+  Tokens stay in the Durable Object. The agent can view the screen and send input, but it can never buy, cancel or bill anything.
 
 ## Local dev
 
