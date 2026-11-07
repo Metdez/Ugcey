@@ -22,3 +22,5 @@
 - Deployed as image v17.
 - Live check on v17: a web-only research run wrote all four files (`agents/` and `episodes/` for research-analyst and the orchestrator).
 - Deviation: the lessons GLM-4.7-flash wrote for the orchestrator were made up (models, dates and languages that appear nowhere in the run). Lesson merging moved to GLM-5.3 (the critic role), the prompt now requires lessons to be grounded in the run record, and the bad file was reset. Redeployed as v18.
+- Live check on v18 (a forced loop: device_tap with no session). Both the `errors` and `repeat` detectors fired. The agent stopped retrying, diagnosed the cause with device_status, and saved a grounded lesson with edit_file. The GLM-5.3 orchestrator lessons are grounded.
+- Live on an operator run (phone stuck in the Photos viewer). The `no_change` detector fired and the agent called web_search twice. That run's flash-written lessons included made-up items, so the device-operator lessons were rewritten from its episode record.
