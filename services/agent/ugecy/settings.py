@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     firecrawl_api_key: str | None = Field(default=None, validation_alias="FIRECRAWL_API_KEY")
     glasshand_token: str | None = Field(default=None, validation_alias="GLASSHAND_TOKEN")  # local dev only
     glasshand_rental_id: str | None = Field(default=None, validation_alias="GLASSHAND_RENTAL_ID")  # local dev only
+    dropbox_app_key: str | None = Field(default=None, validation_alias="DROPBOX_APP_KEY")  # local dev only
+    dropbox_app_secret: str | None = Field(default=None, validation_alias="DROPBOX_APP_SECRET")  # local dev only
+    dropbox_refresh_token: str | None = Field(default=None, validation_alias="DROPBOX_REFRESH_TOKEN")  # local dev only
 
     # edge-mode capability flags set by the AgentRuntime DO from the Worker's secrets
     has_higgsfield: bool = False

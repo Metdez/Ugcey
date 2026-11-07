@@ -13,6 +13,7 @@ All requests are `POST` with JSON (except the vendor proxies and llm). Responses
 | `bindings.internal` | D1, Browser Run, Vectorize, Stream, Workflows, metrics | Worker bindings | SQLite `.ugecy/app.db`, httpx fetch, in-memory vectors, no-ops |
 | `higgsfield.internal` | Higgsfield REST passthrough | `https://api.higgsfield.ai` + `Authorization: Key ${HF_KEY}` | direct to `https://api.higgsfield.ai` with `HF_KEY` / `HF_API_KEY_SECRET` |
 | `firecrawl.internal` | Firecrawl v2 REST passthrough (optional) | `https://api.firecrawl.dev` + `Authorization: Bearer ${FIRECRAWL_API_KEY}` | direct with `FIRECRAWL_API_KEY` |
+| `dropbox.internal` | Dropbox API v2 RPC passthrough (optional) | `https://api.dropboxapi.com` + bearer from the stored OAuth refresh token | direct with `DROPBOX_APP_KEY`/`DROPBOX_APP_SECRET`/`DROPBOX_REFRESH_TOKEN` |
 | `glasshand.internal` | Glasshand REST passthrough (optional) | `https://api.glasshand.com` + bearer from stored device-flow token | direct |
 
 A vendor host whose secret is missing returns `503 {"error":{"code":"not_configured"}}`, and the Python provider then falls back to **mock mode**.
@@ -52,6 +53,25 @@ Edge: SQLite table `kv(ns TEXT, key TEXT, value BLOB, updated_at INTEGER, PRIMAR
 | `/metrics` | `{event, blobs: string[], doubles: number[]}` | `{ok:true}` | `env.METRICS.writeDataPoint` |
 
 The D1 schema lives in `migrations/0001_init.sql`. It is applied with `wrangler d1 migrations apply ugecy-db --remote`, and the Python local SQLite fallback runs the same file. Tables: `threads`, `audit`, `assets`, `posts`, `accounts`, `approvals`, all columns matching `packages/contracts/src/models.ts`. JSON-valued fields are TEXT columns holding JSON.
+
+## dropbox.internal
+
+The Worker holds `DROPBOX_APP_KEY` / `DROPBOX_APP_SECRET` (secrets) and the operator's OAuth tokens (DO SQLite table `dropbox(k, v)`). The access token is refreshed with the refresh token when < 60 s remain, or after a 401 (one retry).
+
+| Path | Body | Response |
+|---|---|---|
+| `GET /_ugecy/status` | — | `{connected, account_name?, email?, scopes: string[], missing_scopes: string[]}` answered by the gateway, no Dropbox call when disconnected |
+| `POST /2/users/get_current_account`, `/2/files/save_url`, `/2/files/save_url/check_job_status`, `/2/files/get_metadata`, `/2/files/list_folder`, `/2/files/list_folder/continue`, `/2/files/get_temporary_link`, `/2/files/search_v2` | the Dropbox JSON body (`null` for get_current_account) | the Dropbox response, status passed through (409 endpoint errors, 429 with `Retry-After`) |
+
+Any other path returns 403 `path_not_allowed`. With no secrets or no connection it returns 503 `not_configured`.
+
+Required scopes: `account_info.read files.metadata.read files.content.read files.content.write`.
+
+Operator connect flow (Worker, behind the access-key cookie; no redirect URI to register):
+- `POST /api/dropbox/connect` returns `{authorize_url}`. The URL is `https://www.dropbox.com/oauth2/authorize?client_id=…&response_type=code&token_access_type=offline`. Dropbox shows a code after the operator approves.
+- `POST /api/dropbox/code {code}` exchanges the code at `/oauth2/token` (Basic auth with the app key and secret, no redirect_uri), stores the tokens, and returns `DropboxStatus`. A bad code returns 400 `invalid_code`.
+- `GET /api/dropbox/status` returns `DropboxStatus`: `{configured, connected, account_name?, email?, scopes, missing_scopes}`.
+- `POST /api/dropbox/disconnect` calls `/2/auth/token/revoke` (best effort), deletes the tokens, and returns `DropboxStatus`.
 
 ## Worker → container (public API proxy)
 

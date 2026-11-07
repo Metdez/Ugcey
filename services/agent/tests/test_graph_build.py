@@ -18,15 +18,16 @@ from ugecy.middleware.audit import AuditMiddleware
 SIDE_EFFECT_TOOLS = {"generate_media", "publish_post", "device_commit", "device_tap", "device_swipe",
                      "device_type", "device_start_session"}
 WEB = {"web_search", "fetch_page"}  # every specialist can look things up when stuck
+DBX = {"dropbox_status", "list_dropbox_media", "browse_dropbox", "save_to_dropbox", "dropbox_backfill"}
 EXPECTED = {
     "research-analyst": {"web_search", "fetch_page", "remember_pattern", "search_patterns", "device_status", "device_start_session",
                          "device_screenshot", "device_scroll", "device_back", "device_observe", "device_tap", "device_swipe",
                          "device_next_post", "device_type", "device_home"},
     "creative-strategist": WEB | {"search_patterns"},
     "compliance-critic": WEB | {"compliance_check"},
-    "production-coordinator": WEB | {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
-    "publishing-coordinator": WEB | {"list_connected_accounts", "publish_post", "get_post_status"},
-    "device-operator": WEB | {"device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe",
+    "production-coordinator": WEB | DBX | {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
+    "publishing-coordinator": WEB | DBX | {"list_connected_accounts", "publish_post", "get_post_status"},
+    "device-operator": WEB | DBX | {"device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe",
                         "device_scroll", "device_back", "device_open_url", "device_type", "device_home", "device_confirm",
                         "device_commit"},
     "analytics-analyst": WEB | {"get_post_metrics", "search_patterns", "remember_pattern"},
@@ -104,7 +105,8 @@ async def test_seed_store_writes_skills_and_keeps_existing_memory():
     assert (await store.aget(("ws1", "memories"), "/AGENTS.md")).value["content"].startswith("# Brand voice")
     await store.aput(("ws1", "memories"), "/AGENTS.md", {"content": "mine", "encoding": "utf-8"})
     await seed_store(store, "ws1")
-    assert (await store.aget(("ws1", "memories"), "/AGENTS.md")).value["content"] == "mine"
+    kept = (await store.aget(("ws1", "memories"), "/AGENTS.md")).value["content"]
+    assert kept.startswith("mine\n") and kept.count("- Media library:") == 1  # operator text kept; playbook line added once
 
 
 def test_skill_frontmatter_is_valid():

@@ -1,5 +1,6 @@
-// higgsfield/firecrawl/glasshand .internal: authenticated passthrough. Secrets never reach the container.
+// higgsfield/firecrawl/glasshand/dropbox .internal: authenticated passthrough. Secrets never reach the container.
 import type { Env, RuntimeProps } from "../env";
+import { handleDropbox } from "../dropbox/egress";
 import { glasshandAllowed } from "../glasshand/allow";
 import { handleGlasshand } from "../glasshand/egress";
 import { errorResponse } from "./llm";
@@ -34,6 +35,8 @@ export async function handleVendor(req: Request, env: Env, props: RuntimeProps):
   const u = new URL(req.url);
   if (u.hostname === "glasshand.internal")
     return handleGlasshand(req, env.AGENT_RUNTIME.get(env.AGENT_RUNTIME.idFromString(props.runtimeId)));
+  if (u.hostname === "dropbox.internal")
+    return handleDropbox(req, env.AGENT_RUNTIME.get(env.AGENT_RUNTIME.idFromString(props.runtimeId)));
   const v = VENDORS[u.hostname];
   if (!v) return errorResponse(403, "egress_denied", u.hostname);
   if (!v.allowed(u.pathname)) return errorResponse(403, "path_not_allowed", u.pathname);

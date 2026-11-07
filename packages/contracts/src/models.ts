@@ -12,6 +12,7 @@ export interface ProviderModes {
   device: Mode;
   publishing: Mode;
   research: Mode;
+  storage: Mode; // Dropbox
 }
 
 export interface ModelRoute {
@@ -124,6 +125,8 @@ export interface Asset {
   job_id: string | null;
   mode: Mode;
   estimated_usd: number | null;
+  dropbox_path?: string | null;
+  dropbox_status?: "pending" | "saved" | "failed" | null;
   created_at: ISODate;
 }
 
@@ -224,4 +227,14 @@ export interface GlasshandStatus {
   message?: string;
   rentals?: GlasshandRental[]; // when connected
   selected_rental_id?: string | null;
+}
+
+// ---- Dropbox (operator-connected storage): handled by the Worker, see INTERNAL-API.md "dropbox.internal" ----
+export interface DropboxStatus {
+  configured: boolean; // app key + secret present
+  connected: boolean;
+  account_name?: string;
+  email?: string;
+  scopes: string[];
+  missing_scopes: string[]; // required scopes the granted token lacks
 }

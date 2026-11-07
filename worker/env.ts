@@ -23,6 +23,8 @@ export interface Env {
   HF_KEY?: string; // Higgsfield "key-id:key-secret"
   FIRECRAWL_API_KEY?: string;
   GLASSHAND_TOKEN?: string;
+  DROPBOX_APP_KEY?: string; // Dropbox app key / secret (OAuth code flow, operator-connected)
+  DROPBOX_APP_SECRET?: string;
 }
 
 /** Minimal surface of the Stream binding we use (copy-from-URL). */

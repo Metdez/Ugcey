@@ -27,6 +27,7 @@ from ugecy.middleware.memory import (
 )
 from ugecy.middleware.stop import StopMiddleware
 from ugecy.middleware.stuck import LOOKUP_TOOLS, StuckMiddleware
+from ugecy.stream.adapter import file_text
 
 GENERAL_PURPOSE_PROMPT = (
     "You are a read-only helper. Search, read and summarize files in the virtual filesystem and return "
@@ -130,6 +131,13 @@ async def seed_store(store: Any, workspace_id: str) -> None:
         skill = entry.joinpath("SKILL.md")
         if entry.is_dir() and not entry.name.startswith("_") and skill.is_file():
             await store.aput(SKILLS_NS, f"/{entry.name}/SKILL.md", create_file_data(skill.read_text("utf-8")))
-    if await store.aget(memories_ns(workspace_id), "/AGENTS.md") is None:
-        template = root.joinpath("_memory", "AGENTS.md").read_text("utf-8")
+    template = root.joinpath("_memory", "AGENTS.md").read_text("utf-8")
+    item = await store.aget(memories_ns(workspace_id), "/AGENTS.md")
+    if item is None:
         await store.aput(memories_ns(workspace_id), "/AGENTS.md", create_file_data(template))
+        return
+    text = file_text(item.value)  # existing memory: add playbook lines it is missing (e.g. the Dropbox media library)
+    new = [ln for ln in template.splitlines() if ln.startswith("- Media library:") and ln not in text]
+    if new:
+        await store.aput(memories_ns(workspace_id), "/AGENTS.md", create_file_data(
+            text.rstrip("\n") + "\n" + "\n".join(new) + "\n", created_at=item.value.get("created_at")))

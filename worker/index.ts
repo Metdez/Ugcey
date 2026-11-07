@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { requireKey, unlock } from "./auth";
+import { dropbox } from "./dropbox/routes";
 import { glasshand } from "./glasshand/routes";
 import type { Env, JobMessage } from "./env";
 import { proxyToRuntime } from "./proxy";
@@ -11,6 +12,7 @@ app.get("/api/edge/health", (c) => c.json({ ok: true, edge: true }));
 app.get("/api/edge/unlock", (c) => unlock(c));
 app.use("/api/*", requireKey);
 app.route("/api/glasshand", glasshand); // before the container proxy, after the cookie gate
+app.route("/api/dropbox", dropbox);
 const runtime = (env: Env) => env.AGENT_RUNTIME.get(env.AGENT_RUNTIME.idFromName(env.WORKSPACE_ID));
 app.get("/api/runtime/info", async (c) => c.json(await runtime(c.env).runtimeInfo()));
 app.post("/api/runtime/restart", async (c) => {

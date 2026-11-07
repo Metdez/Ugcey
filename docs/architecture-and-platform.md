@@ -45,6 +45,16 @@ Every agent, including the orchestrator, runs Deep Agents memory with three midd
 
 All memory files live in the LangGraph Store (mirrored to DO SQLite) and show in the Memory tab.
 
+## Dropbox media library
+
+Every Higgsfield output is copied to the operator's Dropbox. Higgsfield deletes outputs after 7 days.
+
+- **Connect:** Accounts → Dropbox → Connect. The operator approves on dropbox.com and pastes the code. The Worker keeps the refresh token in DO SQLite; the container reaches Dropbox only through `dropbox.internal`.
+- **Copying:** `services/agent/ugecy/storage/backup.py` calls `save_url`, so Dropbox pulls the file itself. It runs after each media job, at startup and after Connect (the backfill). Files are named `/Ugecy/Videos/<date> <prompt words> <asset id 8>.mp4` (`Images/` for images).
+- **Tools:** `dropbox_status`, `list_dropbox_media`, `browse_dropbox`, `save_to_dropbox` and `dropbox_backfill`, given to the production, publishing and device agents.
+- **Phone:** the device agent gets videos onto the iPhone from the Dropbox app (Search, then ••• → Export → Save video).
+- **After Higgsfield expiry:** `/api/assets` serves assets older than 6.5 days through private 4-hour Dropbox links.
+
 The contracts that keep modules independent live in `packages/contracts/` (UI events, REST, internal edge API), `services/agent/ugecy/{contracts,interfaces,registry,deps}.py` and `worker/env.ts`. Decisions are recorded in `.planning/research/SUMMARY.md`.
 
 ## Models

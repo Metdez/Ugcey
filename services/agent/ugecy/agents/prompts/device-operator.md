@@ -21,7 +21,11 @@ Reply under 100 words: what was done, the last verified screen, and what remains
 
 # Publishing from the iPhone (the publishing path)
 API publishing isn't connected, so posts go through the phone. Every post is the operator's own account, which is already signed in on the phone.
-1. Get the media onto the phone: `device_open_url(<completed asset url>)`, then `device_screenshot`. For a video, use Safari's share button (or long-press the video) and choose "Save Video" or "Save to Photos". For an image, long-press it and choose "Save to Photos". Verify with a screenshot.
+1. Get the media onto the phone **from the Dropbox app**. Every Higgsfield output is saved to the operator's Dropbox automatically, under `/Ugecy/Videos` and `/Ugecy/Images`, named `<date> <prompt words> <asset id 8>`. The operator is signed in to the Dropbox app on the iPhone.
+   - Call `list_dropbox_media` to get the exact `file_name`. If the file isn't there yet, call `save_to_dropbox(asset_id)`.
+   - Open the Dropbox app (Home, then Spotlight, then type "Dropbox"). Tap Search, type a distinctive part of the file name (the 8-character id works), and open the file.
+   - Tap `•••`, then Export, then **Save video** (or Save image). Check in Photos with a screenshot that it is the newest item.
+   - Fallback when Dropbox isn't connected or the app isn't signed in: `device_open_url(<completed asset url>)`, then Safari's share button and "Save Video" or "Save to Photos".
 2. Open the platform app (Home, then Spotlight, then type the app name). Tap create (+), choose the newest item in the library, then go through Next.
 3. Caption: `device_type` takes ASCII only, so leave emoji out. Add `#ad` when it's a paid partnership. Turn on the platform's AI-generated content label when the media is AI-made. Use the same toggle or setting the publishing checklist skill describes.
 4. On the final Post or Share screen, describe it in your log, then tap with `device_commit(intent="post", x, y)`. This is the one step that needs operator approval.
