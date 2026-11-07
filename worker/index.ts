@@ -1,8 +1,21 @@
-import { Hono } from "hono"
+import { Hono } from "hono";
+import { requireKey, unlock } from "./auth";
+import type { Env, JobMessage } from "./env";
+import { proxyToRuntime } from "./proxy";
+import { handleQueue } from "./queues/consumer";
 
-const app = new Hono()
+const app = new Hono<{ Bindings: Env }>();
 
-app.get("/api/edge/health", (c) => c.json({ ok: true, edge: true }))
-app.all("/api/*", (c) => c.json({ error: "not_implemented" }, 501))
+app.get("/api/edge/health", (c) => c.json({ ok: true, edge: true }));
+app.get("/api/edge/unlock", (c) => unlock(c));
+app.use("/api/*", requireKey);
+app.all("/api/*", (c) => proxyToRuntime(c.req.raw, c.env));
 
-export default app
+export { AgentRuntime } from "./do/agent-runtime";
+export { EgressGateway } from "./egress/gateway";
+export { PublishWorkflow } from "./workflows/publish";
+
+export default {
+  fetch: app.fetch,
+  queue: (batch, env) => handleQueue(batch as MessageBatch<JobMessage>, env),
+} satisfies ExportedHandler<Env>;

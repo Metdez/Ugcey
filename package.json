@@ -7,14 +7,16 @@
     "build:web": "pnpm --filter web build",
     "build": "pnpm build:web",
     "deploy": "pnpm build && wrangler deploy",
-    "typecheck": "pnpm --filter web exec tsc -b && tsc -p worker/tsconfig.json --noEmit"
+    "typecheck": "pnpm --filter web exec tsc -b && tsc -p worker/tsconfig.json --noEmit",
+    "test:worker": "vitest run worker/test"
   },
   "dependencies": {
     "hono": "^4"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4",
+    "@cloudflare/workers-types": "^5.20261107.1",
     "typescript": "~5.9.0",
+    "vitest": "^5.1.0",
     "wrangler": "4.158.0"
   }
 }

@@ -1,0 +1,43 @@
+# UGC-relevant Higgsfield workflows (INTEGRATIONS.md B6). endpoint_id is the POST path.
+# defaults are merged under caller args. Read through HiggsfieldProvider.models() / MockMediaProvider.models().
+models:
+  - endpoint_id: higgsfield-ai/soul/v2/standard
+    kind: image
+    label: Soul V2 creator still
+    defaults: {aspect_ratio: "9:16", resolution: 1080p, batch_size: 1}
+  - endpoint_id: marketing-studio/image
+    kind: image
+    label: Marketing Studio product still
+    defaults: {aspect_ratio: "9:16", resolution: 2k}
+  - endpoint_id: higgsfield/ads-studio/v1.0
+    kind: image
+    label: Ads Studio from product images
+    defaults: {aspect_ratio: "9:16", batch_size: 1}
+  - endpoint_id: bytedance/seedance-2.5/image-to-video
+    kind: video
+    label: Seedance 2.5 image to video (audio)
+    defaults: {duration: 5, resolution: 720p, generate_audio: true}
+  - endpoint_id: bytedance/seedance-2.5/reference-to-video
+    kind: video
+    label: Seedance 2.5 multi-reference UGC video
+    defaults: {aspect_ratio: "9:16", duration: 5, generate_audio: true}
+  - endpoint_id: bytedance/seedance-2.5/text-to-video
+    kind: video
+    label: Seedance 2.5 text to video
+    defaults: {aspect_ratio: "9:16", duration: 5, output_format: mp4}
+  - endpoint_id: kling-video/v3.0/std/image-to-video
+    kind: video
+    label: Kling 3.0 image to video
+    defaults: {duration: 5, sound: "on"}
+  - endpoint_id: kling-video/v3/motion-control/std
+    kind: video
+    label: Kling 3 motion control
+    defaults: {character_orientation: video}
+  - endpoint_id: alibaba/wan-3.0/image-to-video
+    kind: video
+    label: Wan 3.0 image to video
+    defaults: {aspect_ratio: "9:16", duration: 5, resolution: 720p, generate_audio: true}
+  - endpoint_id: minimax/h3/image-to-video
+    kind: video
+    label: MiniMax H3 image to video
+    defaults: {duration: 5}
