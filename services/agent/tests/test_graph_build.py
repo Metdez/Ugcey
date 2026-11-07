@@ -1,4 +1,3 @@
-import json
 import re
 
 import pytest
@@ -79,7 +78,7 @@ async def test_audit_writes_entry_and_survives_failure(reg):
     await AuditMiddleware().awrap_tool_call(Req(), handler)
     e = app.entries[0]
     assert (e.actor, e.action, e.tool, e.status, e.mode) == ("agent", "tool_call", "generate_media", "ok", "mock")
-    assert len(e.detail) == 300 and json.loads(e.detail[:0] or "{}") == {}
+    assert len(e.detail) == 300
     set_deps(fake_deps(FakeApp(fail=True)))
     assert (await AuditMiddleware().awrap_tool_call(Req(), handler)).content == "ok"  # audit failure is swallowed
 
@@ -106,3 +105,15 @@ def test_skill_frontmatter_is_valid():
         head = d.joinpath("SKILL.md").read_text("utf-8").split("---")[1]
         assert re.search(rf"^name: {d.name}$", head, re.M)
         assert len(re.search(r"^description: (.+)$", head, re.M).group(1)) <= 1024
+
+
+async def test_orchestrator_can_delegate_to_registered_subagent(reg):
+    call = AIMessage(content="", tool_calls=[{"name": "task", "id": "k1", "args": {
+        "description": "Find 3 patterns", "subagent_type": "research-analyst"}}])
+    models = fake_models(fake_model(call, "Delegated."))
+    models["research"] = fake_model("Wrote /research/summary.md")
+    agent = build_agent(fake_deps(), models)
+    out = await agent.ainvoke({"messages": [{"role": "user", "content": "research"}]},
+                              {"configurable": {"thread_id": "d"}}, context=RunContext())
+    task_result = next(m for m in out["messages"] if isinstance(m, ToolMessage) and m.name == "task")
+    assert "summary.md" in task_result.content

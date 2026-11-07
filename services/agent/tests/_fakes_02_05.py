@@ -36,10 +36,11 @@ def fake_tool(name: str) -> StructuredTool:
 
 def install_registry(monkeypatch) -> None:
     """Empty registry, re-register the seven real agent modules, add fake tools they reference."""
+    mods = [importlib.import_module(f"ugecy.agents.{m}") for m in AGENT_MODULES]  # first import may register
     monkeypatch.setattr(registry, "TOOLS", {})
     monkeypatch.setattr(registry, "AGENTS", {})
-    for mod in AGENT_MODULES:
-        importlib.reload(importlib.import_module(f"ugecy.agents.{mod}"))
+    for mod in mods:
+        importlib.reload(mod)
     for agent in registry.AGENTS.values():
         for tool in agent.tools:
             if tool not in registry.TOOLS:

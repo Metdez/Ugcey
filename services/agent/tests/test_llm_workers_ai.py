@@ -8,13 +8,15 @@ from ugecy.settings import Settings
 
 
 def test_edge_mode_uses_internal_gateway():
-    m = make_model("orchestrator", Settings(internal_mode="edge", cf_api_token="secret"))
+    m = make_model("orchestrator", Settings(internal_mode="edge"))
     assert m.openai_api_base == "http://llm.internal/v1"
     assert m.openai_api_key.get_secret_value() == "intercepted"
 
 
-def test_local_mode_uses_cloudflare_with_account_and_token():
-    m = make_model("research", Settings(internal_mode="local", cf_account_id="acct1", cf_api_token="tok"))
+def test_local_mode_uses_cloudflare_with_account_and_token(monkeypatch):
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "acct1")
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "tok")
+    m = make_model("research", Settings(internal_mode="local"))
     assert m.openai_api_base == "https://api.cloudflare.com/client/v4/accounts/acct1/ai/v1"
     assert m.openai_api_key.get_secret_value() == "tok"
     assert m.model_name == "@cf/deepseek-ai/deepseek-v4.1-flash-1017"

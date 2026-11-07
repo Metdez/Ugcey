@@ -1,4 +1,4 @@
-import { Bot, Clapperboard, FlaskConical, Megaphone, PenTool, Search, ShieldCheck, Smartphone, BarChart3, type LucideIcon } from "lucide-react";
+import { Bot, Clapperboard, Megaphone, PenTool, Search, ShieldCheck, Smartphone, BarChart3, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Kind = "orchestrator" | "research" | "creative" | "production" | "publishing" | "device" | "analytics";
@@ -30,7 +30,7 @@ export const agentKind = (name: string): Kind => KIND[name] ?? "orchestrator";
 /** `kind` is an agent name ("research-analyst") or a color kind ("research"). */
 export function AgentAvatar({ kind, size = "md", className }: { kind: string; size?: "sm" | "md" | "lg"; className?: string }) {
   const k = (kind in TONE ? kind : agentKind(kind)) as Kind;
-  const Icon = kind === "mock" ? FlaskConical : k === "orchestrator" && kind === "compliance-critic" ? ShieldCheck : ICON[k];
+  const Icon = kind === "compliance-critic" ? ShieldCheck : ICON[k];
   return (
     <span
       aria-hidden
