@@ -101,3 +101,95 @@ class MemAppStore:
             lst.append(source)
 
     async def list_sources(self, thread_id: str): return list(self.sources.get(thread_id, []))
+
+
+# ---- app wiring helpers --------------------------------------------------------------------
+import json  # noqa: E402
+import sys  # noqa: E402
+import types  # noqa: E402
+from dataclasses import dataclass  # noqa: E402
+
+import httpx  # noqa: E402
+from deepagents import create_deep_agent  # noqa: E402
+from langchain_core.tools import tool  # noqa: E402
+from langgraph.checkpoint.memory import InMemorySaver  # noqa: E402
+from langgraph.store.memory import InMemoryStore  # noqa: E402
+
+from ugecy.contracts import DeviceInfo, ProviderModes  # noqa: E402
+from ugecy.deps import Deps  # noqa: E402
+from ugecy.main import create_app  # noqa: E402
+from ugecy.settings import Settings  # noqa: E402
+
+
+@dataclass
+class Ctx:
+    workspace_id: str
+    thread_id: str
+
+
+CALLS: list[str] = []
+
+
+@tool
+def publish_post(caption: str) -> str:
+    """Publish a post (gated by approval)."""
+    CALLS.append(caption)
+    return f"published: {caption}"
+
+
+class FakeDevice:
+    name, mode = "fake", "mock"
+
+    async def list_devices(self):
+        return [DeviceInfo(id="d1", name="iPhone", kind="iphone", status="ready", ready=True)]
+
+    async def screenshot(self, device_id: str) -> bytes:
+        return b"\xff\xd8jpeg"
+
+
+def install_fake_graph(monkeypatch) -> None:
+    """02-05 owns ugecy.graph; the runs manager only needs RunContext from it."""
+    monkeypatch.setitem(sys.modules, "ugecy.graph", types.SimpleNamespace(RunContext=Ctx))
+
+
+def call(name: str, args: dict, cid: str) -> dict:
+    return {"name": name, "args": args, "id": cid}
+
+
+def make_agent(script: list[AIMessage], subagent_script: list[AIMessage] | None = None):
+    subagents = [{"name": "worker", "description": "w", "system_prompt": "x", "tools": [publish_post],
+                  "model": ScriptedModel(script=subagent_script)}] if subagent_script else None
+    return create_deep_agent(
+        model=ScriptedModel(script=script), tools=[publish_post], subagents=subagents, context_schema=Ctx,
+        interrupt_on={"publish_post": {"allowed_decisions": ["approve", "edit", "reject"]}},
+        checkpointer=InMemorySaver(), store=InMemoryStore(), name="ugecy-orchestrator")
+
+
+def make_deps(store: InMemoryStore | None = None) -> Deps:
+    return Deps(settings=Settings(), modes=ProviderModes(), kv=None, app=MemAppStore(), edge=None,  # type: ignore[arg-type]
+                research=None, media=None, device=FakeDevice(), publisher=None, analytics=None,  # type: ignore[arg-type]
+                store=store or InMemoryStore())
+
+
+def make_client(agent, deps: Deps | None = None) -> tuple[httpx.AsyncClient, Deps]:
+    deps = deps or make_deps()
+    app = create_app(agent=agent, deps=deps)
+    return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t"), deps
+
+
+async def sse(client: httpx.AsyncClient, method: str, url: str, **kw) -> list[dict]:
+    """Read an SSE response to the end; returns the decoded UiEvent dicts (also checks event: == type)."""
+    events = []
+    async with client.stream(method, url, **kw) as r:
+        assert r.status_code == 200, await r.aread()
+        assert r.headers["content-type"].startswith("text/event-stream")
+        assert r.headers["x-accel-buffering"] == "no"
+        name = None
+        async for line in r.aiter_lines():
+            if line.startswith("event:"):
+                name = line.split(":", 1)[1].strip()
+            elif line.startswith("data:"):
+                data = json.loads(line.split(":", 1)[1])
+                assert data["type"] == name
+                events.append(data)
+    return events
