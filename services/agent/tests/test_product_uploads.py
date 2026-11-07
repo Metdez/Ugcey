@@ -11,10 +11,7 @@ from tests._doubles.media import FakeMediaProvider
 from tests._fakes_02_08 import install
 from ugecy.api.uploads import MAX_BYTES
 from ugecy.contracts import Asset, ThreadSummary
-from ugecy.integrations.media.higgsfield import (
-    EDGE_UPLOAD_UNSUPPORTED,
-    HiggsfieldProvider,
-)
+from ugecy.integrations.media.higgsfield import HiggsfieldProvider
 from ugecy.settings import Settings
 from ugecy.tools import media
 
@@ -87,11 +84,24 @@ async def test_higgsfield_upload_puts_to_presigned_url_without_credentials():
     assert put.headers["x-amz-tagging"] == "retention=temporary" and put.content == b"img"
 
 
-async def test_higgsfield_upload_reports_edge_mode_clearly():
-    p = HiggsfieldProvider(Settings(internal_mode="edge"), transport=httpx.MockTransport(lambda r: httpx.Response(500)))
-    with pytest.raises(RuntimeError, match="not available on the deployed app"):
-        await p.upload(b"img", "image/png")
-    assert "Worker" in EDGE_UPLOAD_UNSUPPORTED
+async def test_higgsfield_upload_in_edge_mode_goes_through_the_worker_relay():
+    seen = []
+    presigned = "https://fnf-api-input-prod-1.s3.amazonaws.com/in/p.png?X-Amz-Signature=abc&x=1"
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        seen.append(req)
+        if req.url.path == "/files/generate-upload-url":
+            assert req.url.host == "higgsfield.internal"  # the Worker injects the key
+            return httpx.Response(200, json={"public_url": "https://cdn.example/in/p.png", "upload_url": presigned,
+                                             "upload_headers": {"Content-Type": "image/png"}})
+        return httpx.Response(200)
+
+    p = HiggsfieldProvider(Settings(internal_mode="edge"), transport=httpx.MockTransport(handler))
+    assert await p.upload(b"img", "image/png") == "https://cdn.example/in/p.png"
+    _, put = seen
+    assert (put.method, put.url.host, put.url.path) == ("PUT", "hfupload.internal", "/")
+    assert put.url.params["to"] == presigned  # signature survives the round trip intact
+    assert "authorization" not in put.headers and put.content == b"img"
 
 
 class Recorder:

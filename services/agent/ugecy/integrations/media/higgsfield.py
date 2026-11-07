@@ -16,8 +16,6 @@ from ugecy.integrations.media.catalog import catalog_models
 from ugecy.interfaces import MediaJob
 from ugecy.settings import Settings
 
-EDGE_UPLOAD_UNSUPPORTED = ("Product photo upload is not available on the deployed app yet: the Worker must relay the "
-                           "upload to Higgsfield storage. It works when the agent runs locally.")
 _MAX_RETRY_WAIT_S = 30.0
 _ATTEMPTS = 3
 _STATUSES = {"queued", "in_progress", "completed", "failed", "nsfw", "canceled"}
@@ -123,15 +121,16 @@ class HiggsfieldProvider:
         """Upload an input file (a product photo) and return the public URL models can read.
         Step 1 asks Higgsfield for a presigned URL; step 2 PUTs the bytes to storage with a separate client that
         carries no Higgsfield credentials (the docs forbid sending them to the presigned host)."""
-        if self._edge:
-            # The container has no internet: only *.internal hosts pass the Worker's EgressGateway, and the presigned
-            # storage host is not one of them, so the Worker would have to relay this upload.
-            raise RuntimeError(EDGE_UPLOAD_UNSUPPORTED)
         meta = (await self._request("POST", "/files/generate-upload-url", json={"content_type": content_type})).json()
         headers = {str(k): str(v) for k, v in (meta.get("upload_headers") or {}).items()}
         headers.setdefault("Content-Type", content_type)
+        # Edge: the container has no internet, so the Worker's hfupload.internal relay forwards the PUT to the
+        # presigned host (Higgsfield's input bucket only, no credentials). Local: PUT straight to storage.
+        target, params = meta["upload_url"], None
+        if self._edge:
+            target, params = "http://hfupload.internal/", {"to": meta["upload_url"]}
         async with httpx.AsyncClient(timeout=120.0, transport=self._transport) as storage:
-            resp = await storage.put(meta["upload_url"], content=data, headers=headers)
+            resp = await storage.put(target, params=params, content=data, headers=headers)
         if resp.status_code >= 400:
             raise RuntimeError(f"upload to Higgsfield storage failed: HTTP {resp.status_code}")
         return str(meta["public_url"])

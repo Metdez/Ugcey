@@ -13,11 +13,12 @@ const VHOSTS = [
   "state.internal",
   "bindings.internal",
   "higgsfield.internal",
+  "hfupload.internal",
   "firecrawl.internal",
   "glasshand.internal",
 ];
 
-const RUNTIME_CODE = "2026-11-07.r5";
+const RUNTIME_CODE = "2026-11-07.r6";
 
 export class AgentRuntime extends DurableObject<Env> {
   private starting?: Promise<void>;
