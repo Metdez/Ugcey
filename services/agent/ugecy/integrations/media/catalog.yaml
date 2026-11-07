@@ -36,7 +36,7 @@ models:
   - endpoint_id: bytedance/seedance-2.5/image-to-video
     kind: video
     label: Seedance 2.5 image to video (audio)
-    use: 'Final ads. Animate a completed still (image_asset_id), 4-30 s, keeps the still''s aspect ratio. A 15 s ad with "Shot 1 (0-5s) ... Shot 2 (5-10s): Cut to ..." in the prompt cuts on time and keeps identity. Best label, hand and face stability in our tests; generation time varied from 2.5 to 10 min.'
+    use: 'Default for every ad (480p previews, 720p finals): most consistent in our tests, including keeping a product shade right from application to the last frame. Animate a completed still (image_asset_id), 4-30 s, keeps the still''s aspect ratio. A 15 s ad with "Shot 1 (0-5s) ... Shot 2 (5-10s): Cut to ..." in the prompt cuts on time and keeps identity. Best label, hand and face stability in our tests; generation time varied from 2.5 to 10 min.'
     requires: [image_url]
     defaults: {duration: 5, resolution: 720p, generate_audio: true}
     cost_hint: "about $0.46 per second at 720p ($2.30 for 5 s); 480p is $0.21/s"
@@ -50,7 +50,7 @@ models:
   - endpoint_id: kling-video/v3.0/std/image-to-video
     kind: video
     label: Kling 3.0 image to video (multi-shot)
-    use: 'Default for previews and live demos. Animate a still (image_asset_id) into 3-15 s; a whole 15 s ad in one call via multi_shots true + multi_prompt (up to 6 shots, each with prompt and duration), which cut on time and kept identity in our tests (about 3.5 min, $1.60). Tends to overshoot motion and let label text drift.'
+    use: 'Only when speed matters more than consistency. In a product test it ignored the shot cuts and briefly added a skin blemish. Animate a still (image_asset_id) into 3-15 s; a whole 15 s ad in one call via multi_shots true + multi_prompt (up to 6 shots, each with prompt and duration), which cut on time and kept identity in our tests (about 3.5 min, $1.60). Tends to overshoot motion and let label text drift.'
     requires: [image_url]
     defaults: {duration: 5, sound: "on"}
     cost_hint: "about $0.54 for 5 s"
