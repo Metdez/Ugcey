@@ -211,7 +211,7 @@ async def estimate_media_cost(model: str, args: dict | None = None) -> str:
     """Estimate USD cost of a media generation for a model endpoint_id and its args (include prompt)."""
     if get_deps().media.mode == "off":
         return json.dumps({"error": MEDIA_OFF, "model": model, "estimated_usd": None})
-    est = await get_deps().media.estimate(model, args or {})
+    est = await get_deps().media.estimate(model, _merged_args(model, str((args or {}).get("prompt", "")), args))
     return json.dumps({"model": model, "estimated_usd": est})
 
 

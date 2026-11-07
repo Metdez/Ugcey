@@ -89,6 +89,19 @@ async def test_generate_media_flow_and_poller(monkeypatch):
     assert "error" in json.loads(await media.generate_media.ainvoke({"model": "nope", "prompt": "x"}))
 
 
+async def test_estimate_tool_strips_batch_size_for_non_soul(monkeypatch):
+    d = install()
+    seen: list[dict] = []
+
+    async def spy(model, args):
+        seen.append(args)
+        return 0.05
+    monkeypatch.setattr(d.media, "estimate", spy)
+    out = json.loads(await media.estimate_media_cost.ainvoke(
+        {"model": "marketing-studio/image/flare", "args": {"prompt": "x", "batch_size": 1}}))
+    assert out["estimated_usd"] == 0.05 and "batch_size" not in seen[-1] and seen[-1]["prompt"] == "x"
+
+
 async def test_failed_job_marks_asset_failed(monkeypatch):
     d = install()
     monkeypatch.setitem(media.POLL, "first", 0.01)
