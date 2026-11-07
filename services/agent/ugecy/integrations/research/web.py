@@ -1,4 +1,4 @@
-"""Live research provider: Firecrawl v2 search + oEmbed/Browser Run fetch. Falls back to labelled samples."""
+"""Live research provider: Firecrawl v2 search + oEmbed/Browser Run fetch. With no Firecrawl key, search raises NotConnected (never fake data)."""
 from __future__ import annotations
 
 import contextlib
@@ -9,7 +9,7 @@ import httpx
 
 from ugecy.contracts import Mode, Source
 from ugecy.deps import get_deps
-from ugecy.integrations.research.mock import MockResearchProvider
+from ugecy.integrations.unavailable import SEARCH_OFF, NotConnected
 
 FIRECRAWL_URL = "https://api.firecrawl.dev/v2/search"
 MAX_MD = 20_000
@@ -36,18 +36,14 @@ class WebResearchProvider:
         self.settings = settings
         self.edge = settings.internal_mode == "edge"
         configured = settings.has_firecrawl if self.edge else bool(settings.firecrawl_api_key)
-        self.mode: Mode = "live" if configured else "mock"  # fixed at init
-        self._mock = MockResearchProvider(settings)
+        self.mode: Mode = "live" if configured else "off"  # web_search only; fetch always works
 
     async def search(self, query: str, platform: str | None = None, limit: int = 8) -> list[Source]:
-        if self.mode == "mock":
-            return await self._mock.search(query, platform, limit)
+        if self.mode == "off":
+            raise NotConnected(SEARCH_OFF)
         q = f"{query} {platform} short-form video" if platform else query
         body = {"query": q, "limit": limit, "sources": [{"type": "web"}], "domainTools": False}
-        try:
-            data = await self._post(body)
-        except Exception:  # noqa: BLE001  not_configured (503), quota, network: degrade to labelled samples
-            return await self._mock.search(query, platform, limit)
+        data = await self._post(body)  # quota / network errors propagate; the tool reports them, nothing is faked
         out = []
         for r in (data.get("data") or {}).get("web") or []:
             if r.get("url"):
@@ -67,8 +63,6 @@ class WebResearchProvider:
 
     async def fetch(self, url: str) -> dict[str, Any]:
         platform = platform_of(url)
-        if url.startswith("https://example.com/sample/"):
-            return await self._mock.fetch(url)
         # shortcut: in edge mode external hosts are unreachable from the container, so oEmbed needs an
         # edge route (v2). Until then edge mode uses browser_markdown for every URL.
         if not self.edge and platform in OEMBED:

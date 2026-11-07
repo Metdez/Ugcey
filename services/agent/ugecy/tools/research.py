@@ -11,6 +11,7 @@ from ugecy import registry
 from ugecy.contracts import Source
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id, emit
+from ugecy.integrations.unavailable import SEARCH_OFF, NotConnected
 from ugecy.tools.source_policy import policy_error, take_budget
 
 _BLOCKED_SUFFIXES = (".internal", ".local", ".localhost", ".lan", ".home.arpa")
@@ -54,21 +55,24 @@ async def web_search(query: str, platform: str | None = None, limit: int = 8) ->
     Use this first when you need examples, hooks, formats or market context. `platform` may be
     tiktok, instagram, youtube or facebook to bias results. Returns one JSON object per line
     (url, title, platform, snippet). Only public, permitted pages are searched; never use it to
-    reach logged-in, private or paywalled content. If results are labelled SAMPLE DATA the
-    provider is in mock mode: treat them as illustrative patterns, not real posts.
+    reach logged-in, private or paywalled content. If live search is not connected the result
+    says so (mode "off"): research on the iPhone or use fetch_page on specific URLs instead.
     """
     limit = max(1, min(limit, 15))
     research = get_deps().research
-    sources = await research.search(query, platform, limit)
+    if research.mode == "off":
+        return json.dumps({"mode": "off", "results": 0, "error": SEARCH_OFF})
+    try:
+        sources = await research.search(query, platform, limit)
+    except NotConnected as e:
+        return json.dumps({"mode": "off", "results": 0, "error": str(e)})
+    except Exception as e:  # noqa: BLE001 quota / network: report it, never substitute data
+        return json.dumps({"mode": research.mode, "results": 0, "error": f"search failed: {type(e).__name__}"})
     for s in sources:
         await _record(s)
     if not sources:
         return json.dumps({"mode": research.mode, "results": 0, "note": "no results; try broader terms"})
-    meta: dict[str, object] = {"mode": research.mode, "results": len(sources)}
-    if research.mode == "mock":
-        meta["note"] = ("SAMPLE DATA ONLY: live web search is not configured (no FIRECRAWL_API_KEY). Do not try "
-                        "to search by fetching search engines or scraping platforms. Use these samples, pages the "
-                        "operator gave you and your own expertise, and tell the operator search is in sample mode.")
+    meta = {"mode": research.mode, "results": len(sources)}
     head = json.dumps(meta)
     return "\n".join([head, *(json.dumps(s.model_dump(exclude_none=True)) for s in sources)])
 

@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     llm_timeout_s: float = 180.0
 
     @model_validator(mode="after")
-    def _no_mock_outside_tests(self) -> "Settings":
+    def _no_mock_outside_tests(self) -> Settings:
         picks = (self.media_provider, self.device_provider, self.research_provider, self.publishing_provider)
         if self.internal_mode != "test" and "mock" in picks:
             raise ValueError("provider 'mock' is only allowed when UGECY_INTERNAL_MODE=test; use auto, live or off")

@@ -10,12 +10,11 @@ from langchain_core.tools import tool
 from ugecy.contracts import AuditEntry, ConnectedAccount, Post
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id
-from ugecy.integrations.publishing.mock import is_ai_generated
+from ugecy.integrations.publishing.policy import is_ai_generated
+from ugecy.integrations.unavailable import PUBLISH_OFF
 from ugecy.registry import APPROVE_EDIT_REJECT, register_tool
 
 CAPTION_LIMITS = {"tiktok": 2200, "instagram": 2200, "youtube": 5000, "facebook": 5000}
-# shortcut: demo accounts are seeded on first list; real OAuth account linking needs platform app review
-_DEMO = [("tiktok", "@ugecy.demo"), ("instagram", "@ugecy.demo"), ("youtube", "@ugecydemo"), ("facebook", "Ugecy Demo Page")]
 
 
 async def _audit(action: str, status: str, detail: str, thread_id: str | None) -> None:
@@ -25,12 +24,7 @@ async def _audit(action: str, status: str, detail: str, thread_id: str | None) -
 
 
 async def _accounts() -> list[ConnectedAccount]:
-    app = get_deps().app
-    if not (accts := await app.list_accounts()):
-        for platform, handle in _DEMO:
-            await app.upsert_account(ConnectedAccount(id=f"acct_{platform}_demo", platform=platform, handle=handle, mode="mock"))  # type: ignore[arg-type]
-        accts = await app.list_accounts()
-    return accts
+    return await get_deps().app.list_accounts()  # only accounts a real connection created; never seeded
 
 
 async def run_publish_job(post_id: str) -> dict:
@@ -56,7 +50,10 @@ async def run_publish_job(post_id: str) -> dict:
 @tool
 async def list_connected_accounts() -> str:
     """List connected social accounts (id, platform, handle, mode) available for publishing."""
-    return json.dumps([a.model_dump() for a in await _accounts()])
+    accts = [a.model_dump() for a in await _accounts()]
+    if accts:
+        return json.dumps(accts)
+    return json.dumps({"accounts": [], "note": "No social accounts connected. " + PUBLISH_OFF})
 
 
 @tool
@@ -66,6 +63,9 @@ async def publish_post(account_id: str, asset_id: str, caption: str, ai_disclosu
     Needs approval. ai_disclosure must be true for AI-generated media; the platform AI label is set from it."""
     d = get_deps()
     thread_id = current_thread_id()
+    if d.publisher.mode == "off":
+        await _audit("publish", "rejected", "publishing not connected", thread_id)
+        return json.dumps({"error": PUBLISH_OFF})
     acct = next((a for a in await _accounts() if a.id == account_id), None)
     asset = await d.app.get_asset(asset_id)
     when: datetime | None = None

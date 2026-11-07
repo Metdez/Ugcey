@@ -1,4 +1,4 @@
-"""Reads catalog.yaml (package data) once; shared by the live and mock media providers."""
+"""Reads catalog.yaml (package data) once; shared by the live and off media providers."""
 from __future__ import annotations
 
 from functools import lru_cache

@@ -4,8 +4,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from ugecy.contracts import Mode, Source
 from tests._doubles.research_samples import SAMPLES
+from ugecy.contracts import Mode, Source
 
 LABEL = "SAMPLE DATA"
 _TOKEN = re.compile(r"[a-z0-9]+")

@@ -4,10 +4,10 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
+from tests._doubles.analytics import MockAnalytics
+from tests._doubles.research import MockResearchProvider
 from ugecy import deps as deps_mod
 from ugecy.contracts import Post, Source
-from ugecy.integrations.publishing.analytics import MockAnalytics
-from ugecy.integrations.research.mock import MockResearchProvider
 from ugecy.settings import Settings
 
 

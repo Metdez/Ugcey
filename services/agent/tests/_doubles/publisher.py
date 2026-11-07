@@ -5,14 +5,7 @@ from typing import Any
 
 from ugecy.contracts import Asset, Post
 from ugecy.deps import get_deps
-
-
-class DisclosureRequired(ValueError):
-    pass
-
-
-def is_ai_generated(asset: Asset | None) -> bool:
-    return asset is not None and asset.provider != "upload"
+from ugecy.integrations.publishing.policy import DisclosureRequired, is_ai_generated
 
 
 class MockPublisher:

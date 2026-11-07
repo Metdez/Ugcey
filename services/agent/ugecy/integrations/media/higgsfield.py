@@ -109,7 +109,7 @@ class HiggsfieldProvider:
         if not edge:
             key = settings.higgsfield_key
             if not key:
-                raise RuntimeError("Higgsfield key missing (set HF_KEY or HF_API_KEY_SECRET) or use media_provider=mock")
+                raise RuntimeError("Higgsfield key missing (set HF_KEY or HF_API_KEY_SECRET) or set media_provider=off")
             headers["Authorization"] = f"Key {key}"
         self._client = httpx.AsyncClient(
             base_url="http://higgsfield.internal" if edge else "https://api.higgsfield.ai",

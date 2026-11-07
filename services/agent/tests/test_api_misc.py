@@ -6,7 +6,6 @@ from langchain_core.messages import AIMessage
 
 from ugecy import registry
 from ugecy.contracts import AuditEntry
-from ugecy.main import ensure_default_accounts
 
 AGENT = make_agent([AIMessage(content="ok", id="m")])
 
@@ -58,16 +57,12 @@ async def test_memories_get_put():
             assert (await client.put("/api/memories", json={"path": bad, "content": "x"})).status_code == 422
 
 
-async def test_store_reads_and_default_accounts():
+async def test_store_reads_and_no_seeded_accounts():
     deps = make_deps()
-    await ensure_default_accounts(deps.app)
-    await ensure_default_accounts(deps.app)  # idempotent
     await deps.app.add_audit(AuditEntry(id="a1", thread_id="t", actor="system", action="x", status="ok", mode="mock"))
     client, _ = make_client(AGENT, deps)
     async with client:
-        accts = (await client.get("/api/accounts")).json()
-        assert sorted(a["platform"] for a in accts) == ["instagram", "tiktok", "youtube"]
-        assert all(a["mode"] == "mock" and a["handle"] == "@demo_brand" for a in accts)
+        assert (await client.get("/api/accounts")).json() == []  # nothing is ever seeded
         assert len((await client.get("/api/audit", params={"thread_id": "t"})).json()) == 1
         for path in ("assets", "approvals", "posts"):
             assert (await client.get(f"/api/{path}")).json() == []
@@ -78,6 +73,19 @@ async def test_device_screenshot():
     async with client:
         r = await client.get("/api/device/screenshot")
         assert r.headers["content-type"] == "image/jpeg" and r.content.startswith(b"\xff\xd8")
+
+
+async def test_device_off_api():
+    from ugecy.integrations.unavailable import OffDeviceProvider
+
+    deps = make_deps()
+    deps.device = OffDeviceProvider()
+    client, _ = make_client(AGENT, deps)
+    async with client:
+        r = await client.get("/api/device/screenshot")
+        assert r.status_code == 503 and r.json()["error"]["code"] == "not_connected"
+        st = (await client.get("/api/device")).json()
+        assert (st["provider"], st["mode"], st["devices"]) == ("glasshand", "off", [])
 
 
 async def test_publish_job(monkeypatch):

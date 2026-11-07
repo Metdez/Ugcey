@@ -59,7 +59,7 @@ class GlasshandProvider:
         headers = {}
         if not edge:
             if not settings.glasshand_token:
-                raise RuntimeError("GLASSHAND_TOKEN missing; connect Glasshand or use device_provider=mock")
+                raise RuntimeError("GLASSHAND_TOKEN missing; connect Glasshand in the Device tab")
             headers["Authorization"] = f"Bearer {settings.glasshand_token}"
         self._client = httpx.AsyncClient(base_url=EDGE_URL if edge else LOCAL_URL, headers=headers, timeout=30.0, transport=transport)
         self._geometry: dict[str, dict[str, Any]] = {}

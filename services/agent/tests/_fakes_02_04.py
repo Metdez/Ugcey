@@ -172,7 +172,7 @@ def make_agent(script: list[AIMessage], subagent_script: list[AIMessage] | None 
 
 
 def make_deps(store: InMemoryStore | None = None) -> Deps:
-    return Deps(settings=Settings(), modes=ProviderModes(), kv=None, app=MemAppStore(), edge=None,  # type: ignore[arg-type]
+    return Deps(settings=Settings(), modes=ProviderModes(media="mock", device="mock", publishing="mock", research="mock"), kv=None, app=MemAppStore(), edge=None,  # type: ignore[arg-type]
                 research=None, media=None, device=FakeDevice(), publisher=None, analytics=None,  # type: ignore[arg-type]
                 store=store or InMemoryStore())
 

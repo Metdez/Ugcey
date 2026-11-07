@@ -9,7 +9,6 @@ from langchain_core.tools import tool
 from ugecy import registry
 from ugecy.deps import get_deps
 from ugecy.events import emit
-from ugecy.integrations.research.mock import search_samples
 
 
 def _slug(title: str) -> str:
@@ -44,19 +43,14 @@ async def remember_pattern(title: str, hook: str, hook_type: str, structure: str
 async def search_patterns(query: str, top_k: int = 5) -> str:
     """Search the saved pattern library for hooks, formats or angles relevant to a brief.
 
-    Use before writing scripts so new ideas build on proven patterns. Returns JSON lines labelled
-    by source: "library" (saved by this workspace) or "SAMPLE DATA" (illustrative starter patterns,
-    shown only when the library has no match).
+    Use before writing scripts so new ideas build on proven patterns. Returns only patterns this
+    workspace saved (JSON lines); an empty library returns results 0.
     """
     top_k = max(1, min(top_k, 10))
     matches = await get_deps().edge.vectors_query(_ns(), query, top_k)
-    if matches:
-        rows = [{"label": "library", "id": m.get("id"), "score": m.get("score"), **(m.get("metadata") or {})}
-                for m in matches]
-    else:
-        rows = search_samples(query, None, top_k)
-        if not rows:
-            return json.dumps({"results": 0, "note": "library empty and no sample matches"})
+    if not matches:
+        return json.dumps({"results": 0, "note": "no saved patterns match; research first, then remember_pattern"})
+    rows = [{"label": "library", "id": m.get("id"), "score": m.get("score"), **(m.get("metadata") or {})} for m in matches]
     return "\n".join(json.dumps(r) for r in rows)
 
 

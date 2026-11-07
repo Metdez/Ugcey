@@ -1,4 +1,4 @@
-"""Seams between modules. Each Protocol has a live and a mock/local implementation.
+"""Seams between modules. Each Protocol has a live implementation and an Off one (ugecy.integrations.unavailable).
 
 Owners (see .planning/phases/02-build/): persistence/* implements KVStore, AppStore, EdgeBindings;
 integrations/* implements the providers. Tools call providers only through ugecy.deps.get_deps().
@@ -110,7 +110,7 @@ class DeviceProvider(Protocol):
 
     async def list_devices(self) -> list[DeviceInfo]: ...
     async def screenshot(self, device_id: str) -> bytes: ...  # JPEG
-    async def describe(self, device_id: str) -> str: ...  # short text of what is on screen (mock: screen label)
+    async def describe(self, device_id: str) -> str: ...  # short text of what is on screen
     async def send(self, device_id: str, action: dict[str, Any], *, idempotency_key: str) -> dict[str, Any]: ...
 
 

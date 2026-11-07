@@ -18,6 +18,7 @@ from ugecy.contracts import (
     ModelRoute,
     Post,
 )
+from ugecy.integrations.unavailable import DEVICE_OFF
 from ugecy.settings import get_settings
 
 router = APIRouter()
@@ -89,7 +90,7 @@ async def device(request: Request) -> DeviceStatus:
 async def device_screenshot(request: Request) -> Response:
     devices = await deps_of(request).device.list_devices()
     if not devices:
-        raise ApiError(404, "no_device", "no device available")
+        raise ApiError(503, "not_connected", DEVICE_OFF)
     try:
         jpeg = await deps_of(request).device.screenshot(devices[0].id)  # already cropped to the viewport
     except httpx.HTTPError as e:

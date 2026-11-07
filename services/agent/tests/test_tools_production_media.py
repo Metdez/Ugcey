@@ -6,10 +6,10 @@ from importlib import resources
 import httpx
 import pytest
 
+from tests._doubles.media import MockMediaProvider
 from tests._fakes_02_08 import install
 from ugecy import registry
 from ugecy.integrations.media.higgsfield import HiggsfieldProvider
-from ugecy.integrations.media.mock import MockMediaProvider
 from ugecy.settings import Settings
 from ugecy.tools import media
 

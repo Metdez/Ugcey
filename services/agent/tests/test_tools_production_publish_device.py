@@ -1,8 +1,8 @@
 import json
 
+from tests._doubles.device import MockDeviceProvider
 from tests._fakes_02_08 import install
-from ugecy.contracts import Asset
-from ugecy.integrations.device.mock import MockDeviceProvider
+from ugecy.contracts import Asset, ConnectedAccount
 from ugecy.tools import device, publishing
 
 
@@ -13,6 +13,7 @@ def _asset(status="completed", provider="mock-media"):
 async def _setup(**kw):
     d = install(**kw)
     await d.app.upsert_asset(_asset(**{k: v for k, v in kw.items() if k in ("status",)}))
+    await d.app.upsert_account(ConnectedAccount(id="acct_tiktok", platform="tiktok", handle="@test", mode="mock"))
     accts = json.loads(await publishing.list_connected_accounts.ainvoke({}))
     return d, accts[0]["id"]
 

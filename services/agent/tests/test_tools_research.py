@@ -2,12 +2,12 @@ import json
 
 import pytest
 
+from tests._doubles.analytics import MockAnalytics
+from tests._doubles.research import search_samples
+from tests._doubles.research_samples import SAMPLES
 from tests._fakes_02_07 import FakeApp, FakeEdge, install
 from ugecy import registry
 from ugecy.contracts import Post
-from ugecy.integrations.publishing.analytics import MockAnalytics
-from ugecy.integrations.research.mock import search_samples
-from ugecy.integrations.research.samples import SAMPLES
 from ugecy.integrations.research.web import WebResearchProvider, platform_of
 from ugecy.settings import Settings
 from ugecy.tools import analytics, creative, memory, research
@@ -111,7 +111,7 @@ async def test_web_search_emits_sources(monkeypatch):
 
 
 def test_web_provider_mode_and_platform():
-    assert WebResearchProvider(Settings()).mode == "mock"
+    assert WebResearchProvider(Settings()).mode == "off"
     assert WebResearchProvider(Settings(firecrawl_api_key="k")).mode == "live"
     assert WebResearchProvider(Settings(internal_mode="edge", has_firecrawl=True)).mode == "live"
     assert platform_of("https://www.youtube.com/shorts/x") == "youtube"
@@ -119,15 +119,15 @@ def test_web_provider_mode_and_platform():
     assert platform_of("https://eviltiktok.com/x") is None
 
 
-async def test_memory_roundtrip_and_fallback():
+async def test_memory_roundtrip_and_empty_library():
     edge = FakeEdge()
     install(edge=edge)
     out = json.loads(await memory.remember_pattern.ainvoke({
         "title": "Label Warning!", "hook": "h", "hook_type": "negative_warning", "structure": "s",
         "why_it_works": "w", "source_urls": ["https://example.com/a"], "tags": ["t"]}))
     assert out["saved"] == "label-warning" and edge.upserts[0][0] == "default:patterns"
-    res = await memory.search_patterns.ainvoke({"query": "magnesium supplements"})
-    assert "SAMPLE DATA" in res
+    res = json.loads(await memory.search_patterns.ainvoke({"query": "magnesium supplements"}))
+    assert res["results"] == 0 and "SAMPLE" not in json.dumps(res)  # never sample patterns
     edge.matches = [{"id": "label-warning", "score": 0.9, "metadata": {"title": "Label Warning!"}}]
     assert json.loads(await memory.search_patterns.ainvoke({"query": "x"}))["label"] == "library"
 
@@ -138,7 +138,7 @@ async def test_post_metrics_deterministic():
     install(app=FakeApp([post]))
     a = await analytics.get_post_metrics.ainvoke({})
     b = await analytics.get_post_metrics.ainvoke({"post_ids": ["p1"]})
-    assert a == b and "MOCK DATA" in a
+    assert a == b
     row = json.loads(a.splitlines()[1])
     assert len(row["views_7d_cumulative"]) == 7 and row["views_7d_cumulative"] == sorted(row["views_7d_cumulative"])
     assert (await MockAnalytics().post_metrics([post]))[0]["views"] == row["views"]

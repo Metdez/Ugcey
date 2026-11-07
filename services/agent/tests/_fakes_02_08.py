@@ -1,11 +1,11 @@
 """In-memory app store / edge and a Deps builder for the production-tools tests (plan 02-08)."""
 from __future__ import annotations
 
+from tests._doubles.device import MockDeviceProvider
+from tests._doubles.media import MockMediaProvider
+from tests._doubles.publisher import MockPublisher
 from ugecy.contracts import ProviderModes
 from ugecy.deps import Deps, set_deps
-from ugecy.integrations.device.mock import MockDeviceProvider
-from ugecy.integrations.media.mock import MockMediaProvider
-from ugecy.integrations.publishing.mock import MockPublisher
 from ugecy.settings import Settings
 
 
@@ -37,7 +37,7 @@ class FakeEdge:
 
 def install(media=None, internal_mode="test") -> Deps:
     s = Settings(internal_mode=internal_mode)
-    d = Deps(settings=s, modes=ProviderModes(), kv=None, app=MemApp(), edge=FakeEdge(), research=None,  # type: ignore[arg-type]
+    d = Deps(settings=s, modes=ProviderModes(media="mock", device="mock", publishing="mock", research="mock"), kv=None, app=MemApp(), edge=FakeEdge(), research=None,  # type: ignore[arg-type]
              media=media or MockMediaProvider(t_progress=0.0, t_done=0.0), device=MockDeviceProvider(), publisher=MockPublisher(),
              analytics=None)  # type: ignore[arg-type]
     set_deps(d)

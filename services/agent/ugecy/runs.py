@@ -152,7 +152,7 @@ class RunManager:
 
 
 def tool_mode(deps: Deps, tool: str) -> str:
-    """Provider mode ("live"/"mock") of the domain a tool belongs to, for audit entries."""
+    """Provider mode ("live"/"off") of the domain a tool belongs to, for audit entries."""
     from ugecy import registry
 
     spec = registry.TOOLS.get(tool)

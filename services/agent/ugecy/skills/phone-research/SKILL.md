@@ -1,11 +1,11 @@
 ---
 name: phone-research
-description: "Research short-form UGC on a real iPhone (Glasshand) in read-only mode: open TikTok, Instagram Reels or YouTube Shorts via Spotlight, search a niche, observe up to 12 posts at human pace, read metrics, stop on login walls or captchas, and turn observations into outlier-based pattern cards. Use whenever the research-analyst has a ready Glasshand device or a mock demo phone."
+description: "Research short-form UGC on a real iPhone (Glasshand) in read-only mode: open TikTok, Instagram Reels or YouTube Shorts via Spotlight, search a niche, observe up to 12 posts at human pace, read metrics, stop on login walls or captchas, and turn observations into outlier-based pattern cards. Use whenever the research-analyst has a ready Glasshand device (read-only research on the real phone only)."
 ---
 # Phone research playbook
 
 ## Preconditions
-- `device_status`: provider glasshand, mode live, a device with ready true. Mode mock = demo only; label everything MOCK DEVICE DEMO and never treat it as market evidence.
+- `device_status`: provider glasshand, mode live, a device with ready true. Mode off = no phone: tell the operator to connect Glasshand in the Device tab.
 - `device_start_session(goal, allowed_apps, purpose="research")` once; the operator approves. Budget is 60 steps and 12 observed posts.
 
 ## Read-only rules

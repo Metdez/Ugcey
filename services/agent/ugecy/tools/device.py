@@ -13,6 +13,7 @@ from langchain_core.tools import tool
 from ugecy.contracts import AuditEntry, DeviceSessionInfo, DeviceStatus, Source
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id, emit
+from ugecy.integrations.unavailable import DEVICE_OFF, NotConnected
 from ugecy.registry import APPROVE_REJECT, register_tool
 
 # shortcut: session state is module-level memory (single operator, single process); persist it in KV when multi-worker
@@ -69,6 +70,8 @@ async def _act(tool_name: str, action: dict, detail: str) -> str:
     _STATE["session"] = s.model_copy(update={"steps_used": s.steps_used + 1})
     try:
         r = await d.device.send(s.device_id, action, idempotency_key=uuid4().hex)
+    except NotConnected as e:
+        return f"error: {e}"
     except Exception as e:  # noqa: BLE001
         await _audit(tool_name, "error", f"{detail}: {type(e).__name__}")
         return f"error: device send failed ({type(e).__name__}); take a screenshot before retrying, never blindly replay"
@@ -91,9 +94,11 @@ async def device_screenshot() -> str:
     d = get_deps()
     devices = await d.device.list_devices()
     if not devices:
-        return "error: no ready device"
+        return f"error: {DEVICE_OFF}"
     try:
         text = await d.device.describe(devices[0].id)
+    except NotConnected as e:
+        return f"error: {e}"
     except Exception as e:  # noqa: BLE001
         return f"error: screen capture/vision failed ({type(e).__name__}); retry device_screenshot"
     _STATE["last_action"] = "screenshot"
@@ -108,11 +113,13 @@ async def device_observe(note: str = "") -> str:
     d = get_deps()
     devices = await d.device.list_devices()
     if not devices:
-        return "error: no ready device"
+        return f"error: {DEVICE_OFF}"
     if _STATE["purpose"] == "research" and _STATE["session"] is not None and _STATE["observed"] >= RESEARCH_POSTS:
         return f"error: post limit reached ({RESEARCH_POSTS} per research session); write your pattern cards"
     try:
         post = await getattr(d.device, "observe")(devices[0].id)  # noqa: B009
+    except NotConnected as e:
+        return f"error: {e}"
     except Exception as e:  # noqa: BLE001
         return f"error: observe failed ({type(e).__name__}); retry or use device_screenshot"
     if post is None or post.get("error") or not (post.get("creator") or post.get("caption") or post.get("hook_guess")):
@@ -144,7 +151,7 @@ async def device_start_session(goal: str, allowed_apps: list[str], max_steps: in
     d = get_deps()
     devices = await d.device.list_devices()
     if not devices:
-        return "error: no ready device"
+        return f"error: {DEVICE_OFF}"
     sess = DeviceSessionInfo(id=uuid4().hex[:12], device_id=devices[0].id, goal=goal, steps_used=0, max_steps=RESEARCH_STEPS if purpose == "research" else max(1, min(max_steps, 100)))
     _STATE.update(session=sess, control="agent", allowed_apps=list(allowed_apps), last_action="session started", purpose=purpose, observed=0)
     await _audit("device_start_session", "ok", f"goal={goal!r} apps={allowed_apps} purpose={purpose} max_steps={sess.max_steps}")

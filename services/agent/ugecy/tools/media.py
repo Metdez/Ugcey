@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from ugecy.contracts import Asset, AuditEntry
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id, emit
+from ugecy.integrations.unavailable import MEDIA_OFF
 from ugecy.registry import APPROVE_EDIT_REJECT, register_tool
 
 # poll backoff: first delay, factor, max delay, overall cap (seconds). Tests shrink these.
@@ -117,7 +118,7 @@ async def _poll(asset_id: str, thread_id: str | None) -> None:
             if job.status == "completed" and job.outputs:
                 out = job.outputs[0]
                 url = out["url"]
-                if url.startswith("http"):  # data: URIs (mock) have nothing to ingest
+                if url.startswith("http"):  # only http(s) urls can be ingested
                     try:
                         ing = await d.edge.media_ingest(asset_id, url, out["kind"])
                         url = ing.get("playback_url") or ing.get("url") or url
@@ -190,6 +191,8 @@ async def list_media_models(kind: str | None = None) -> str:
 @tool(args_schema=_EstimateIn)
 async def estimate_media_cost(model: str, args: dict | None = None) -> str:
     """Estimate USD cost of a media generation for a model endpoint_id and its args (include prompt)."""
+    if get_deps().media.mode == "off":
+        return json.dumps({"error": MEDIA_OFF, "model": model, "estimated_usd": None})
     est = await get_deps().media.estimate(model, args or {})
     return json.dumps({"model": model, "estimated_usd": est})
 
@@ -203,6 +206,8 @@ async def generate_media(model: str, prompt: str, kind: str = "video", args: dic
     Videos for UGC should be 9:16. For image-to-video pass image_asset_id (a completed still); for
     reference-to-video pass reference_asset_ids. Optional brief_path points at the creative brief file."""
     d = get_deps()
+    if d.media.mode == "off":
+        return json.dumps({"error": MEDIA_OFF})
     spec = next((m for m in d.media.models() if m["endpoint_id"] == model), None)
     if spec is None:
         return json.dumps({"error": f"unknown model {model!r}; call list_media_models"})

@@ -66,14 +66,14 @@ def resolve_modes(s: Settings) -> ProviderModes:
     def pick(choice: str, configured: bool) -> str:
         if choice == "mock" and s.internal_mode == "test":
             return "mock"
-        return "live" if configured and choice != "off" else "off"
+        return "live" if configured and choice != "off" and s.internal_mode != "test" else "off"  # tests never reach live
 
     media_ok = bool(s.higgsfield_key) if local else s.has_higgsfield
     search_ok = bool(s.firecrawl_api_key) if local else s.has_firecrawl
     return ProviderModes(
         llm="live" if s.internal_mode != "test" else "mock",
         media=pick(s.media_provider, media_ok),  # type: ignore[arg-type]
-        device=pick(s.device_provider, s.has_glasshand),  # type: ignore[arg-type]  # token comes from the Settings UI, never env
+        device=pick(s.device_provider, bool(s.glasshand_token) if local else s.has_glasshand),  # type: ignore[arg-type]
         publishing="mock" if s.publishing_provider == "mock" and s.internal_mode == "test" else "off",  # no live API publisher yet
         research=pick(s.research_provider, search_ok),  # type: ignore[arg-type]
     )
