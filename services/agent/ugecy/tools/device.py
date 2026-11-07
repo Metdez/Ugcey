@@ -1,10 +1,7 @@
 """Domain device tools. Input tools are guarded in code (approved session + step budget), not just by prompt."""
 from __future__ import annotations
 
-import asyncio
 import json
-import random
-from collections.abc import Awaitable, Callable
 from typing import Literal
 from uuid import uuid4
 
@@ -19,27 +16,16 @@ from ugecy.registry import APPROVE_REJECT, register_tool
 # shortcut: session state is module-level memory (single operator, single process); persist it in KV when multi-worker
 _STATE: dict = {"session": None, "last_action": None, "control": "idle", "allowed_apps": [], "purpose": "operate", "observed": 0}
 RESEARCH_STEPS, RESEARCH_POSTS, RESEARCH_TYPE_MAX = 60, 12, 80
-DWELL_S = (2.0, 4.0)  # human pace after a feed swipe
-_sleep: Callable[[float], Awaitable[None]] = asyncio.sleep  # tests inject a fake to run fast
 HINT = ("\nHow to act: pass an element's x,y (0..1, centre) to device_tap; re-describe after every action. "
         "If your target is not in elements, use device_scroll (more_below=true means the list continues) or device_back; "
-        "never type unless keyboard_visible is true (tap the text field first, then re-describe). "
+        "tap the text field first, then re-describe before typing. "
         "If the screen did not change after an action, change strategy instead of repeating it. "
         "On control_taken stop; never replay after an ambiguous failure.")
-INTENTS = {"post", "send", "purchase", "delete"}
+INTENTS = {"post", "send", "purchase", "delete", "login", "signup", "confirm"}
 
 
 def reset_state() -> None:
     _STATE.update(session=None, last_action=None, control="idle", allowed_apps=[], purpose="operate", observed=0)
-
-
-def set_sleep(fn: Callable[[float], Awaitable[None]]) -> None:
-    global _sleep
-    _sleep = fn
-
-
-async def _dwell() -> None:
-    await _sleep(random.uniform(*DWELL_S))
 
 
 async def _audit(tool_name: str, status: str, detail: str) -> None:
@@ -143,18 +129,20 @@ async def device_observe(note: str = "") -> str:
 
 
 @tool
-async def device_start_session(goal: str, allowed_apps: list[str], max_steps: int = 25,
+async def device_start_session(goal: str, allowed_apps: list[str] | None = None, max_steps: int = 60,
                                purpose: Literal["research", "operate"] = "operate") -> str:
     """Start a bounded device-control session for a goal (needs operator approval). Required before tap/swipe/type.
 
-    purpose="research" is read-only browsing of short-form apps: 60 steps, search queries up to 80 chars, device_commit refused."""
+    `allowed_apps` optionally records operating scope. purpose="research" is read-only browsing of short-form apps:
+    60 steps, search queries up to 80 chars, device_commit refused."""
     d = get_deps()
     devices = await d.device.list_devices()
     if not devices:
         return f"error: {DEVICE_OFF}"
-    sess = DeviceSessionInfo(id=uuid4().hex[:12], device_id=devices[0].id, goal=goal, steps_used=0, max_steps=RESEARCH_STEPS if purpose == "research" else max(1, min(max_steps, 100)))
-    _STATE.update(session=sess, control="agent", allowed_apps=list(allowed_apps), last_action="session started", purpose=purpose, observed=0)
-    await _audit("device_start_session", "ok", f"goal={goal!r} apps={allowed_apps} purpose={purpose} max_steps={sess.max_steps}")
+    sess = DeviceSessionInfo(id=uuid4().hex[:12], device_id=devices[0].id, goal=goal, steps_used=0, max_steps=RESEARCH_STEPS if purpose == "research" else max(1, min(max_steps, 200)))
+    apps = list(allowed_apps or [])
+    _STATE.update(session=sess, control="agent", allowed_apps=apps, last_action="session started", purpose=purpose, observed=0)
+    await _audit("device_start_session", "ok", f"goal={goal!r} apps={apps} purpose={purpose} max_steps={sess.max_steps}")
     return sess.model_dump_json()
 
 
@@ -165,21 +153,15 @@ async def device_tap(x: float, y: float) -> str:
 
 
 @tool
-async def device_swipe(from_x: float, from_y: float, to_x: float, to_y: float, dwell: bool = False) -> str:
-    """Swipe between normalized points. Needs an active approved session. dwell=true pauses 2-4 s afterwards (human pace in a feed)."""
-    out = await _act("device_swipe", {"type": "swipe", "from_x": from_x, "from_y": from_y, "to_x": to_x, "to_y": to_y}, "swipe")
-    if dwell and not out.startswith("error"):
-        await _dwell()
-    return out
+async def device_swipe(from_x: float, from_y: float, to_x: float, to_y: float) -> str:
+    """Swipe between normalized points. Needs an active approved session."""
+    return await _act("device_swipe", {"type": "swipe", "from_x": from_x, "from_y": from_y, "to_x": to_x, "to_y": to_y}, "swipe")
 
 
 @tool
 async def device_next_post() -> str:
-    """In a short-form feed, swipe up to the next post, then pause 2-4 s like a person watching. Needs an active approved session."""
-    out = await _act("device_next_post", {"type": "swipe", "from_x": 0.5, "from_y": 0.8, "to_x": 0.5, "to_y": 0.25}, "next post")
-    if not out.startswith("error"):
-        await _dwell()
-    return out
+    """In a short-form feed, swipe up to the next post. Needs an active approved session."""
+    return await _act("device_next_post", {"type": "swipe", "from_x": 0.5, "from_y": 0.8, "to_x": 0.5, "to_y": 0.25}, "next post")
 
 
 @tool
@@ -232,7 +214,7 @@ async def device_home() -> str:
 
 @tool
 async def device_commit(intent: str, x: float, y: float) -> str:
-    """Final irreversible tap (intent: post, send, purchase or delete) at normalized x,y. Always needs approval."""
+    """Final irreversible tap (intent: post, send, purchase, delete, login, signup or confirm) at normalized x,y. Always needs approval."""
     if _STATE["purpose"] == "research" and _STATE["session"] is not None:
         return "error: device_commit is refused in a research session (read-only: no like, follow, comment, post or purchase)"
     if intent not in INTENTS:

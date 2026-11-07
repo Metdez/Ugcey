@@ -1,4 +1,3 @@
-import asyncio
 import json
 import pathlib
 from typing import ClassVar
@@ -74,14 +73,14 @@ async def test_fake_feed_navigation_and_observe(monkeypatch):
     assert first["creator"] == "@fake.gymbro_dan" and first["metrics"]["likes"] == 45_300 and first["source_url"] == "device://tiktok/fake.gymbro_dan"
     assert first["mode"] == "live" and first["note"] == "top result" and first["hook_guess"]
     nxt = json.loads(await call(device.device_next_post))
-    assert nxt["ok"] and len(slept) == 1 and 2.0 <= slept[0] <= 4.0
+    assert nxt["ok"] and not slept
     second = json.loads(await call(device.device_observe))
     assert second["creator"] == "@fake.brandy.eats" and second["is_ad"] is True
     assert [s.url for _, s in d.app.sources] == ["device://tiktok/fake.gymbro_dan", "device://tiktok/fake.brandy.eats"]
     assert d.app.sources[0][0] == "t1" and [e["type"] for e in events] == ["source.added"] * 2
     assert "Post 3/4" in await call(device.device_screenshot)
-    await call(device.device_swipe, from_x=0.5, from_y=0.2, to_x=0.5, to_y=0.8, dwell=True)  # swipe down = previous
-    assert len(slept) == 2 and json.loads(await call(device.device_observe))["creator"] == "@fake.gymbro_dan"
+    await call(device.device_swipe, from_x=0.5, from_y=0.2, to_x=0.5, to_y=0.8)  # swipe down = previous
+    assert not slept and json.loads(await call(device.device_observe))["creator"] == "@fake.gymbro_dan"
 
 
 async def test_observe_needs_a_post_and_limits(monkeypatch):
@@ -136,11 +135,6 @@ def test_all_skills_frontmatter():
     for p in root.glob("*/SKILL.md"):
         meta = yaml.safe_load(p.read_text().split("---")[1])
         assert meta["name"] == p.parent.name and isinstance(meta["description"], str) and 0 < len(meta["description"]) <= 1024
-
-
-def test_dwell_range():
-    assert asyncio  # sleep is injectable; real default is asyncio.sleep
-    assert device.DWELL_S == (2.0, 4.0)
 
 
 def test_vision_normalize_keeps_navigation_hints():

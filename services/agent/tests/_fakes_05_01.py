@@ -1,4 +1,4 @@
-"""Fakes for phone-research tests (plan 05-01): deps with a recording app store and a sleep recorder."""
+"""Fakes for phone-research tests (plan 05-01): deps with a recording app store."""
 from __future__ import annotations
 
 from tests._doubles.device import FakeDeviceProvider
@@ -17,7 +17,7 @@ class MemApp:
 
 
 def install(monkeypatch, provider=None) -> tuple[Deps, list[float], list[dict]]:
-    """Returns (deps, recorded sleep seconds, emitted source events); resets device state."""
+    """Returns (deps, an empty legacy delay list, emitted source events); resets device state."""
     d = Deps(settings=Settings(internal_mode="test"), modes=ProviderModes(media="live", device="live", publishing="live", research="live"), kv=None, app=MemApp(), edge=None,  # type: ignore[arg-type]
              research=None, media=None, device=provider or FakeDeviceProvider(), publisher=None, analytics=None)  # type: ignore[arg-type]
     set_deps(d)
@@ -25,10 +25,6 @@ def install(monkeypatch, provider=None) -> tuple[Deps, list[float], list[dict]]:
     slept: list[float] = []
     events: list[dict] = []
 
-    async def fake_sleep(s: float) -> None:
-        slept.append(s)
-
-    device.set_sleep(fake_sleep)
     monkeypatch.setattr(device, "current_thread_id", lambda: "t1")
     monkeypatch.setattr(device, "emit", lambda t, **f: events.append({"type": t, **f}))
     return d, slept, events

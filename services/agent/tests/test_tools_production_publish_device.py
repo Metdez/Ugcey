@@ -85,5 +85,14 @@ async def test_device_session_guard_and_commit_flow():
     assert [a.tool for a in d.app.audit if a.tool != "device_start_session"] == ["device_tap", "device_tap", "device_commit"]
 
 
+async def test_operate_session_does_not_require_predeclared_apps():
+    install()
+    device.reset_state()
+    session = json.loads(await device.device_start_session.ainvoke({"goal": "sign in to the operator's account"}))
+    assert session["max_steps"] == 60
+    result = await device.device_commit.ainvoke({"intent": "confirm", "x": 2, "y": 0})
+    assert "intent must" not in result
+
+
 def device_err(s: str) -> bool:
     return s.startswith("error")

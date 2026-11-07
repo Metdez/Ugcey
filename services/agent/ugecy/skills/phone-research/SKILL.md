@@ -15,8 +15,8 @@ Never: like, follow, comment, share, save, DM, post, buy, log in, sign up, enter
 ## Stop conditions (stop, report, do not work around)
 Login wall or "Log in to continue", captcha or puzzle, age gate, verification code, "unusual activity" or "try again later", account or permission prompt, a human taking control (`control_taken`). Report the screen description and what was collected so far.
 
-## Human pace
-`device_next_post` already dwells 2 to 4 s. Let each post play before `device_observe`. Never loop faster, never batch-swipe. One action, then `device_screenshot`, then the next. If a tap misses twice, go Home and re-orient instead of guessing coordinates.
+## Navigation
+`device_next_post` does not add a delay. Take one action, then `device_screenshot`, then the next. If a tap misses twice, go Home and re-orient instead of guessing coordinates.
 
 ## Opening an app (iOS)
 `device_home` -> `device_swipe` from (0.5,0.4) to (0.5,0.8) opens Spotlight -> `device_type` "TikTok" (or "Instagram", "YouTube") -> `device_screenshot` -> tap the app result. Dismiss any tip card or notification prompt with the visible Not Now / Close, never Allow or Log in.
