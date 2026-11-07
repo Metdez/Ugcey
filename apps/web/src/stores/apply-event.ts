@@ -28,11 +28,23 @@ function ensureMsg(s: ThreadSnapshot, e: UiEvent, id?: string): [ThreadSnapshot,
 const addPart = (s: ThreadSnapshot, id: string, p: MessagePart) =>
   patchMsg(s, id, (m) => ({ ...m, parts: [...m.parts, p] }));
 
+const isProse = (p: MessagePart) => p.type === "text" || p.type === "reasoning";
+
+/** Append a streamed chunk. Models stream thinking and answer chunks interleaved ("I" / thought / "'ll take this"),
+ *  so within the run of prose since the last tool, subagent or approval there is at most one thought block followed
+ *  by one text block, and each chunk joins its own block. A tool call or other structural part starts a new run. */
 function appendText(s: ThreadSnapshot, id: string, type: "text" | "reasoning", text: string) {
   return patchMsg(s, id, (m) => {
-    const l = last(m.parts);
-    if (l && l.type === type) return { ...m, parts: [...m.parts.slice(0, -1), { type, text: l.text + text }] };
-    return { ...m, parts: [...m.parts, { type, text }] };
+    let start = m.parts.length;
+    while (start > 0 && isProse(m.parts[start - 1])) start--;
+    const run = m.parts.slice(start);
+    const thought = run.filter((p) => p.type === "reasoning").map((p) => (p as { text: string }).text).join("");
+    const answer = run.filter((p) => p.type === "text").map((p) => (p as { text: string }).text).join("");
+    const next = { reasoning: thought + (type === "reasoning" ? text : ""), text: answer + (type === "text" ? text : "") };
+    const merged: MessagePart[] = [];
+    if (next.reasoning) merged.push({ type: "reasoning", text: next.reasoning });
+    if (next.text) merged.push({ type: "text", text: next.text });
+    return { ...m, parts: [...m.parts.slice(0, start), ...merged] };
   });
 }
 

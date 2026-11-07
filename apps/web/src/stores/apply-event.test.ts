@@ -27,6 +27,38 @@ describe("applyEvent", () => {
     expect(s.toolCalls.w1).toMatchObject({ status: "error", output: "boom", parentCallId: "c1" });
   });
 
+  it("keeps one thought and one text block when reasoning and text chunks interleave", () => {
+    seq = 0;
+    const s = fold([
+      ev("reasoning.delta", { message_id: "m", text: "plan " }),
+      ev("message.delta", { message_id: "m", text: "I" }),
+      ev("reasoning.delta", { message_id: "m", text: "more" }),
+      ev("message.delta", { message_id: "m", text: "'ll take this" }),
+      ev("reasoning.delta", { message_id: "m", text: "!" }),
+      ev("message.delta", { message_id: "m", text: " through." }),
+    ]);
+    expect(s.messages[0].parts).toEqual([
+      { type: "reasoning", text: "plan more!" },
+      { type: "text", text: "I'll take this through." },
+    ]);
+  });
+
+  it("still starts new blocks after a tool call", () => {
+    seq = 0;
+    const s = fold([
+      ev("message.delta", { message_id: "m", text: "Before" }),
+      ev("tool.started", { call_id: "t1", name: "read_file", args: {} }),
+      ev("reasoning.delta", { message_id: "m", text: "hmm" }),
+      ev("message.delta", { message_id: "m", text: "After" }),
+    ]);
+    expect(s.messages[0].parts).toEqual([
+      { type: "text", text: "Before" },
+      { type: "tool", toolCallId: "t1" },
+      { type: "reasoning", text: "hmm" },
+      { type: "text", text: "After" },
+    ]);
+  });
+
   it("adds approvals, interrupts, and completes", () => {
     seq = 0;
     const s = fold([
