@@ -19,8 +19,9 @@ export function useTabBadges(): Partial<Record<InspectorTab, number>> {
   return {
     agents: Object.values(subagents).filter((a) => a.status === "running").length,
     files: files.filter((f) => f.modified_at && Date.parse(f.modified_at) > since("files")).length,
-    assets: Object.values(assets).filter((a) => a.status === "queued" || a.status === "in_progress"
-      || Date.parse(a.created_at) > since("assets")).length,
+    // the Assets tab shows only finished-ad videos, so only they are counted
+    assets: Object.values(assets).filter((a) => a.kind === "video" && (a.status === "queued" || a.status === "in_progress"
+      || Date.parse(a.created_at) > since("assets"))).length,
     approvals: Object.values(approvals).filter((a) => a.status === "pending").length,
   };
 }
