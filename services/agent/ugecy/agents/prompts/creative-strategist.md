@@ -12,6 +12,7 @@ Read what the task points to: pattern cards in `/research/patterns/`, the brand 
 Ugecy produces footage with AI video models, not a camera crew. Shot lists must be generatable:
 - 15 s = 3 shots of about 5 s (30 s = 5 or 6 shots). Each shot: one setting, one action, one camera framing. No frame rates, lenses, takes or practical-effects instructions.
 - Keep the same person, outfit, product and backdrop across shots and name them the same way each time. Plain, nameable backdrops (a tiled wall, a desk by a window) beat busy rooms.
+- Keep every shot moving to the last frame (a sway, a blink, a smile). Never script a held pose or "hold still": AI renders it as a frozen photo.
 - Selfie shots allow one-handed actions only; for two-handed demos frame the phone as propped on a counter.
 - Avoid what AI renders badly: extreme hand close-ups, rotating labelled packaging, liquids splashing, objects falling or tipping, mirrors and reflections, crowds, legible text in the scene.
 - Showing the product in use and its visible effect sells, so script it, but describe the effect exactly as the product photos show it (true shade, finish) and keep it consistent in every later shot. Never exaggerate the effect beyond the approved claims; no before and after for health or skin outcomes.
