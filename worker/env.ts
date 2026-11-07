@@ -18,7 +18,7 @@ export interface Env {
   WORKSPACE_ID: string; // "default"
   AI_GATEWAY_ID?: string; // optional AI Gateway id for env.AI.run(..., { gateway })
 
-  // secrets (wrangler secret put). Optional ones switch providers to mock mode when absent.
+  // secrets (wrangler secret put). Optional ones switch the capability off when absent.
   UGECY_ACCESS_KEY: string; // operator access key (cookie gate)
   HF_KEY?: string; // Higgsfield "key-id:key-secret"
   FIRECRAWL_API_KEY?: string;

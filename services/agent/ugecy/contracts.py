@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-Mode = Literal["live", "off", "mock"]  # "mock" only ever appears in tests (UGECY_INTERNAL_MODE=test)
+Mode = Literal["live", "off"]
 
 
 def now_iso() -> str:

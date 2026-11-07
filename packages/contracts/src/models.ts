@@ -1,11 +1,11 @@
 // Shared domain models. Source of truth for the UI; mirrored 1:1 in
 // services/agent/ugecy/contracts.py (pydantic). Change both together.
 
-/** "live" = connected and real; "off" = not connected (the feature errors with a clear message). No mock data exists in the product. */
+/** "live" = connected and real; "off" = not connected (the feature errors with a clear message). */
 export type Mode = "live" | "off";
 export type ISODate = string;
 
-/** Provider modes reported by the backend so the UI can show mock badges. */
+/** Provider modes reported by the backend: live or off. */
 export interface ProviderModes {
   llm: Mode;
   media: Mode;
@@ -116,7 +116,7 @@ export interface Asset {
   thread_id: string | null;
   kind: AssetKind;
   status: AssetStatus;
-  provider: string; // "higgsfield" | "mock"
+  provider: string; // "higgsfield"
   model: string; // endpoint id, e.g. "higgsfield-ai/soul/v2/standard"
   prompt: string;
   url: string | null;
@@ -197,7 +197,7 @@ export interface DeviceInfo {
 }
 
 export interface DeviceStatus {
-  provider: string; // "glasshand" | "mock"
+  provider: string; // "glasshand"
   mode: Mode;
   devices: DeviceInfo[];
   session: { id: string; device_id: string; goal: string; steps_used: number; max_steps: number } | null;

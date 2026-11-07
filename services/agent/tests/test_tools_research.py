@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from tests._doubles.analytics import MockAnalytics
+from tests._doubles.analytics import FakeAnalytics
 from tests._doubles.research import search_samples
 from tests._doubles.research_samples import SAMPLES
 from tests._fakes_02_07 import FakeApp, FakeEdge, install
@@ -105,7 +105,7 @@ async def test_web_search_emits_sources(monkeypatch):
     monkeypatch.setattr(research, "current_thread_id", lambda: "th1")
     out = await research.web_search.ainvoke({"query": "skincare pov dry skin"})
     lines = out.splitlines()
-    assert json.loads(lines[0])["mode"] == "mock" and len(lines) > 1
+    assert json.loads(lines[0])["mode"] == "live" and len(lines) > 1
     assert len(events) == len(lines) - 1 and events[0][0] == "source.added"
     assert len(d.app.sources) == len(events) and d.app.sources[0][0] == "th1"
 
@@ -134,14 +134,14 @@ async def test_memory_roundtrip_and_empty_library():
 
 async def test_post_metrics_deterministic():
     post = Post(id="p1", thread_id=None, account_id="a", asset_id=None, caption="c", ai_disclosure=True,
-                status="published", mode="mock")
+                status="published", mode="live")
     install(app=FakeApp([post]))
     a = await analytics.get_post_metrics.ainvoke({})
     b = await analytics.get_post_metrics.ainvoke({"post_ids": ["p1"]})
     assert a == b
     row = json.loads(a.splitlines()[1])
     assert len(row["views_7d_cumulative"]) == 7 and row["views_7d_cumulative"] == sorted(row["views_7d_cumulative"])
-    assert (await MockAnalytics().post_metrics([post]))[0]["views"] == row["views"]
+    assert (await FakeAnalytics().post_metrics([post]))[0]["views"] == row["views"]
 
 
 def test_source_policy_blocks_scraping_routes():

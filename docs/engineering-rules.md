@@ -30,6 +30,10 @@ Install the plugin with `/plugin marketplace add DietrichGebert/ponytail`, then 
 - Orchestration: LangChain Deep Agents.
 - Edge and platform services: maximize appropriate Cloudflare capabilities, with least-privilege access and observable failure handling.
 
+## No mock data
+
+The product never fabricates or simulates. It has no mock mode, no sample data, no demo accounts and no placeholder media. An unconnected capability reports `off` with a clear instruction to connect it. Test fakes live only in `tests/` (Python) or `*.test.ts` and `__fixtures__` (web), and tests inject them directly.
+
 ## Quality bar
 
 - Prefer tested, maintained, license-compatible public implementations where they fit; document provenance and adapt deliberately.

@@ -1,19 +1,19 @@
 import json
 
-from tests._doubles.device import MockDeviceProvider
+from tests._doubles.device import FakeDeviceProvider
 from tests._fakes_02_08 import install
 from ugecy.contracts import Asset, ConnectedAccount
 from ugecy.tools import device, publishing
 
 
-def _asset(status="completed", provider="mock-media"):
-    return Asset(id="a1", thread_id=None, kind="video", status=status, provider=provider, model="m", prompt="p", mode="mock", url="data:x")
+def _asset(status="completed", provider="fake-media"):
+    return Asset(id="a1", thread_id=None, kind="video", status=status, provider=provider, model="m", prompt="p", mode="live", url="data:x")
 
 
 async def _setup(**kw):
     d = install(**kw)
     await d.app.upsert_asset(_asset(**{k: v for k, v in kw.items() if k in ("status",)}))
-    await d.app.upsert_account(ConnectedAccount(id="acct_tiktok", platform="tiktok", handle="@test", mode="mock"))
+    await d.app.upsert_account(ConnectedAccount(id="acct_tiktok", platform="tiktok", handle="@test", mode="live"))
     accts = json.loads(await publishing.list_connected_accounts.ainvoke({}))
     return d, accts[0]["id"]
 
@@ -38,7 +38,7 @@ async def test_publish_validations():
 async def test_publish_now_and_job_idempotent():
     d, acct = await _setup()
     out = await _pub(acct)
-    assert out["status"] == "published" and "example.com/mock/tiktok/" in out["external_url"]
+    assert out["status"] == "published" and "example.com/fake/tiktok/" in out["external_url"]
     again = await publishing.run_publish_job(out["post_id"])
     assert again["noop"] and len([a for a in d.app.audit if a.action == "publish" and a.status == "ok"]) == 1
     assert json.loads(await publishing.get_post_status.ainvoke({"post_id": out["post_id"]}))["status"] == "published"
@@ -54,18 +54,18 @@ async def test_scheduled_edge_vs_local():
 
 
 async def test_mock_device_hit_testing():
-    p = MockDeviceProvider()
-    assert (await p.send("iphone-mock-1", {"type": "tap", "x": 0.2, "y": 0.15}, idempotency_key="1"))["screen"] == "photos"
-    assert "video_001.mp4" in await p.describe("iphone-mock-1")
-    miss = await p.send("iphone-mock-1", {"type": "tap", "x": 0.9, "y": 0.9}, idempotency_key="2")
+    p = FakeDeviceProvider()
+    assert (await p.send("iphone-fake-1", {"type": "tap", "x": 0.2, "y": 0.15}, idempotency_key="1"))["screen"] == "photos"
+    assert "video_001.mp4" in await p.describe("iphone-fake-1")
+    miss = await p.send("iphone-fake-1", {"type": "tap", "x": 0.9, "y": 0.9}, idempotency_key="2")
     assert miss["ok"] and miss["screen"] == "photos"
-    assert (await p.send("iphone-mock-1", {"type": "tap", "x": 2, "y": 0}, idempotency_key="3"))["error"] == "invalid_coordinates"
-    assert (await p.send("iphone-mock-1", {"type": "type", "text": "é"}, idempotency_key="4"))["error"] == "invalid_text"
-    r = await p.send("iphone-mock-1", {"type": "tap", "x": 0.2, "y": 0.15}, idempotency_key="1")  # replayed key: no double action
+    assert (await p.send("iphone-fake-1", {"type": "tap", "x": 2, "y": 0}, idempotency_key="3"))["error"] == "invalid_coordinates"
+    assert (await p.send("iphone-fake-1", {"type": "type", "text": "é"}, idempotency_key="4"))["error"] == "invalid_text"
+    r = await p.send("iphone-fake-1", {"type": "tap", "x": 0.2, "y": 0.15}, idempotency_key="1")  # replayed key: no double action
     assert r["screen"] == "photos"
-    assert (await p.screenshot("iphone-mock-1"))[:2] == b"\xff\xd8"
-    await p.send("iphone-mock-1", {"type": "home"}, idempotency_key="5")
-    assert "Home" in await p.describe("iphone-mock-1")
+    assert (await p.screenshot("iphone-fake-1"))[:2] == b"\xff\xd8"
+    await p.send("iphone-fake-1", {"type": "home"}, idempotency_key="5")
+    assert "Home" in await p.describe("iphone-fake-1")
 
 
 async def test_device_session_guard_and_commit_flow():
@@ -80,7 +80,7 @@ async def test_device_session_guard_and_commit_flow():
     assert out["screen"] == "posted" and out["steps_left"] == 0
     assert "budget" in await device.device_home.ainvoke({})
     snap = await device.device_status_snapshot()
-    assert snap.session.steps_used == 3 and snap.mode == "mock" and snap.devices[0].id == "iphone-mock-1"
+    assert snap.session.steps_used == 3 and snap.mode == "live" and snap.devices[0].id == "iphone-fake-1"
     d = device.get_deps()
     assert [a.tool for a in d.app.audit if a.tool != "device_start_session"] == ["device_tap", "device_tap", "device_commit"]
 

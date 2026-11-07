@@ -6,7 +6,7 @@ from importlib import resources
 import httpx
 import pytest
 
-from tests._doubles.media import MockMediaProvider
+from tests._doubles.media import FakeMediaProvider
 from tests._fakes_02_08 import install
 from ugecy import registry
 from ugecy.integrations.media.higgsfield import HiggsfieldProvider
@@ -17,18 +17,18 @@ from ugecy.tools import media
 def test_catalog_is_package_data():
     text = resources.files("ugecy.integrations.media").joinpath("catalog.yaml").read_text()
     assert "higgsfield-ai/soul/v2/standard" in text
-    assert {m["kind"] for m in MockMediaProvider().models()} == {"image", "video"}
-    assert all(m["defaults"].get("aspect_ratio", "9:16") == "9:16" for m in MockMediaProvider().models("image"))
+    assert {m["kind"] for m in FakeMediaProvider().models()} == {"image", "video"}
+    assert all(m["defaults"].get("aspect_ratio", "9:16") == "9:16" for m in FakeMediaProvider().models("image"))
 
 
 async def test_mock_lifecycle_and_faults():
     now = [0.0]
-    p = MockMediaProvider(clock=lambda: now[0])
+    p = FakeMediaProvider(clock=lambda: now[0])
     ok = await p.submit("bytedance/seedance-2.5/text-to-video", {"prompt": "hi"}, idempotency_key="k1")
     again = await p.submit("bytedance/seedance-2.5/text-to-video", {"prompt": "hi"}, idempotency_key="k1")
     assert again.job_id == ok.job_id and ok.status == "queued"
-    bad = await p.submit("higgsfield-ai/soul/v2/standard", {"prompt": "x [mock:fail]"}, idempotency_key="k2")
-    nsfw = await p.submit("higgsfield-ai/soul/v2/standard", {"prompt": "x [mock:nsfw]"}, idempotency_key="k3")
+    bad = await p.submit("higgsfield-ai/soul/v2/standard", {"prompt": "x [fake:fail]"}, idempotency_key="k2")
+    nsfw = await p.submit("higgsfield-ai/soul/v2/standard", {"prompt": "x [fake:nsfw]"}, idempotency_key="k3")
     now[0] = 3
     assert (await p.get(ok.job_id)).status == "in_progress"
     now[0] = 7
@@ -78,7 +78,7 @@ async def test_generate_media_flow_and_poller(monkeypatch):
     d = install()
     monkeypatch.setitem(media.POLL, "first", 0.01)
     out = json.loads(await media.generate_media.ainvoke({"model": "higgsfield-ai/soul/v2/standard", "prompt": "a creator"}))
-    assert out["status"] == "queued" and out["mode"] == "mock"
+    assert out["status"] == "queued" and out["mode"] == "live"
     await asyncio.gather(*media._tasks)
     asset = d.app.assets[out["asset_id"]]
     assert asset.status == "completed" and asset.url.startswith("data:") and asset.estimated_usd
@@ -92,7 +92,7 @@ async def test_generate_media_flow_and_poller(monkeypatch):
 async def test_failed_job_marks_asset_failed(monkeypatch):
     d = install()
     monkeypatch.setitem(media.POLL, "first", 0.01)
-    out = json.loads(await media.generate_media.ainvoke({"model": "higgsfield-ai/soul/v2/standard", "prompt": "[mock:fail]"}))
+    out = json.loads(await media.generate_media.ainvoke({"model": "higgsfield-ai/soul/v2/standard", "prompt": "[fake:fail]"}))
     await asyncio.gather(*media._tasks)
     assert d.app.assets[out["asset_id"]].status == "failed" and d.app.audit[-1].status == "error"
 

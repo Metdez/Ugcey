@@ -1,4 +1,4 @@
-"""Mock iPhone: a small screen graph rendered with Pillow (750x1334), hit-tested by normalized taps.
+"""Fake iPhone: a small screen graph rendered with Pillow (750x1334), hit-tested by normalized taps.
 
 Home -> Photos -> Upload -> Caption -> Posted, plus a Safari handoff page. Thread-safe state.
 """
@@ -17,7 +17,7 @@ from ugecy.contracts import DeviceInfo
 from ugecy.settings import Settings
 
 W, H = 750, 1334
-DEVICE_ID = "iphone-mock-1"
+DEVICE_ID = "iphone-fake-1"
 # hotspot = (label, (x0, y0, x1, y1) normalized, target screen | None); target None = text field / no-op
 SCREENS: dict[str, dict[str, Any]] = {
     "home": {"title": "Home", "spots": [("Photos", (0.08, 0.10, 0.40, 0.22), "photos"), ("TikTok", (0.42, 0.10, 0.74, 0.22), "upload"),
@@ -39,9 +39,9 @@ def _font(size: int) -> ImageFont.ImageFont:
     return ImageFont.load_default(size=size)
 
 
-class MockDeviceProvider:
-    name = "mock-iphone"
-    mode = "mock"
+class FakeDeviceProvider:
+    name = "fake-iphone"
+    mode = "live"
 
     def __init__(self, settings: Settings | None = None):
         self._lock = threading.Lock()
@@ -50,7 +50,7 @@ class MockDeviceProvider:
         self._receipts: dict[str, dict[str, Any]] = {}
 
     async def list_devices(self) -> list[DeviceInfo]:
-        return [DeviceInfo(id=DEVICE_ID, name="Mock iPhone SE", kind="iphone", status="active", ready=True)]
+        return [DeviceInfo(id=DEVICE_ID, name="Fake iPhone SE", kind="iphone", status="active", ready=True)]
 
     def _spots(self) -> list[tuple[str, tuple[float, float, float, float], str | None]]:
         return feed.spots(self._screen, self._query) if self._screen in FEED else SCREENS[self._screen]["spots"]

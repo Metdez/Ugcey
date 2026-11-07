@@ -17,7 +17,7 @@ async def test_config_shape(monkeypatch):
     client, deps = make_client(AGENT)
     async with client:
         cfg = (await client.get("/api/config")).json()
-        assert cfg["version"] == deps.settings.version and cfg["modes"]["publishing"] == "mock"
+        assert cfg["version"] == deps.settings.version and cfg["modes"]["publishing"] == "live"
         assert {m["role"] for m in cfg["models"]} >= {"orchestrator", "fast", "embeddings"}
         assert len(cfg["starter_prompts"]) == 6
         names = {a["name"]: a for a in cfg["agents"]}
@@ -59,7 +59,7 @@ async def test_memories_get_put():
 
 async def test_store_reads_and_no_seeded_accounts():
     deps = make_deps()
-    await deps.app.add_audit(AuditEntry(id="a1", thread_id="t", actor="system", action="x", status="ok", mode="mock"))
+    await deps.app.add_audit(AuditEntry(id="a1", thread_id="t", actor="system", action="x", status="ok", mode="live"))
     client, _ = make_client(AGENT, deps)
     async with client:
         assert (await client.get("/api/accounts")).json() == []  # nothing is ever seeded

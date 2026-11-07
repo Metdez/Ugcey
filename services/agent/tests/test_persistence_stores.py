@@ -42,21 +42,21 @@ async def test_appstore_crud_roundtrip():
     await st.upsert_thread(ThreadSummary(id="t1", title="B", status="running"))
     assert (await st.get_thread("t1")).title == "B" and len(await st.list_threads()) == 1
 
-    await st.add_audit(AuditEntry(id="a1", thread_id="t1", actor="agent", action="x", status="ok", mode="mock"))
-    await st.add_audit(AuditEntry(id="a2", actor="system", action="y", status="ok", mode="mock"))
+    await st.add_audit(AuditEntry(id="a1", thread_id="t1", actor="agent", action="x", status="ok", mode="live"))
+    await st.add_audit(AuditEntry(id="a2", actor="system", action="y", status="ok", mode="live"))
     assert len(await st.list_audit()) == 2 and [a.id for a in await st.list_audit("t1")] == ["a1"]
 
-    asset = Asset(id="s1", thread_id="t1", kind="image", status="queued", provider="p", model="m", prompt="q", mode="mock")
+    asset = Asset(id="s1", thread_id="t1", kind="image", status="queued", provider="p", model="m", prompt="q", mode="live")
     await st.upsert_asset(asset)
     await st.upsert_asset(asset.model_copy(update={"status": "completed", "url": "u", "estimated_usd": 0.5}))
     got = await st.get_asset("s1")
     assert got.status == "completed" and got.estimated_usd == 0.5 and (await st.list_assets("nope")) == []
 
     await st.upsert_post(Post(id="p1", thread_id="t1", account_id="acc", asset_id="s1", caption="c", ai_disclosure=True,
-                              status="draft", mode="mock"))
+                              status="draft", mode="live"))
     assert (await st.get_post("p1")).ai_disclosure is True and await st.get_post("zz") is None
 
-    await st.upsert_account(ConnectedAccount(id="acc", platform="tiktok", handle="@h", mode="mock"))
+    await st.upsert_account(ConnectedAccount(id="acc", platform="tiktok", handle="@h", mode="live"))
     assert (await st.list_accounts())[0].handle == "@h"
 
     rec = ApprovalRecord(interrupt_id="i1", thread_id="t1", requests=[ApprovalRequest(

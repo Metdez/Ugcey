@@ -42,9 +42,9 @@ def search_samples(query: str, platform: str | None = None, limit: int = 8) -> l
     return [c for _, _, c in scored[:limit]]
 
 
-class MockResearchProvider:
-    name = "mock-research"
-    mode: Mode = "mock"
+class FakeResearchProvider:
+    name = "fake-research"
+    mode: Mode = "live"
 
     def __init__(self, settings: Any = None) -> None:
         self.settings = settings

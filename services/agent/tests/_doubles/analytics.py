@@ -8,9 +8,9 @@ from typing import Any
 from ugecy.contracts import Mode, Post
 
 
-class MockAnalytics:
-    name = "mock-analytics"
-    mode: Mode = "mock"
+class FakeAnalytics:
+    name = "fake-analytics"
+    mode: Mode = "live"
 
     def __init__(self, settings: Any = None) -> None:
         self.settings = settings
@@ -25,7 +25,7 @@ class MockAnalytics:
         total = curve[-1]
         daily = [int(views * c / total) for c in curve]
         return {
-            "post_id": post.id, "mode": "mock", "views": views,
+            "post_id": post.id, "mode": "live", "views": views,
             "likes": int(views * rng.uniform(0.03, 0.09)), "shares": int(views * rng.uniform(0.004, 0.02)),
             "saves": int(views * rng.uniform(0.005, 0.03)), "watch_time_pct": round(rng.uniform(25, 70), 1),
             "views_7d_cumulative": daily,

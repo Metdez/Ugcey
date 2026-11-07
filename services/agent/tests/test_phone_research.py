@@ -9,7 +9,7 @@ from tests._fakes_05_01 import install
 from ugecy.integrations.device import vision
 from ugecy.tools import device
 
-ID = "iphone-mock-1"
+ID = "iphone-fake-1"
 
 
 async def call(tool, **args):
@@ -71,17 +71,17 @@ async def test_mock_feed_navigation_and_observe(monkeypatch):
     assert "Results: protein bar" in await call(device.device_screenshot) or True
     assert (await tap(0.75, 0.33))["screen"] == "tt_post"  # tile 2
     first = json.loads(await call(device.device_observe, note="top result"))
-    assert first["creator"] == "@mock.gymbro_dan" and first["metrics"]["likes"] == 45_300 and first["source_url"] == "device://tiktok/mock.gymbro_dan"
-    assert first["mode"] == "mock" and first["note"] == "top result" and first["hook_guess"]
+    assert first["creator"] == "@fake.gymbro_dan" and first["metrics"]["likes"] == 45_300 and first["source_url"] == "device://tiktok/fake.gymbro_dan"
+    assert first["mode"] == "live" and first["note"] == "top result" and first["hook_guess"]
     nxt = json.loads(await call(device.device_next_post))
     assert nxt["ok"] and len(slept) == 1 and 2.0 <= slept[0] <= 4.0
     second = json.loads(await call(device.device_observe))
-    assert second["creator"] == "@mock.brandy.eats" and second["is_ad"] is True
-    assert [s.url for _, s in d.app.sources] == ["device://tiktok/mock.gymbro_dan", "device://tiktok/mock.brandy.eats"]
+    assert second["creator"] == "@fake.brandy.eats" and second["is_ad"] is True
+    assert [s.url for _, s in d.app.sources] == ["device://tiktok/fake.gymbro_dan", "device://tiktok/fake.brandy.eats"]
     assert d.app.sources[0][0] == "t1" and [e["type"] for e in events] == ["source.added"] * 2
     assert "Post 3/4" in await call(device.device_screenshot)
     await call(device.device_swipe, from_x=0.5, from_y=0.2, to_x=0.5, to_y=0.8, dwell=True)  # swipe down = previous
-    assert len(slept) == 2 and json.loads(await call(device.device_observe))["creator"] == "@mock.gymbro_dan"
+    assert len(slept) == 2 and json.loads(await call(device.device_observe))["creator"] == "@fake.gymbro_dan"
 
 
 async def test_observe_needs_a_post_and_limits(monkeypatch):

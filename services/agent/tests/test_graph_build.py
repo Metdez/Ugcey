@@ -86,7 +86,7 @@ async def test_audit_writes_entry_and_survives_failure(reg):
     set_deps(fake_deps(app))
     await AuditMiddleware().awrap_tool_call(Req(), handler)
     e = app.entries[0]
-    assert (e.actor, e.action, e.tool, e.status, e.mode) == ("agent", "tool_call", "generate_media", "ok", "mock")
+    assert (e.actor, e.action, e.tool, e.status, e.mode) == ("agent", "tool_call", "generate_media", "ok", "live")
     assert len(e.detail) == 300
     set_deps(fake_deps(FakeApp(fail=True)))
     assert (await AuditMiddleware().awrap_tool_call(Req(), handler)).content == "ok"  # audit failure is swallowed

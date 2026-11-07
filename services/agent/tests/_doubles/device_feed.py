@@ -10,13 +10,13 @@ Rect = tuple[float, float, float, float]
 BACK: Rect = (0.03, 0.03, 0.25, 0.08)
 SEARCH_ICON: Rect = (0.80, 0.03, 0.97, 0.08)
 POSTS: list[dict[str, Any]] = [
-    {"creator": "@mock.snackqueen", "caption": "3pm slump fix #proteinbar", "overlay": "I stopped buying candy at 3pm", "hook": "I stopped buying candy at 3pm",
+    {"creator": "@fake.snackqueen", "caption": "3pm slump fix #proteinbar", "overlay": "I stopped buying candy at 3pm", "hook": "I stopped buying candy at 3pm",
      "views": 2_400_000, "likes": 310_000, "comments": 4_200, "shares": 28_000, "saves": 52_000, "audio": "original sound", "format": "problem_solution", "is_ad": False},
-    {"creator": "@mock.gymbro_dan", "caption": "ranking 5 protein bars (honest)", "overlay": "#1 will surprise you", "hook": "#1 will surprise you",
+    {"creator": "@fake.gymbro_dan", "caption": "ranking 5 protein bars (honest)", "overlay": "#1 will surprise you", "hook": "#1 will surprise you",
      "views": 870_000, "likes": 45_300, "comments": 1_900, "shares": 6_100, "saves": 14_000, "audio": "trending beat", "format": "tutorial_demo", "is_ad": False},
-    {"creator": "@mock.brandy.eats", "caption": "my new fave snack #ad", "overlay": "POV: you found the bar that tastes like cookie dough", "hook": "POV: you found the bar that tastes like cookie dough",
+    {"creator": "@fake.brandy.eats", "caption": "my new fave snack #ad", "overlay": "POV: you found the bar that tastes like cookie dough", "hook": "POV: you found the bar that tastes like cookie dough",
      "views": 120_000, "likes": 987, "comments": 64, "shares": 210, "saves": 1_300, "audio": "licensed track", "format": "pov_skit", "is_ad": True},
-    {"creator": "@mock.mealprep.jo", "caption": "$2 vs $4 protein bar", "overlay": "Is the $4 bar worth it?", "hook": "Is the $4 bar worth it?",
+    {"creator": "@fake.mealprep.jo", "caption": "$2 vs $4 protein bar", "overlay": "Is the $4 bar worth it?", "hook": "Is the $4 bar worth it?",
      "views": 1_200_000, "likes": 98_000, "comments": 3_000, "shares": 11_000, "saves": 33_000, "audio": "original sound", "format": "us_vs_them", "is_ad": False},
 ]
 _TILES: list[Rect] = [(0.05, 0.20, 0.48, 0.46), (0.52, 0.20, 0.95, 0.46), (0.05, 0.50, 0.48, 0.76), (0.52, 0.50, 0.95, 0.76)]

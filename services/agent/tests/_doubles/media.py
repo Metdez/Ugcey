@@ -1,7 +1,7 @@
 """Deterministic fake media provider: same catalog, timed lifecycle, SVG data-URI outputs.
 
 queued -> in_progress after `t_progress` s -> completed after `t_done` s (default 2 s / 6 s).
-Prompt markers inject faults: [mock:fail] -> failed, [mock:nsfw] -> nsfw.
+Prompt markers inject faults: [fake:fail] -> failed, [fake:nsfw] -> nsfw.
 """
 from __future__ import annotations
 
@@ -25,15 +25,15 @@ def placeholder_svg(kind: str, model: str, prompt: str) -> str:
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="540" height="960" viewBox="0 0 540 960">'
         '<rect width="540" height="960" fill="#1f2937"/>'
-        f'<text x="40" y="90" fill="#9ca3af" font-size="26" font-family="sans-serif">MOCK {kind.upper()} - {escape(model[-28:])}</text>'
+        f'<text x="40" y="90" fill="#9ca3af" font-size="26" font-family="sans-serif">FAKE {kind.upper()} - {escape(model[-28:])}</text>'
         f'<text x="40" y="150" fill="#e5e7eb" font-size="24" font-family="sans-serif">{escape(prompt[:48])}</text>{play}</svg>'
     )
     return "data:image/svg+xml;base64," + b64encode(svg.encode()).decode()
 
 
-class MockMediaProvider:
-    name = "mock-media"
-    mode = "mock"
+class FakeMediaProvider:
+    name = "fake-media"
+    mode = "live"
 
     def __init__(self, settings: Settings | None = None, *, t_progress: float = 2.0, t_done: float = 6.0,
                  clock: Callable[[], float] = time.monotonic):
@@ -57,7 +57,7 @@ class MockMediaProvider:
         m = next((m for m in catalog_models() if m["endpoint_id"] == model), None)
         if not m:
             raise ValueError(f"unknown model: {model}")
-        job_id = f"mock-{uuid4().hex[:12]}"
+        job_id = f"fake-{uuid4().hex[:12]}"
         self._jobs[job_id] = {"t0": self._clock(), "kind": m["kind"], "model": model, "prompt": str(args.get("prompt", ""))}
         self._by_key[idempotency_key] = job_id
         return MediaJob(job_id=job_id, status="queued")
@@ -71,9 +71,9 @@ class MockMediaProvider:
             return MediaJob(job_id=job_id, status="queued")
         if elapsed < self._t[1]:
             return MediaJob(job_id=job_id, status="in_progress")
-        if "[mock:fail]" in j["prompt"]:
-            return MediaJob(job_id=job_id, status="failed", error="mock failure injected")
-        if "[mock:nsfw]" in j["prompt"]:
-            return MediaJob(job_id=job_id, status="nsfw", error="mock nsfw injected")
+        if "[fake:fail]" in j["prompt"]:
+            return MediaJob(job_id=job_id, status="failed", error="fake failure injected")
+        if "[fake:nsfw]" in j["prompt"]:
+            return MediaJob(job_id=job_id, status="nsfw", error="fake nsfw injected")
         # shortcut: video output is the SVG poster only (no bundled mp4 without new deps); add a real clip when a player needs it
         return MediaJob(job_id=job_id, status="completed", outputs=[{"url": placeholder_svg(j["kind"], j["model"], j["prompt"]), "kind": j["kind"]}])

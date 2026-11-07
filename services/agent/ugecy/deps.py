@@ -38,43 +38,25 @@ IMPLEMENTATIONS: dict[str, dict[str, str]] = {
     "analytics": {"off": "ugecy.integrations.unavailable:OffAnalytics"},
 }
 
-# Test doubles live under tests/ and are loadable only when internal_mode == "test".
-_TEST_DOUBLES: dict[str, str] = {
-    "research": "tests._doubles.research:MockResearchProvider",
-    "media": "tests._doubles.media:MockMediaProvider",
-    "device": "tests._doubles.device:MockDeviceProvider",
-    "publisher": "tests._doubles.publisher:MockPublisher",
-    "analytics": "tests._doubles.analytics:MockAnalytics",
-}
-
-
 def _load(kind: str, mode: str, settings: Settings) -> Any:
-    if mode == "mock":
-        if settings.internal_mode != "test":
-            raise RuntimeError("mock providers are only available when UGECY_INTERNAL_MODE=test")
-        path = _TEST_DOUBLES[kind]
-    else:
-        path = IMPLEMENTATIONS[kind][mode]
-    module, attr = path.split(":")
+    module, attr = IMPLEMENTATIONS[kind][mode].split(":")
     return getattr(importlib.import_module(module), attr)(settings)
 
 
 def resolve_modes(s: Settings) -> ProviderModes:
-    """live when configured, otherwise off. "mock" is returned only in test mode, and only when asked for."""
+    """live when configured, otherwise off. Tests (internal_mode "test") start with everything off and inject their own providers."""
     local = s.internal_mode != "edge"
 
     def pick(choice: str, configured: bool) -> str:
-        if choice == "mock" and s.internal_mode == "test":
-            return "mock"
-        return "live" if configured and choice != "off" and s.internal_mode != "test" else "off"  # tests never reach live
+        return "live" if configured and choice != "off" and s.internal_mode != "test" else "off"
 
     media_ok = bool(s.higgsfield_key) if local else s.has_higgsfield
     search_ok = bool(s.firecrawl_api_key) if local else s.has_firecrawl
     return ProviderModes(
-        llm="live" if s.internal_mode != "test" else "mock",
+        llm="live" if s.internal_mode != "test" else "off",
         media=pick(s.media_provider, media_ok),  # type: ignore[arg-type]
         device=pick(s.device_provider, bool(s.glasshand_token) if local else s.has_glasshand),  # type: ignore[arg-type]
-        publishing="mock" if s.publishing_provider == "mock" and s.internal_mode == "test" else "off",  # no live API publisher yet
+        publishing="off",  # no live API publisher yet
         research=pick(s.research_provider, search_ok),  # type: ignore[arg-type]
     )
 
@@ -107,8 +89,8 @@ def build_deps(settings: Settings | None = None) -> Deps:
         kv=_load("kv", infra, s), app=_load("app", infra, s), edge=_load("edge", infra, s),
         research=_load("research", m.research, s), media=_load("media", m.media, s),
         device=_load("device", "auto" if s.device_provider == "auto" else m.device, s),
-        publisher=_load("publisher", "mock" if m.publishing == "mock" else "off", s),
-        analytics=_load("analytics", "mock" if m.publishing == "mock" else "off", s),
+        publisher=_load("publisher", "off", s),
+        analytics=_load("analytics", "off", s),
     )
 
 

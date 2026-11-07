@@ -48,13 +48,13 @@ def test_resolve_modes_never_mock_outside_test(mode, monkeypatch):
     on = deps_mod.resolve_modes(Settings(internal_mode="edge", has_higgsfield=True, has_firecrawl=True, has_glasshand=True))
     assert (on.media, on.device, on.research, on.publishing) == ("live", "live", "live", "off")
     with pytest.raises(ValidationError):  # mock is rejected, not silently accepted
-        Settings(internal_mode=mode, media_provider="mock")
+        Settings(internal_mode=mode, media_provider="live")
 
 
 def test_mock_only_loadable_in_test_mode():
     with pytest.raises(RuntimeError):
-        deps_mod._load("media", "mock", Settings(internal_mode="local"))
-    assert deps_mod._load("media", "mock", Settings(internal_mode="test")).mode == "mock"
+        deps_mod._load("media", "live", Settings(internal_mode="local"))
+    assert deps_mod._load("media", "live", Settings(internal_mode="test")).mode == "live"
     d = deps_mod.build_deps(Settings(internal_mode="test"))  # test mode defaults to off too
     assert (d.media.mode, d.publisher.mode, d.analytics.mode) == ("off", "off", "off")
 

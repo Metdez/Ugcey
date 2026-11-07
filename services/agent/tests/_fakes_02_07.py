@@ -4,8 +4,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
-from tests._doubles.analytics import MockAnalytics
-from tests._doubles.research import MockResearchProvider
+from tests._doubles.analytics import FakeAnalytics
+from tests._doubles.research import FakeResearchProvider
 from ugecy import deps as deps_mod
 from ugecy.contracts import Post, Source
 from ugecy.settings import Settings
@@ -42,6 +42,6 @@ class FakeEdge:
 def install(app: FakeApp | None = None, edge: FakeEdge | None = None):
     s = Settings()
     d = SimpleNamespace(settings=s, app=app or FakeApp(), edge=edge or FakeEdge(),
-                        research=MockResearchProvider(s), analytics=MockAnalytics(s))
+                        research=FakeResearchProvider(s), analytics=FakeAnalytics(s))
     deps_mod.set_deps(d)  # type: ignore[arg-type]
     return d

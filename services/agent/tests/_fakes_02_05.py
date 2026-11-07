@@ -60,7 +60,7 @@ class FakeApp:
 
 
 def fake_deps(app: FakeApp | None = None) -> SimpleNamespace:
-    return SimpleNamespace(settings=Settings(internal_mode="test"), modes=ProviderModes(media="mock"),
+    return SimpleNamespace(settings=Settings(internal_mode="test"), modes=ProviderModes(media="live"),
                            app=app or FakeApp(), checkpointer=InMemorySaver(), store=InMemoryStore())
 
 

@@ -5,10 +5,10 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ProviderChoice = Literal["auto", "live", "off", "mock"]  # "mock" is accepted only in test mode
+ProviderChoice = Literal["auto", "live", "off"]
 
 
 class Settings(BaseSettings):
@@ -54,13 +54,6 @@ class Settings(BaseSettings):
     max_model_calls_per_run: int = 80
     max_model_calls_per_subagent: int = 30
     llm_timeout_s: float = 180.0
-
-    @model_validator(mode="after")
-    def _no_mock_outside_tests(self) -> Settings:
-        picks = (self.media_provider, self.device_provider, self.research_provider, self.publishing_provider)
-        if self.internal_mode != "test" and "mock" in picks:
-            raise ValueError("provider 'mock' is only allowed when UGECY_INTERNAL_MODE=test; use auto, live or off")
-        return self
 
     @property
     def higgsfield_key(self) -> str | None:
