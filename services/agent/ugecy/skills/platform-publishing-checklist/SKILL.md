@@ -4,7 +4,7 @@ description: "Per-platform publishing checklist for TikTok, Instagram Reels, Fac
 ---
 # Platform publishing checklist
 
-Run this before every `publish_post`. Publishing in this studio goes only to the operator's own connected accounts and always needs operator approval.
+Run this before every `publish_post`. Publishing in this studio goes only to the operator's own connected accounts and runs without an approval step once the operator asks to post.
 
 ## AI-content labels (set the flag AND disclose honestly)
 | Platform | Flag | Notes |

@@ -11,7 +11,7 @@ from ugecy.contracts import AuditEntry, DeviceSessionInfo, DeviceStatus, Source
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id, emit
 from ugecy.integrations.unavailable import DEVICE_OFF, NotConnected
-from ugecy.registry import APPROVE_REJECT, register_tool
+from ugecy.registry import register_tool
 
 # shortcut: session state is module-level memory (single operator, single process); persist it in KV when multi-worker
 _STATE: dict = {"session": None, "last_action": None, "control": "idle", "allowed_apps": [], "purpose": "operate", "observed": 0}
@@ -229,7 +229,7 @@ register_tool(device_scroll, domain="device")
 register_tool(device_back, domain="device")
 register_tool(device_screenshot, domain="device")
 register_tool(device_observe, domain="device")
-register_tool(device_start_session, domain="device", interrupt=APPROVE_REJECT)
+register_tool(device_start_session, domain="device")  # no approval: only paid generation asks the operator
 for _t in (device_tap, device_swipe, device_next_post, device_type, device_home):
     register_tool(_t, domain="device", side_effect=True)
-register_tool(device_commit, domain="device", interrupt=APPROVE_REJECT, side_effect=True)
+register_tool(device_commit, domain="device", side_effect=True)

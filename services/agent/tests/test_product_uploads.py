@@ -157,3 +157,11 @@ async def test_end_frame_rejected_for_models_without_one_and_uploads_chain_as_re
     assert rec.submits[0][1]["image_urls"] == ["https://cdn.example/in/p.webp"]
     for t in list(media._tasks):
         t.cancel()
+
+
+def test_batch_size_only_reaches_models_that_take_it():
+    install(media=HiggsfieldProvider(Settings(internal_mode="local", hf_key="id:secret"),
+                                     transport=httpx.MockTransport(lambda r: httpx.Response(200))))
+    assert "batch_size" not in media._merged_args("marketing-studio/image/flare", "p", {"batch_size": 1})
+    assert "batch_size" not in media._merged_args("bytedance/seedance-2.5/image-to-video", "p", {"batch_size": 1})
+    assert media._merged_args("higgsfield-ai/soul/v2/standard", "p", {"batch_size": 1})["batch_size"] == 1

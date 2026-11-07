@@ -72,7 +72,6 @@ def build_agent(deps: Deps, models: dict[str, BaseChatModel] | None = None):
     })
     permissions = [
         FilesystemPermission(operations=["write"], paths=["/skills/**"], mode="deny"),
-        FilesystemPermission(operations=["write"], paths=["/memories/**"], mode="interrupt"),
     ]
     agent = create_deep_agent(
         model=models["orchestrator"], name="ugecy-orchestrator", tools=[], context_schema=RunContext,

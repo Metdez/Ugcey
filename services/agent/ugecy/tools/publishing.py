@@ -12,7 +12,7 @@ from ugecy.deps import get_deps
 from ugecy.events import current_thread_id
 from ugecy.integrations.publishing.policy import is_ai_generated
 from ugecy.integrations.unavailable import PUBLISH_OFF
-from ugecy.registry import APPROVE_EDIT_REJECT, register_tool
+from ugecy.registry import register_tool
 
 CAPTION_LIMITS = {"tiktok": 2200, "instagram": 2200, "youtube": 5000, "facebook": 5000}
 
@@ -112,5 +112,5 @@ async def get_post_status(post_id: str) -> str:
 
 
 register_tool(list_connected_accounts, domain="publishing")
-register_tool(publish_post, domain="publishing", interrupt=APPROVE_EDIT_REJECT, side_effect=True)
+register_tool(publish_post, domain="publishing", side_effect=True)  # no approval: only paid generation asks
 register_tool(get_post_status, domain="publishing")

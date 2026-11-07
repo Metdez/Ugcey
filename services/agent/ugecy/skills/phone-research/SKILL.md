@@ -6,7 +6,7 @@ description: "Research short-form UGC on a real iPhone (Glasshand) in read-only 
 
 ## Preconditions
 - `device_status`: provider glasshand, mode live, a device with ready true. Mode off = no phone: tell the operator to connect Glasshand in the Device tab.
-- `device_start_session(goal, allowed_apps, purpose="research")` once; the operator approves. Budget is 60 steps and 12 observed posts.
+- `device_start_session(goal, allowed_apps, purpose="research")` once (no approval step). Budget is 60 steps and 12 observed posts.
 
 ## Read-only rules
 Allowed: Home, swipe, tap to open search, results and posts, type a search query (80 characters at most), screenshot, observe.
