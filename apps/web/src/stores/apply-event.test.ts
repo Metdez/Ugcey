@@ -6,7 +6,7 @@ import { mockResume, mockRun } from "@/fixtures/mock-run";
 
 let seq = 0;
 const ev = (type: string, body: object, parent: string | null = null, agent = "orchestrator", run = "r1"): UiEvent =>
-  ({ seq: ++seq, ts: "2026-01-01T00:00:00Z", thread_id: "t", run_id: run, agent, ns: [], parent_call_id: parent, type, ...body }) as UiEvent;
+  ({ seq: ++seq, ts: "2026-01-01T00:00:00Z", thread_id: "t", run_id: run, agent, ns: [], parent_call_id: parent, type, ...body }) as unknown as UiEvent;
 const fold = (events: UiEvent[]) => events.reduce(applyEvent, emptySnapshot());
 
 describe("applyEvent", () => {

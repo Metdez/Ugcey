@@ -38,10 +38,10 @@ function appendText(s: ThreadSnapshot, id: string, type: "text" | "reasoning", t
 
 function ensureSub(s: ThreadSnapshot, e: UiEvent, id: string, patch: Partial<SubagentRunView>): [ThreadSnapshot, boolean] {
   const prev = s.subagents[id];
-  const sub: SubagentRunView = {
-    id, name: e.agent, task: "", status: "running", toolCallIds: [], text: "", startedAt: e.ts,
-    parentMessageId: "", ...prev, ...patch,
+  const base: SubagentRunView = {
+    id, name: e.agent, task: "", status: "running", toolCallIds: [], text: "", startedAt: e.ts, parentMessageId: "",
   };
+  const sub: SubagentRunView = { ...base, ...prev, ...patch };
   return [{ ...s, subagents: { ...s.subagents, [id]: sub } }, !prev];
 }
 

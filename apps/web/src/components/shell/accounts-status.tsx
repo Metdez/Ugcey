@@ -1,11 +1,11 @@
-import { Camera, Facebook, Music2, Play, type LucideIcon } from "lucide-react";
+import { Camera, Music2, Play, Users, type LucideIcon } from "lucide-react";
 import type { ConnectedAccount, Platform } from "@ugecy/contracts";
 import { Badge } from "@/components/ui/badge";
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem } from "@/components/ui/sidebar";
 import { StatusDot, type Tone } from "@/components/common/status-dot";
 import { useWorkspace } from "@/stores/workspace-store";
 
-const ICON: Record<Platform, LucideIcon> = { tiktok: Music2, instagram: Camera, youtube: Play, facebook: Facebook };
+const ICON: Record<Platform, LucideIcon> = { tiktok: Music2, instagram: Camera, youtube: Play, facebook: Users };
 const TONE: Record<ConnectedAccount["status"], [Tone, string]> = {
   connected: ["success", "Connected"], needs_auth: ["warning", "Reconnect needed"], error: ["error", "Error"],
 };
