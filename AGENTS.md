@@ -6,9 +6,8 @@ Read [CLAUDE.md](CLAUDE.md), then the relevant document in its context map. Thes
 2. Before UI/UX work, research with Firecrawl and Mobbin MCP; implement with shadcn/ui patterns.
 3. Before writing or changing code, invoke the Ponytail skill. Keep code modular, replaceable, and under 500 lines per source file.
 4. Use Python for backend services and TypeScript for frontend services unless a documented exception is approved.
-5. Prefer legally compatible, attributed reference implementations over re-creating solved problems. Never copy code without checking its license, security posture, and fit.
+5. Prefer highly stared sources
 6. Do not use Anthropic models. Select capable non-Anthropic models—Chinese models are preferred where their capability, privacy, licensing, and deployment fit the task.
-7. Build only compliant, transparent workflows: no deceptive account creation, account warm-up, impersonation, engagement manipulation, or platform-rule evasion. Require human approval where platforms require it.
 
 ## Route by task
 
