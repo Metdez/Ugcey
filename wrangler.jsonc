@@ -1,0 +1,53 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ugecy",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./apps/web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/webhooks/*", "/oauth/*"]
+  },
+  "vars": { "WORKSPACE_ID": "default" },
+  "ai": { "binding": "AI" },
+  "browser": { "binding": "BROWSER" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ugecy-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [{ "binding": "KV", "id": "00000000000000000000000000000000" }],
+  "vectorize": [{ "binding": "MEMORY", "index_name": "ugecy-memory" }],
+  "analytics_engine_datasets": [{ "binding": "METRICS", "dataset": "ugecy_events" }],
+  "queues": {
+    "producers": [{ "binding": "JOBS", "queue": "ugecy-jobs" }],
+    "consumers": [
+      {
+        "queue": "ugecy-jobs",
+        "max_batch_size": 10,
+        "max_retries": 5,
+        "dead_letter_queue": "ugecy-jobs-dlq"
+      }
+    ]
+  },
+  "workflows": [{ "binding": "PUBLISH_WF", "name": "ugecy-publish", "class_name": "PublishWorkflow" }],
+  // durable_object policy: image map is read in code via ctx.container.images.agent.
+  // Orchestrator may swap dockerfile for a digest-pinned { "image": "registry.cloudflare.com/...@sha256:..." }.
+  "containers": [
+    {
+      "class_name": "AgentRuntime",
+      "scheduling_policy": "durable_object",
+      "images": { "agent": { "dockerfile": "./services/agent/Dockerfile", "build_context": "./services/agent" } }
+    }
+  ],
+  "durable_objects": { "bindings": [{ "name": "AGENT_RUNTIME", "class_name": "AgentRuntime" }] },
+  // `exports` replaces `migrations`; never configure both.
+  "exports": { "AgentRuntime": { "type": "durable-object", "storage": "sqlite" } }
+}

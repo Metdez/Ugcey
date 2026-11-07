@@ -1,0 +1,57 @@
+# UGC-relevant Higgsfield workflows, verified against docs.higgsfield.ai/llms-full.txt (2026-11).
+# endpoint_id is the POST path. `defaults` are merged under caller args (drafts: 9:16, 5 s, 720p).
+# `requires` lists args the caller must supply (image_asset_id fills image_url / reference_asset_ids fills image_urls).
+# `cost_hint` is orientation only: the real number is always the live POST /estimate.
+models:
+  - endpoint_id: higgsfield-ai/soul/v2/standard
+    kind: image
+    label: Soul V2 creator still
+    use: Photoreal creator / lifestyle still to anchor a shot. Start here, then animate with image-to-video.
+    defaults: {aspect_ratio: "9:16", resolution: 1080p, batch_size: 1}
+    cost_hint: "about $0.01 per 1080p still"
+  - endpoint_id: marketing-studio/image
+    kind: image
+    label: Marketing Studio product still
+    use: Product ad still. Pass product photos via image_urls (up to 16).
+    defaults: {aspect_ratio: "9:16", resolution: 1k, quality: medium}
+    cost_hint: "about $0.03 at 1k medium, $0.21 at 2k high"
+  - endpoint_id: higgsfield/ads-studio/v1.0
+    kind: image
+    label: Ads Studio from product images
+    use: Several ad concepts from a brief plus product images (image_urls up to 10).
+    defaults: {aspect_ratio: "9:16", batch_size: 1}
+    cost_hint: "token-metered, estimate unavailable; roughly $0.08 per image"
+  - endpoint_id: bytedance/seedance-2.5/text-to-video
+    kind: video
+    label: Seedance 2.5 text to video (audio)
+    use: UGC clip with generated audio straight from a prompt, 4-30 s. No still needed.
+    defaults: {aspect_ratio: "9:16", duration: 5, resolution: 720p, generate_audio: true}
+    cost_hint: "about $0.46 per second at 720p ($2.30 for 5 s); 480p is $0.21/s"
+  - endpoint_id: bytedance/seedance-2.5/image-to-video
+    kind: video
+    label: Seedance 2.5 image to video (audio)
+    use: Animate an approved still (image_asset_id), 4-30 s, keeps the still's aspect ratio.
+    requires: [image_url]
+    defaults: {duration: 5, resolution: 720p, generate_audio: true}
+    cost_hint: "about $0.46 per second at 720p ($2.30 for 5 s); 480p is $0.21/s"
+  - endpoint_id: bytedance/seedance-2.5/reference-to-video
+    kind: video
+    label: Seedance 2.5 multi-reference UGC video
+    use: Keep one creator or product consistent across shots using up to 30 reference images (reference_asset_ids).
+    requires: [image_urls]
+    defaults: {aspect_ratio: "9:16", duration: 5, resolution: 720p, generate_audio: true}
+    cost_hint: "about $0.46 per second at 720p; reference video inputs are billed too"
+  - endpoint_id: kling-video/v3.0/std/image-to-video
+    kind: video
+    label: Kling 3.0 image to video (multi-shot)
+    use: Animate a still (image_asset_id) into 3-15 s, optionally multi-shot via multi_shots + multi_prompt (up to 6).
+    requires: [image_url]
+    defaults: {duration: 5, sound: "on"}
+    cost_hint: "about $0.54 for 5 s"
+  - endpoint_id: alibaba/wan-3.0/image-to-video
+    kind: video
+    label: Wan 3.0 image to video (cheap draft)
+    use: Cheapest motion test of a still before spending on Seedance or Kling. 480p draft.
+    requires: [image_url]
+    defaults: {aspect_ratio: "9:16", duration: 5, resolution: 480p, generate_audio: true}
+    cost_hint: "about $0.05 per second at 480p ($0.25 for 5 s)"
