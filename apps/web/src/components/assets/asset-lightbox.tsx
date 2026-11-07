@@ -27,7 +27,7 @@ export function AssetLightbox() {
               <div className="flex flex-wrap gap-1">
                 <Badge variant="outline">{asset.model}</Badge>
                 <Badge variant="outline">{asset.provider}</Badge>
-                <Badge variant={asset.mode === "mock" ? "secondary" : "outline"}>{asset.mode === "mock" ? "SIMULATED" : "live"}</Badge>
+                <Badge variant="outline">{asset.mode}</Badge>
                 <Badge variant="outline">{asset.status}</Badge>
               </div>
               {asset.url && (

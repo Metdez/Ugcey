@@ -1,5 +1,4 @@
 import { AlertCircle, Music } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useThread } from "@/stores/thread-store";
@@ -35,7 +34,6 @@ export function AssetThumb({ assetId, size = "md" }: { assetId: string; size?: "
       ) : (
         <Music className="absolute inset-0 m-auto size-5 text-muted-foreground" />
       )}
-      {asset.mode === "mock" && <Badge variant="secondary" className="absolute top-1 left-1 text-[10px]">SIMULATED</Badge>}
     </button>
   );
 }

@@ -3,7 +3,7 @@ import { filterAudit, groupFiles } from "./lib";
 
 const f = (path: string) => ({ path, size: 1, modified_at: null });
 const a = (id: string, ts: string, status: "ok" | "error") => ({
-  id, ts, thread_id: null, actor: "agent" as const, agent: null, action: "tool_call", tool: null, status, mode: "mock" as const, detail: "",
+  id, ts, thread_id: null, actor: "agent" as const, agent: null, action: "tool_call", tool: null, status, mode: "live" as const, detail: "",
 });
 
 test("groupFiles groups by first segment and sorts", () => {

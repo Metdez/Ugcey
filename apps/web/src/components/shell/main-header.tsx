@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Command, FlaskConical, PanelRight } from "lucide-react";
+import { Command, PanelRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
@@ -15,7 +15,7 @@ export function MainHeader() {
   const title = useThread((s) => s.title);
   const status = useThread((s) => s.status);
   const pending = useThread((s) => Object.values(s.approvals).filter((a) => a.status === "pending").length);
-  const mock = useWorkspace((s) => !!s.config && Object.values(s.config.modes).includes("mock"));
+  const modes = useWorkspace((s) => s.config?.modes);
   const { inspectorOpen, toggleInspector, setPalette } = useUi();
 
   useEffect(() => {
@@ -29,8 +29,15 @@ export function MainHeader() {
       <h1 className="min-w-0 flex-1 truncate text-sm font-semibold">{title}</h1>
       <div className="hidden items-center gap-2 sm:flex"><ModelChip /></div>
       <RunStatusBadge />
-      {mock && (
-        <Badge className="gap-1 bg-warning/12 text-warning"><FlaskConical className="size-3" />MOCK</Badge>
+      {modes && (
+        <div className="hidden items-center gap-1 md:flex">
+          {([["iPhone", modes.device], ["Higgsfield", modes.media]] as const).map(([name, m]) => (
+            <Badge key={name} variant="outline" className="gap-1 text-[11px]" title={`${name} ${m === "live" ? "connected" : "not connected"}`}>
+              <span className={`size-1.5 rounded-full ${m === "live" ? "bg-success" : "bg-muted-foreground"}`} aria-hidden />
+              {name} {m === "live" ? "live" : "off"}
+            </Badge>
+          ))}
+        </div>
       )}
       <Tooltip>
         <TooltipTrigger asChild>

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { UiEvent } from "@ugecy/contracts";
 import { emptySnapshot } from "@/types/agent";
 import { applyEvent } from "./apply-event";
-import { mockResume, mockRun } from "@/fixtures/mock-run";
+import { sampleResume, sampleRun } from "./__fixtures__/run-timeline";
 
 let seq = 0;
 const ev = (type: string, body: object, parent: string | null = null, agent = "orchestrator", run = "r1"): UiEvent =>
@@ -53,12 +53,12 @@ describe("applyEvent", () => {
     expect(s.progress).toBe("x");
   });
 
-  it("replays the full mock timeline without orphaning tool calls", () => {
-    const s1 = fold(mockRun("t", "hi").map((e) => ({ ...e, thread_id: "t" })));
+  it("replays the full sample timeline without orphaning tool calls", () => {
+    const s1 = fold(sampleRun("t", "hi").map((e) => ({ ...e, thread_id: "t" })));
     expect(s1.status).toBe("interrupted");
     expect(Object.keys(s1.subagents).sort()).toEqual(["call-c1", "call-r1"]);
     expect(s1.subagents["call-r1"].toolCallIds).toHaveLength(4);
-    const s2 = mockResume("t", [{ type: "approve" }]).reduce(applyEvent, s1);
+    const s2 = sampleResume("t", [{ type: "approve" }]).reduce(applyEvent, s1);
     expect(s2.status).toBe("idle");
     expect(s2.assets["asset-1"].status).toBe("completed");
   });

@@ -1,9 +1,6 @@
-// Realistic UiEvent timelines so WP-B / WP-C can develop without a backend. Enabled with
-// `?mock=1` or VITE_MOCK=1. `mockRun` ends at an approval; `mockResume` finishes the job.
+// TEST-ONLY UiEvent timelines (imported by *.test.ts, never by app code). `sampleRun` ends at an
+// approval; `sampleResume` finishes the job.
 import type { Asset, Decision, EventBase, UiEvent } from "@ugecy/contracts";
-
-export const MOCK = new URLSearchParams(globalThis.location?.search).get("mock") === "1"
-  || import.meta.env.VITE_MOCK === "1";
 
 type Body<T extends UiEvent["type"]> = Omit<Extract<UiEvent, { type: T }>, keyof EventBase | "type">;
 type Who = { agent?: string; parent?: string };
@@ -30,7 +27,7 @@ function builder(threadId: string, runId: string) {
 
 const words = (text: string) => text.match(/\S+\s*/g) ?? [];
 
-export function mockRun(threadId: string, userText: string): UiEvent[] {
+export function sampleRun(threadId: string, userText: string): UiEvent[] {
   const { out, ev } = builder(threadId, `run-${Date.now()}`);
   const R = { agent: "research-analyst", parent: "call-r1" };
   const C = { agent: "creative-strategist", parent: "call-c1" };
@@ -93,13 +90,13 @@ export function mockRun(threadId: string, userText: string): UiEvent[] {
   ev("approval.requested", { interrupt_id: "int-1", requests: [{
     tool: "generate_media", agent: "production-coordinator",
     args: { kind: "video", prompt: "Handheld UGC, woman applies serum, 'day 30' caption", model: "higgsfield-ai/soul/v2/standard", count: 1 },
-    description: "Generate 1 vertical video (simulated)", allowed_decisions: ["approve", "edit", "reject"], estimated_cost_usd: 0.6,
+    description: "Generate 1 vertical video", allowed_decisions: ["approve", "edit", "reject"], estimated_cost_usd: 0.6,
   }] });
   ev("run.completed", { status: "interrupted" });
   return out;
 }
 
-export function mockResume(threadId: string, decisions: Decision[]): UiEvent[] {
+export function sampleResume(threadId: string, decisions: Decision[]): UiEvent[] {
   const { out, ev } = builder(threadId, `run-${Date.now()}-b`);
   const rejected = decisions[0]?.type === "reject";
   ev("run.started", { model: "@cf/zai-org/glm-5.3" });
@@ -108,31 +105,18 @@ export function mockResume(threadId: string, decisions: Decision[]): UiEvent[] {
   } else {
     ev("tool.completed", { call_id: "g1", name: "generate_media", status: "ok", output_preview: "job queued" }, { agent: "production-coordinator" });
     const base: Asset = {
-      id: "asset-1", thread_id: threadId, kind: "video", status: "queued", provider: "mock", model: "higgsfield-ai/soul/v2/standard",
-      prompt: "Handheld UGC, woman applies serum", url: null, thumbnail_url: null, job_id: "job-1", mode: "mock", estimated_usd: 0.6,
+      id: "asset-1", thread_id: threadId, kind: "video", status: "queued", provider: "higgsfield", model: "higgsfield-ai/soul/v2/standard",
+      prompt: "Handheld UGC, woman applies serum", url: null, thumbnail_url: null, job_id: "job-1", mode: "live", estimated_usd: 0.6,
       created_at: new Date().toISOString(),
     };
     ev("asset.updated", { asset: base });
-    ev("progress", { tool: "generate_media", message: "Rendering video (simulated)…" });
+    ev("progress", { tool: "generate_media", message: "Rendering video…" });
     ev("asset.updated", { asset: { ...base, status: "in_progress" } });
-    ev("asset.updated", { asset: { ...base, status: "completed", thumbnail_url: svg("Mock video", 280), url: svg("Mock video", 280) } });
-    words("The mock video finished. Nothing was posted; publishing is simulated until accounts are connected.")
+    ev("asset.updated", { asset: { ...base, status: "completed", thumbnail_url: svg("Video", 280), url: svg("Video", 280) } });
+    words("The video finished. Nothing was posted.")
       .forEach((w) => ev("message.delta", { message_id: "m3", text: w }));
   }
   ev("message.completed", { message_id: "m3", text: "" });
   ev("run.completed", { status: "done" });
   return out;
-}
-
-/** Replay events with small delays (text fast, structural events slower). */
-export async function replay(events: UiEvent[], onEvent: (e: UiEvent) => void, signal?: AbortSignal) {
-  for (const e of events) {
-    if (signal?.aborted) return;
-    onEvent(e);
-    const ms = e.type === "message.delta" || e.type === "reasoning.delta" ? 22 : 260;
-    await new Promise<void>((r) => {
-      const t = setTimeout(r, ms);
-      signal?.addEventListener("abort", () => { clearTimeout(t); r(); }, { once: true });
-    });
-  }
 }

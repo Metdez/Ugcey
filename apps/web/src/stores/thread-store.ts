@@ -1,11 +1,10 @@
 // Thread store: the only channel between chat and inspector components (FROZEN API:
-// `useThread`, `threadActions`). Streams real SSE, or replays the mock timeline with `?mock=1`.
+// `useThread`, `threadActions`). Streams real SSE.
 import { create } from "zustand";
 import type { Decision, UiEvent } from "@ugecy/contracts";
 import { api, ApiError, streams } from "@/lib/api";
 import { setThreadParam } from "@/lib/location";
 import { clip } from "@/lib/time";
-import { MOCK, mockResume, mockRun, replay } from "@/fixtures/mock-run";
 import { emptySnapshot, type ThreadActions, type ThreadSnapshot, type UiMessage } from "@/types/agent";
 import { applyEvent } from "./apply-event";
 import { historyToUi } from "./history";
@@ -56,10 +55,6 @@ export const threadActions: ThreadActions = {
     abort?.abort();
     abort = null;
     if (!id) return set(emptySnapshot());
-    if (MOCK) {
-      const title = useWorkspace.getState().threads.find((t) => t.id === id)?.title ?? "Mock chat";
-      return set({ ...emptySnapshot(), threadId: id, title });
-    }
     set({ ...emptySnapshot(), threadId: id, status: "connecting" });
     try {
       const [st, assets] = await Promise.all([api.getThread(id), api.listAssets(id).catch(() => [])]);
@@ -91,7 +86,7 @@ export const threadActions: ThreadActions = {
     try {
       if (!id) {
         const title = clip(text.trim(), 60);
-        id = MOCK ? "mock-thread" : (await api.createThread(title)).id;
+        id = (await api.createThread(title)).id;
         set({ threadId: id, title });
         setThreadParam(id, "replace");
       }
@@ -100,7 +95,7 @@ export const threadActions: ThreadActions = {
     }
     set((s) => ({ messages: [...s.messages, userMessage(text)] }));
     const tid = id;
-    await run((sig) => (MOCK ? replay(mockRun(tid, text), onEvent, sig) : streams.run(tid, text, onEvent, sig)));
+    await run((sig) => streams.run(tid, text, onEvent, sig));
   },
 
   async stop() {
@@ -108,7 +103,7 @@ export const threadActions: ThreadActions = {
     abort?.abort();
     abort = null;
     set({ status: "idle", progress: null });
-    if (id && !MOCK) await api.cancel(id).catch(() => undefined);
+    if (id) await api.cancel(id).catch(() => undefined);
   },
 
   async decide(interruptId, decisions: Decision[]) {
@@ -119,12 +114,12 @@ export const threadActions: ThreadActions = {
     set((s) => ({ approvals: { ...s.approvals, [interruptId]: {
       ...ap, status: d === "reject" ? "rejected" : d === "edit" ? "edited" : "approved", decided_at: new Date().toISOString(),
     } } }));
-    await run((sig) => (MOCK ? replay(mockResume(id, decisions), onEvent, sig) : streams.resume(id, interruptId, decisions, onEvent, sig)));
+    await run((sig) => streams.resume(id, interruptId, decisions, onEvent, sig));
   },
 
   async refreshAssets() {
     const id = get().threadId;
-    if (!id || MOCK) return;
+    if (!id) return;
     const list = await api.listAssets(id).catch(() => null);
     if (list && get().threadId === id) set({ assets: Object.fromEntries(list.map((a) => [a.id, a])) });
   },

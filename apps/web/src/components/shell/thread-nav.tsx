@@ -15,7 +15,6 @@ import { StatusDot } from "@/components/common/status-dot";
 import { navigateToThread } from "@/hooks/use-thread-route";
 import { api } from "@/lib/api";
 import { dateBucket } from "@/lib/time";
-import { MOCK } from "@/fixtures/mock-run";
 import { useThread } from "@/stores/thread-store";
 import { useWorkspace } from "@/stores/workspace-store";
 
@@ -68,16 +67,14 @@ export function ThreadNav() {
                     <Dot t={t} live={t.id === activeId && (status === "streaming" || status === "connecting")} />
                     <span className="truncate">{t.title}</span>
                   </SidebarMenuButton>
-                  {!MOCK && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuAction showOnHover aria-label={`Actions for ${t.title}`}><MoreHorizontal /></SidebarMenuAction>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent side="right" align="start">
-                        <DropdownMenuItem variant="destructive" onSelect={() => setDoomed(t)}><Trash2 />Delete chat</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuAction showOnHover aria-label={`Actions for ${t.title}`}><MoreHorizontal /></SidebarMenuAction>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start">
+                      <DropdownMenuItem variant="destructive" onSelect={() => setDoomed(t)}><Trash2 />Delete chat</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

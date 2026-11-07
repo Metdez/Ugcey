@@ -1,4 +1,4 @@
-// Tiny URL sync: the open thread lives in `?t=<id>`; other params (e.g. `mock=1`) are kept.
+// Tiny URL sync: the open thread lives in `?t=<id>`; other params are kept.
 export const getThreadParam = () => new URLSearchParams(location.search).get("t");
 
 export function setThreadParam(id: string | null, mode: "push" | "replace" = "push") {

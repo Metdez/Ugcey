@@ -26,7 +26,6 @@ export function AuditRow({ row, focused }: { row: AuditEntry; focused: boolean }
         <Badge variant="outline" className="font-mono">{row.action}</Badge>
         {row.tool && <span className="truncate font-mono">{row.tool}</span>}
         <Status className={`ml-auto size-3.5 ${color}`} aria-label={label} />
-        {row.mode === "mock" && <Badge variant="secondary">MOCK</Badge>}
       </button>
       {open && <pre className="mx-2 mb-2 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-2 font-mono text-[11.5px]">{row.detail || "(no detail)"}</pre>}
     </li>

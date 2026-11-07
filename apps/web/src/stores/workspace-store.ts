@@ -2,8 +2,6 @@
 import { create } from "zustand";
 import type { AppConfig, ConnectedAccount, ThreadSummary } from "@ugecy/contracts";
 import { api, ApiError } from "@/lib/api";
-import { MOCK_ACCOUNTS, MOCK_CONFIG, MOCK_THREADS } from "@/fixtures/mock-data";
-import { MOCK } from "@/fixtures/mock-run";
 
 export type Health = "unknown" | "ok" | "offline" | "locked";
 
@@ -28,10 +26,6 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   setHealth: (health) => set({ health }),
 
   async boot() {
-    if (MOCK) {
-      set({ config: MOCK_CONFIG, threads: MOCK_THREADS, threadsLoaded: true, accounts: MOCK_ACCOUNTS, health: "ok" });
-      return;
-    }
     try {
       set({ config: await api.getConfig(), health: "ok" });
     } catch (err) {
@@ -42,7 +36,6 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   },
 
   async refreshThreads() {
-    if (MOCK) return;
     try {
       const threads = await api.listThreads();
       set({ threads: threads.toSorted((a, b) => b.updated_at.localeCompare(a.updated_at)), threadsLoaded: true });
@@ -52,12 +45,10 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   },
 
   async refreshAccounts() {
-    if (MOCK) return;
     try { set({ accounts: await api.listAccounts() }); } catch { /* sidebar footer only; health comes from threads */ }
   },
 
   async ping() {
-    if (MOCK) return;
     try {
       const res = await fetch("/api/healthz", { credentials: "same-origin" });
       if (res.status === 401) return set({ health: "locked" });

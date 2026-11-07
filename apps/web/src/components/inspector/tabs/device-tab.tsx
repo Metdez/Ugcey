@@ -1,6 +1,5 @@
 import { Smartphone } from "lucide-react";
 import { useMemo } from "react";
-import { DeviceFrame } from "@/components/device/device-frame";
 import { DeviceReceipts } from "@/components/device/device-receipts";
 import { GlasshandDisconnected, GlasshandFailed, GlasshandPending } from "@/components/device/glasshand-connect";
 import { GlasshandPanel } from "@/components/device/glasshand-panel";
@@ -26,19 +25,15 @@ export default function DeviceTab() {
     <div className="flex flex-col gap-4 p-3">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-sm font-semibold capitalize">{dev.provider}</span>
-        {dev.mode === "mock" && <Badge variant="secondary">MOCK</Badge>}
+        {dev.mode === "off" && <Badge variant="secondary">not connected</Badge>}
         <Badge variant="outline">control: {dev.control}</Badge>
       </div>
       {dev.last_action && <p className="text-xs text-muted-foreground">Last action: {dev.last_action}</p>}
       {view === "connected" && gh.status ? <GlasshandPanel status={gh.status} busy={gh.busy} onSelect={gh.select} onDisconnect={gh.disconnect} />
         : (
-          <>
-            {view === "pending" ? <GlasshandPending status={gh.status} busy={gh.busy} onCancel={gh.disconnect} />
+          view === "pending" ? <GlasshandPending status={gh.status} busy={gh.busy} onCancel={gh.disconnect} />
               : view === "failed" ? <GlasshandFailed status={gh.status} busy={gh.busy} onConnect={gh.connect} />
-              : <GlasshandDisconnected busy={gh.busy} error={gh.error} onConnect={gh.connect} />}
-            <p className="text-center text-[11px] font-medium text-muted-foreground">Mock iPhone (demo)</p>
-            <DeviceFrame caption={dev.last_action} />
-          </>
+              : <GlasshandDisconnected busy={gh.busy} error={gh.error} onConnect={gh.connect} />
         )}
       {s ? (
         <section className="flex flex-col gap-1 rounded-lg border p-2.5 text-xs">

@@ -1,7 +1,8 @@
 // Shared domain models. Source of truth for the UI; mirrored 1:1 in
 // services/agent/ugecy/contracts.py (pydantic). Change both together.
 
-export type Mode = "live" | "mock";
+/** "live" = connected and real; "off" = not connected (the feature errors with a clear message). No mock data exists in the product. */
+export type Mode = "live" | "off";
 export type ISODate = string;
 
 /** Provider modes reported by the backend so the UI can show mock badges. */
