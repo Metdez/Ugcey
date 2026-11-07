@@ -29,8 +29,6 @@ def test_per_model_kwargs_and_context():
     fast = make_model("fast", s)
     assert fast.extra_body == {"chat_template_kwargs": {"enable_thinking": False}}
     assert fast.reasoning_effort is None and fast.profile["max_input_tokens"] == 131_072
-    assert make_model("vision", s).profile["max_input_tokens"] == 200_000  # deepseek (capped)
-    assert make_model("vision_fallback", s).profile["max_input_tokens"] == 262_144  # qwen3.8
     assert make_model("orchestrator", s).reasoning_effort == "high"
 
 

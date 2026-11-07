@@ -8,6 +8,8 @@ export const CHAT_MODELS = new Set([
   "@cf/qwen/qwen3.8-27b",
   "@cf/openai/gpt-oss-120b",
 ]);
+/** OpenAI models on Workers AI (unified billing) use the Responses API shape. */
+export const RESPONSES_MODELS = new Set(["openai/gpt-6-luna"]);
 export const EMBED_MODELS = new Set(["@cf/qwen/qwen3-embedding-0.6b", "@cf/baai/bge-m3"]);
 
 export function errorResponse(status: number, code: string, message: string): Response {
@@ -82,6 +84,15 @@ export async function handleLlm(req: Request, env: Env): Promise<Response> {
         });
       }
       return Response.json(out);
+    } catch (e) {
+      return upstreamError(e);
+    }
+  }
+  if (path === "/v1/responses") {
+    if (typeof model !== "string" || !RESPONSES_MODELS.has(model))
+      return errorResponse(400, "model_not_allowed", `model not allowed: ${model}`);
+    try {
+      return Response.json(await (env.AI as any).run(model, rest, aiOpts(env)));
     } catch (e) {
       return upstreamError(e);
     }

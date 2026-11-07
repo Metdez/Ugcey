@@ -87,16 +87,12 @@ class GlasshandProvider:
 
     async def describe(self, device_id: str) -> str:
         if self._vision is None:
-            from ugecy.llm.workers_ai import make_model
-
-            self._vision = make_model("vision", self._settings).with_fallbacks([make_model("vision_fallback", self._settings)])
+            self._vision = _vision_model(self._settings)
         return await vision.describe_jpeg(self._vision, await self.screenshot(device_id))
 
     async def observe(self, device_id: str) -> dict[str, Any]:
         if self._vision is None:
-            from ugecy.llm.workers_ai import make_model
-
-            self._vision = make_model("vision", self._settings).with_fallbacks([make_model("vision_fallback", self._settings)])
+            self._vision = _vision_model(self._settings)
         return await vision.observe_jpeg(self._vision, await self.screenshot(device_id))
 
     async def send(self, device_id: str, action: dict[str, Any], *, idempotency_key: str | None = None) -> dict[str, Any]:
@@ -117,3 +113,10 @@ class GlasshandProvider:
         if err is None and body.get("ok") is False:
             err = "failed"
         return {"request_id": body.get("requestId", ""), "ok": err is None, "error": err, "error_code": err}  # control_taken / control_busy
+
+
+def _vision_model(settings: Settings) -> Any:
+    """GPT-6 Luna (Responses API) is the only model that reads the iPhone screen. No other-model fallback."""
+    from ugecy.llm.responses_vision import ResponsesVision
+
+    return ResponsesVision(settings, settings.model_vision)

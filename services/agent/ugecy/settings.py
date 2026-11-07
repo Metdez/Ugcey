@@ -45,8 +45,7 @@ class Settings(BaseSettings):
     model_creative: str = "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
     model_critic: str = "@cf/zai-org/glm-5.3"
     model_fast: str = "@cf/zai-org/glm-4.7-flash"
-    model_vision: str = "@cf/deepseek-ai/deepseek-v4.1-flash-1017"  # best measured iPhone grounding (7/7, err 0.026, 9s)
-    model_vision_fallback: str = "@cf/qwen/qwen3.8-27b"
+    model_vision: str = "openai/gpt-6-luna"  # the ONLY screen-reading model (operator decision): 7/7 icons, avg err 0.016, 6.8s
     model_fallback: str = "@cf/qwen/qwen3.8-27b"  # 300 rpm; absorbs 20-rpm limits on paid models
     model_embeddings: str = "@cf/qwen/qwen3-embedding-0.6b"
 

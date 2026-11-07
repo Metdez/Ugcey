@@ -80,6 +80,4 @@ def make_model(role: str, settings: Settings) -> ChatWorkersAI:
         "profile": {"max_input_tokens": CONTEXT_TOKENS.get(model_id, DEFAULT_CONTEXT)},
     }
     kwargs.update(MODEL_KWARGS.get(model_id, {}))
-    if role == "vision" and "deepseek" in model_id:
-        kwargs["reasoning_effort"] = "low"  # screen reading needs speed, not long reasoning
     return ChatWorkersAI(**kwargs)
