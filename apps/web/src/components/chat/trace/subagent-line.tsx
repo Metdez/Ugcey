@@ -22,7 +22,7 @@ export function SubagentLine({ subagentId }: { subagentId: string }) {
       <div className="flex flex-col gap-2 py-1">
         <p className="text-[13px] text-muted-foreground">{sub.task}</p>
         {sub.toolCallIds.map((id) => <ToolCallLine key={id} toolCallId={id} />)}
-        {sub.text && <MarkdownContent text={sub.text} streaming={running} />}
+        {stripJson(sub.text) && <MarkdownContent text={stripJson(sub.text)} streaming={running} />}
         {sub.result && (
           <div>
             <div className={more ? "" : "line-clamp-6"}><MarkdownContent text={sub.result} /></div>
@@ -34,4 +34,23 @@ export function SubagentLine({ subagentId }: { subagentId: string }) {
       </div>
     </TraceLine>
   );
+}
+
+/** Remove raw JSON objects (e.g. echoed screen descriptions) from narration so only the prose shows. */
+export function stripJson(text: string): string {
+  let out = "";
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "{" && /^\{\s*"/.test(text.slice(i, i + 3))) {
+      let depth = 0, j = i, inStr = false;
+      for (; j < text.length; j++) {
+        const c = text[j];
+        if (inStr) { if (c === "\\") j++; else if (c === '"') inStr = false; continue; }
+        if (c === '"') inStr = true; else if (c === "{") depth++; else if (c === "}" && --depth === 0) break;
+      }
+      i = j; out += " ";
+      continue;
+    }
+    out += text[i];
+  }
+  return out.replace(/[ \t]{2,}/g, " ").trim();
 }

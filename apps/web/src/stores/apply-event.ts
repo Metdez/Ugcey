@@ -1,4 +1,5 @@
 // Pure reducer: wire UiEvent -> UI view model. No I/O. See types/agent.ts for the model.
+import { toolLabel } from "@/components/chat/tool-labels";
 import type {
   MessagePart, SubagentRunView, ThreadSnapshot, ToolCallView, UiEvent, UiMessage,
 } from "@/types/agent";
@@ -98,6 +99,7 @@ export function applyEvent(s: ThreadSnapshot, e: UiEvent): ThreadSnapshot {
           name: argStr(a, "subagent_type") || argStr(a, "subagent") || "subagent", task: argStr(a, "description"),
         });
       }
+      s = { ...s, progress: `${e.agent === "orchestrator" ? "Ugecy" : e.agent.replace(/-/g, " ")} · ${toolLabel(e.name, e.args, "running")}` };
       const call: ToolCallView = {
         id: e.call_id, name: e.name, args: e.args, agent: e.agent, parentCallId: e.parent_call_id,
         status: "running", startedAt: e.ts,

@@ -1,4 +1,4 @@
-import { Loader2, PauseCircle, XCircle } from "lucide-react";
+import { Loader2, PauseCircle } from "lucide-react";
 import { useThread } from "@/stores/thread-store";
 
 export function RunStatusPill() {
@@ -10,7 +10,6 @@ export function RunStatusPill() {
     body = <><Loader2 className="size-3.5 animate-spin" />Working{progress ? ` · ${progress}` : ""}</>;
   else if (status === "interrupted")
     body = <><PauseCircle className="size-3.5 text-warning" />Paused · {waiting} approval{waiting === 1 ? "" : "s"} waiting</>;
-  else if (status === "error") body = <><XCircle className="size-3.5 text-destructive" />Error</>;
   return (
     <div aria-live="polite" className="flex min-h-7 justify-center">
       {body && <span className="flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs">{body}</span>}
