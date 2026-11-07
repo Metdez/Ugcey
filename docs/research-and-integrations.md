@@ -14,8 +14,7 @@ Before any research-backed recommendation or feature build, use Firecrawl. Gathe
 
 - Use documented APIs and authorized connections for Glasshand, Higgsfield, Cloudflare, and social platforms.
 - Store secrets only in approved secret-management systems; never in source, prompts, or logs.
-- Respect rate limits, user consent, terms, copyright, and data-retention requirements.
-- For reference code, verify license compatibility and preserve required attribution before adapting it.
+
 
 For UI research, also use Mobbin MCP; see [interface.md](interface.md). For build rules, see [engineering-rules.md](engineering-rules.md).
 

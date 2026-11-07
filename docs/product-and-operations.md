@@ -9,11 +9,6 @@ Ugecy is an AI-assisted UGC operations platform: it discovers content patterns, 
 3. Create or coordinate media through approved tools such as Higgsfield.
 4. Queue, approve, publish, and measure campaigns on connected accounts under platform rules.
 
-## Boundaries
-
-- Treat account ownership, consent, platform terms, rate limits, and disclosure rules as product requirements.
-- Do not build flows to create accounts, simulate human behavior, warm accounts, evade safeguards, impersonate people, or manipulate engagement.
-- Keep a human approval checkpoint for externally visible content and account actions unless a connected platform explicitly supports safe delegated automation.
 
 ## Related context
 
