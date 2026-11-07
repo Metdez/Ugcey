@@ -50,16 +50,26 @@ def file_entries(files: dict[str, Any]) -> list[FileEntry]:
             for p, fd in sorted(files.items()) if isinstance(fd, dict)]
 
 
+async def settle(request: Request, thread: ThreadSummary) -> ThreadSummary:
+    """A "running" thread with no live run lost it to a container restart or deploy before the run could
+    record how it ended (there is one container). Mark it idle so the UI stops waiting on a stream."""
+    if thread.status != "running" or runs_of(request).active(thread.id):
+        return thread
+    thread = thread.model_copy(update={"status": "idle"})
+    await deps_of(request).app.upsert_thread(thread)
+    return thread
+
+
 async def require_thread(request: Request, thread_id: str) -> ThreadSummary:
     thread = await deps_of(request).app.get_thread(thread_id)
     if thread is None:
         raise ApiError(404, "not_found", f"thread {thread_id} not found")
-    return thread
+    return await settle(request, thread)
 
 
 @router.get("")
 async def list_threads(request: Request) -> list[ThreadSummary]:
-    threads = await deps_of(request).app.list_threads()
+    threads = [await settle(request, t) for t in await deps_of(request).app.list_threads()]
     return sorted(threads, key=lambda t: t.updated_at, reverse=True)
 
 
