@@ -20,3 +20,4 @@ See .planning/research/SUMMARY.md, "Locked decisions" L1–L12.
 
 ## Session log
 - 2026-11-07: Ran the GSD research step (8 parallel researchers), wrote PROJECT, SUMMARY, REQUIREMENTS and ROADMAP, built the scaffold, froze the contracts, and dispatched Phase 2.
+- 2026-11-07: Created Cloudflare resources: D1 `ugecy-db` (b70c37bc-cb91-4ae3-a3f7-5a6f9f004cd9), KV `ugecy-cache` (c3f019863287426fb60de2b822c95bf3), queues `ugecy-jobs` and `ugecy-jobs-dlq`, and Vectorize `ugecy-memory` (1024-d, cosine). The agent image builds locally with the CA passed as a BuildKit secret, then is pushed to registry.cloudflare.com with `--provenance=false --sbom=false`.
