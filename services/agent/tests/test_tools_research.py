@@ -34,7 +34,7 @@ def test_sample_library():
     assert all(r[0] and r[5] for r in SAMPLES)
 
 
-def test_mock_search_ranking():
+def test_fake_search_ranking():
     top = search_samples("supplements magnesium label warning")[0]
     assert top["id"] == "supp-label-warning" and top["url"] == "https://example.com/sample/supp-label-warning"
     assert "SAMPLE DATA" in top["title"]
@@ -92,7 +92,7 @@ async def test_fetch_page_rejects_private():
 
 async def test_fetch_page_truncates_and_records():
     d = install()
-    d.research = WebResearchProvider(Settings())  # mock mode, no key -> browser_markdown path
+    d.research = WebResearchProvider(Settings())  # no key -> browser_markdown path
     out = await research.fetch_page.ainvoke({"url": "https://example.org/page"})
     head, body = out.split("\n\n", 1)
     assert json.loads(head)["title"] == "T" and len(body) == 8000

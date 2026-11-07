@@ -28,7 +28,7 @@ async def test_connected_uses_glasshand_and_dynamic_mode():
     assert (await a.send("r1", {"type": "home"}, idempotency_key="k"))["ok"]
 
 
-async def test_disconnected_and_unreachable_are_off_without_mock():
+async def test_disconnected_and_unreachable_are_off_without_fakes():
     for status in ({"connected": False, "selected_rental_id": None}, None):
         a = auto(gateway(status=status), Clock())
         assert await a.list_devices() == []

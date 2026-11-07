@@ -1,4 +1,4 @@
-"""Deterministic pseudo-metrics seeded by post.id. Mock only; real metrics need platform review (L7)."""
+"""Deterministic pseudo-metrics seeded by post.id. Fake only; real metrics need platform review (L7)."""
 from __future__ import annotations
 
 import hashlib

@@ -59,7 +59,7 @@ async def test_research_session_guards(monkeypatch):
     assert not slept
 
 
-async def test_mock_feed_navigation_and_observe(monkeypatch):
+async def test_fake_feed_navigation_and_observe(monkeypatch):
     d, slept, events = install(monkeypatch)
     await start()
     await open_tiktok()

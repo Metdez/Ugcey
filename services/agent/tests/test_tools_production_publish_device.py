@@ -53,7 +53,7 @@ async def test_scheduled_edge_vs_local():
     assert out2["status"] == "published" and "local mode" in out2["note"] and not d2.edge.scheduled
 
 
-async def test_mock_device_hit_testing():
+async def test_fake_device_hit_testing():
     p = FakeDeviceProvider()
     assert (await p.send("iphone-fake-1", {"type": "tap", "x": 0.2, "y": 0.15}, idempotency_key="1"))["screen"] == "photos"
     assert "video_001.mp4" in await p.describe("iphone-fake-1")

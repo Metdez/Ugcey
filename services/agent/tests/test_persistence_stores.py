@@ -91,11 +91,11 @@ async def test_memory_kv():
     assert await kv.delete("n", "x") == 1 and await kv.get("n") == {"y": b"2"}
 
 
-def _mock_http(handler) -> httpx.AsyncClient:
+def _http_stub(handler) -> httpx.AsyncClient:
     return httpx.AsyncClient(transport=httpx.MockTransport(handler), base_url="http://state.internal")
 
 
-async def test_edge_kv_against_mock_transport():
+async def test_edge_kv_against_stub_transport():
     store: dict[str, bytes] = {}
     calls: list[int] = []
 
@@ -112,7 +112,7 @@ async def test_edge_kv_against_mock_transport():
             return httpx.Response(200, json={"items": items})
         return httpx.Response(400, json={"error": {"code": "bad", "message": "nope"}})
 
-    kv = EdgeKV(S(internal_mode="edge"), _mock_http(handler))
+    kv = EdgeKV(S(internal_mode="edge"), _http_stub(handler))
     await kv.put("ckpt:t", {f"k{i:04d}": b"v" for i in range(450)})
     assert calls == [200, 200, 50]
     assert len(await kv.get("ckpt:t", "k00")) == 100
@@ -128,7 +128,7 @@ async def test_edge_kv_splits_by_bytes():
         sizes.append(len(json.loads(req.content)["items"]))
         return httpx.Response(200, json={"ok": True})
 
-    kv = EdgeKV(S(internal_mode="edge"), _mock_http(handler))
+    kv = EdgeKV(S(internal_mode="edge"), _http_stub(handler))
     await kv.put("n", {f"k{i}": b"x" * 1_500_000 for i in range(4)})  # ~2 MB base64 each -> 2 per chunk
     assert sizes == [2, 2]
 
@@ -142,7 +142,7 @@ async def test_d1_appstore_posts_to_bindings():
         row = {"id": "t1", "title": "x", "created_at": "c", "updated_at": "u", "status": "idle"}
         return httpx.Response(200, json={"results": [row] if seen[-1]["sql"].startswith("SELECT") else [], "meta": {}})
 
-    st = D1AppStore(S(internal_mode="edge"), _mock_http(handler))
+    st = D1AppStore(S(internal_mode="edge"), _http_stub(handler))
     await st.init()
     await st.upsert_thread(ThreadSummary(id="t1", title="x"))
     assert "ON CONFLICT(id) DO UPDATE" in seen[0]["sql"] and seen[0]["params"][0] == "t1"

@@ -1,4 +1,4 @@
-"""Phase 06: nothing is simulated outside test mode; off capabilities say what to connect."""
+"""Phase 06: nothing is simulated; off capabilities say what to connect."""
 import json
 
 import pytest
@@ -40,23 +40,21 @@ def _off_deps(**kw):
 
 
 @pytest.mark.parametrize("mode", ["edge", "local"])
-def test_resolve_modes_never_mock_outside_test(mode, monkeypatch):
+def test_resolve_modes_report_only_live_or_off(mode, monkeypatch):
     for k in ("HF_KEY", "HF_API_KEY_SECRET", "FIRECRAWL_API_KEY", "GLASSHAND_TOKEN"):
         monkeypatch.delenv(k, raising=False)
     m = deps_mod.resolve_modes(Settings(internal_mode=mode))
     assert {m.media, m.device, m.publishing, m.research} == {"off"} and m.llm == "live"
     on = deps_mod.resolve_modes(Settings(internal_mode="edge", has_higgsfield=True, has_firecrawl=True, has_glasshand=True))
     assert (on.media, on.device, on.research, on.publishing) == ("live", "live", "live", "off")
-    with pytest.raises(ValidationError):  # mock is rejected, not silently accepted
-        Settings(internal_mode=mode, media_provider="live")
+    with pytest.raises(ValidationError):  # only auto, live or off are accepted
+        Settings(internal_mode=mode, media_provider="fake")
 
 
-def test_mock_only_loadable_in_test_mode():
-    with pytest.raises(RuntimeError):
-        deps_mod._load("media", "live", Settings(internal_mode="local"))
-    assert deps_mod._load("media", "live", Settings(internal_mode="test")).mode == "live"
-    d = deps_mod.build_deps(Settings(internal_mode="test"))  # test mode defaults to off too
+def test_test_mode_builds_all_off():
+    d = deps_mod.build_deps(Settings(internal_mode="test"))
     assert (d.media.mode, d.publisher.mode, d.analytics.mode) == ("off", "off", "off")
+    assert d.modes.llm == "off" and d.modes.publishing == "off"
 
 
 async def test_web_search_off_message():

@@ -1,4 +1,4 @@
-"""Mock publisher: never touches a network. Enforces the AI-disclosure rule (FEATURES.md 3.2)."""
+"""Fake publisher: never touches a network. Enforces the AI-disclosure rule (FEATURES.md 3.2)."""
 from __future__ import annotations
 
 from typing import Any

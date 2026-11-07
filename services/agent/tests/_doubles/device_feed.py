@@ -1,4 +1,4 @@
-"""Mock TikTok-like app for research demos: Spotlight -> For You feed -> search -> results grid -> posts. All data is FAKE."""
+"""Fake TikTok-like app for research demos: Spotlight -> For You feed -> search -> results grid -> posts. All data is FAKE."""
 from __future__ import annotations
 
 from typing import Any

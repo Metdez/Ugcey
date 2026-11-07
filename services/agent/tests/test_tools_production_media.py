@@ -21,7 +21,7 @@ def test_catalog_is_package_data():
     assert all(m["defaults"].get("aspect_ratio", "9:16") == "9:16" for m in FakeMediaProvider().models("image"))
 
 
-async def test_mock_lifecycle_and_faults():
+async def test_fake_lifecycle_and_faults():
     now = [0.0]
     p = FakeMediaProvider(clock=lambda: now[0])
     ok = await p.submit("bytedance/seedance-2.5/text-to-video", {"prompt": "hi"}, idempotency_key="k1")
