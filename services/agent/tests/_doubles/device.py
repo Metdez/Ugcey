@@ -13,7 +13,7 @@ from uuid import uuid4
 from PIL import Image, ImageDraw, ImageFont
 
 from ugecy.contracts import DeviceInfo
-from ugecy.integrations.device import mock_feed as feed
+from tests._doubles import device_feed as feed
 from ugecy.settings import Settings
 
 W, H = 750, 1334

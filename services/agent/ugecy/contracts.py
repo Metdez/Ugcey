@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-Mode = Literal["live", "mock"]
+Mode = Literal["live", "off", "mock"]  # "mock" only ever appears in tests (UGECY_INTERNAL_MODE=test)
 
 
 def now_iso() -> str:
@@ -18,10 +18,10 @@ def now_iso() -> str:
 
 class ProviderModes(BaseModel):
     llm: Mode = "live"
-    media: Mode = "mock"
-    device: Mode = "mock"
-    publishing: Mode = "mock"
-    research: Mode = "live"
+    media: Mode = "off"
+    device: Mode = "off"
+    publishing: Mode = "off"
+    research: Mode = "off"  # web_search; fetch_page is always available
 
 
 class ModelRoute(BaseModel):

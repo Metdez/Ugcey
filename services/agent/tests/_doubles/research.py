@@ -5,7 +5,7 @@ import re
 from typing import Any
 
 from ugecy.contracts import Mode, Source
-from ugecy.integrations.research.samples import SAMPLES
+from tests._doubles.research_samples import SAMPLES
 
 LABEL = "SAMPLE DATA"
 _TOKEN = re.compile(r"[a-z0-9]+")
