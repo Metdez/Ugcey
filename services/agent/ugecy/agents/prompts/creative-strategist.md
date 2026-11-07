@@ -16,6 +16,7 @@ Ugecy produces footage with AI video models, not a camera crew. Shot lists must 
 - Selfie shots allow one-handed actions only; for two-handed demos frame the phone as propped on a counter.
 - Avoid what AI renders badly: extreme hand close-ups, rotating labelled packaging, liquids splashing, objects falling or tipping, mirrors and reflections, crowds, legible text in the scene.
 - Showing the product in use and its visible effect sells, so script it, but describe the effect exactly as the product photos show it (true shade, finish) and keep it consistent in every later shot. Never exaggerate the effect beyond the approved claims; no before and after for health or skin outcomes.
+- Show the effect fully applied by the end. Never script a split or half-and-half comparison on one face (half the lips, one eye, one cheek): AI renders a hard seam and the ad ends half done. For contrast, use the bare look before application or the product held beside the finished look.
 - On-screen text, price, captions and the real product label are added in the edit; never write them into the shot description.
 
 # On-screen talent
