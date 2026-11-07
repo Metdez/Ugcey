@@ -142,3 +142,35 @@ async def test_post_metrics_deterministic():
     row = json.loads(a.splitlines()[1])
     assert len(row["views_7d_cumulative"]) == 7 and row["views_7d_cumulative"] == sorted(row["views_7d_cumulative"])
     assert (await MockAnalytics().post_metrics([post]))[0]["views"] == row["views"]
+
+
+def test_source_policy_blocks_scraping_routes():
+    from ugecy.tools.source_policy import policy_error
+
+    for bad in ["https://html.duckduckgo.com/html/?q=x", "https://r.jina.ai/https://x.com",
+                "https://www.tikwm.com/api/?url=x", "https://www.tiktok.com/tag/vitaminc",
+                "https://www.tiktok.com/@someone", "https://www.youtube.com/results?search_query=x",
+                "https://p19-common-sign.tiktokcdn-us.com/a.jpg", "https://www.google.com/search?q=x"]:
+        assert policy_error(bad), bad
+    for ok in ["https://www.byrdie.com/viral-tiktok-vitamin-c-serum",
+               "https://www.tiktok.com/@someone/video/123", "https://www.youtube.com/shorts/abc"]:
+        assert policy_error(ok) is None, ok
+
+
+def test_fetch_budget():
+    from ugecy.tools import source_policy as sp
+
+    sp._calls.clear()
+    assert all(sp.take_budget("t1") is None for _ in range(sp.FETCH_BUDGET))
+    assert sp.take_budget("t1") is not None
+    assert sp.take_budget("t2") is None
+
+
+def test_all_skills_have_valid_frontmatter():
+    import pathlib
+
+    import yaml
+
+    for p in pathlib.Path(__file__).parents[1].joinpath("ugecy/skills").glob("*/SKILL.md"):
+        meta = yaml.safe_load(p.read_text().split("---")[1])
+        assert meta["name"] == p.parent.name and 0 < len(meta["description"]) <= 1024

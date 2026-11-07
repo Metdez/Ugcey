@@ -1,6 +1,6 @@
 ---
 name: higgsfield-prompting
-description: How to write Higgsfield image and video generation prompts for 9:16 UGC (subject, setting, camera, lighting), which model endpoint to choose and which arguments matter. Use before calling estimate_media_cost or generate_media, or when turning a shot list into prompts.
+description: "How to write Higgsfield image and video generation prompts for 9:16 UGC (subject, setting, camera, lighting), which model endpoint to choose and which arguments matter. Use before calling estimate_media_cost or generate_media, or when turning a shot list into prompts."
 ---
 # Higgsfield prompting for UGC
 

@@ -1,6 +1,6 @@
 ---
 name: platform-publishing-checklist
-description: Per-platform publishing checklist for TikTok, Instagram Reels, Facebook Reels and YouTube Shorts covering AI-content label flags, paid-partnership toggles, posting caps, format limits and mandatory steps. Use before calling publish_post or when scheduling posts.
+description: "Per-platform publishing checklist for TikTok, Instagram Reels, Facebook Reels and YouTube Shorts covering AI-content label flags, paid-partnership toggles, posting caps, format limits and mandatory steps. Use before calling publish_post or when scheduling posts."
 ---
 # Platform publishing checklist
 

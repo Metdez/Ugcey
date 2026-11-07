@@ -1,6 +1,6 @@
 ---
 name: script-critic-rubric
-description: Scoring rubric and verdict rules for reviewing short-form UGC scripts before generation or publishing: hook strength, retention structure, originality, claim safety, disclosure, AI-label readiness and brand fit. Use when reviewing a script and writing /reviews/<script>.md.
+description: "Scoring rubric and verdict rules for reviewing short-form UGC scripts before generation or publishing: hook strength, retention structure, originality, claim safety, disclosure, AI-label readiness and brand fit. Use when reviewing a script and writing /reviews/<script>.md."
 ---
 # Script critic rubric
 

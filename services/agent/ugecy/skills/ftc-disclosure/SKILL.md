@@ -1,6 +1,6 @@
 ---
 name: ftc-disclosure
-description: US FTC rules for sponsored and AI-generated UGC: endorsement disclosure wording and placement, the 16 CFR 465 ban on fake testimonials, claim substantiation, and what AI avatars may and may not say. Use when writing captions or scripts for paid, gifted or affiliate content, or when reviewing claims. Not legal advice.
+description: "US FTC rules for sponsored and AI-generated UGC: endorsement disclosure wording and placement, the 16 CFR 465 ban on fake testimonials, claim substantiation, and what AI avatars may and may not say. Use when writing captions or scripts for paid, gifted or affiliate content, or when reviewing claims. Not legal advice."
 ---
 # FTC disclosure and claims
 

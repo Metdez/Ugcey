@@ -32,8 +32,8 @@ class RunContext:
     workspace_id: str = "default"
 
 
-def _middleware(deps: Deps, models: dict[str, BaseChatModel]) -> list[Any]:
-    return [AuditMiddleware(), *limit_middleware(deps.settings, models["fallback"]), CompatMiddleware()]
+def _middleware(deps: Deps, models: dict[str, BaseChatModel], run_limit: int | None = None) -> list[Any]:
+    return [AuditMiddleware(), *limit_middleware(deps.settings, models["fallback"], run_limit), CompatMiddleware()]
 
 
 def _subagents(deps: Deps, models: dict[str, BaseChatModel]) -> list[dict[str, Any]]:
@@ -42,13 +42,14 @@ def _subagents(deps: Deps, models: dict[str, BaseChatModel]) -> list[dict[str, A
         "name": "general-purpose",
         "description": "Read-only helper for searching and summarizing files. Has no external tools.",
         "system_prompt": GENERAL_PURPOSE_PROMPT, "tools": [], "model": models["fast"],
-        "middleware": _middleware(deps, models), "skills": ["/skills/"],
+        "middleware": _middleware(deps, models, s.max_model_calls_per_subagent), "skills": ["/skills/"],
     }]
     for agent in registry.enabled_agents(s.disabled("agents")):
         spec: dict[str, Any] = {
             "name": agent.name, "description": agent.description, "system_prompt": agent.system_prompt,
             "tools": registry.tools_for(agent, s.disabled("tools")),  # always explicit: no inherited tools
-            "model": models.get(agent.model_role, models["fast"]), "middleware": _middleware(deps, models),
+            "model": models.get(agent.model_role, models["fast"]),
+            "middleware": _middleware(deps, models, s.max_model_calls_per_subagent),
         }
         if agent.skills:
             spec["skills"] = agent.skills

@@ -1,8 +1,5 @@
-/// <reference types="node" />
-// Run: node --test --experimental-strip-types src/components/inspector/lib.test.ts
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { filterAudit, groupFiles } from "./lib.ts";
+import { expect, test } from "vitest";
+import { filterAudit, groupFiles } from "./lib";
 
 const f = (path: string) => ({ path, size: 1, modified_at: null });
 const a = (id: string, ts: string, status: "ok" | "error") => ({
@@ -11,13 +8,13 @@ const a = (id: string, ts: string, status: "ok" | "error") => ({
 
 test("groupFiles groups by first segment and sorts", () => {
   const g = groupFiles([f("/scripts/b.md"), f("/research/x/y.md"), f("/manifest.json"), f("/scripts/a.md")]);
-  assert.deepEqual(g.map((x) => x.group), ["/", "/research", "/scripts"]);
-  assert.deepEqual(g[2].files.map((x) => x.name), ["a.md", "b.md"]);
-  assert.equal(g[1].files[0].name, "x/y.md");
+  expect(g.map((x) => x.group)).toEqual(["/", "/research", "/scripts"]);
+  expect(g[2].files.map((x) => x.name)).toEqual(["a.md", "b.md"]);
+  expect(g[1].files[0].name).toBe("x/y.md");
 });
 
 test("filterAudit filters by status, newest first", () => {
   const rows = [a("1", "2026-01-01T00:00:01Z", "ok"), a("2", "2026-01-01T00:00:03Z", "error"), a("3", "2026-01-01T00:00:02Z", "ok")];
-  assert.deepEqual(filterAudit(rows, "all").map((r) => r.id), ["2", "3", "1"]);
-  assert.deepEqual(filterAudit(rows, "ok").map((r) => r.id), ["3", "1"]);
+  expect(filterAudit(rows, "all").map((r) => r.id)).toEqual(["2", "3", "1"]);
+  expect(filterAudit(rows, "ok").map((r) => r.id)).toEqual(["3", "1"]);
 });

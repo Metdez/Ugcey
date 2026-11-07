@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     disabled_agents: str = ""  # comma-separated agent names
     disabled_tools: str = ""
     max_model_calls_per_run: int = 80
+    max_model_calls_per_subagent: int = 30
     llm_timeout_s: float = 180.0
 
     @property

@@ -11,6 +11,10 @@ import { useUi } from "@/stores/ui-store";
 import { useWorkspace } from "@/stores/workspace-store";
 import { TAB_ICONS } from "./inspector-icons";
 
+const Item = ({ icon, children, onSelect, value }: { icon: ReactNode; children: ReactNode; onSelect: () => void; value?: string }) => (
+  <CommandItem value={value} onSelect={onSelect}>{icon}{children}</CommandItem>
+);
+
 export function CommandPalette() {
   const { paletteOpen, setPalette, openInspector, toggleInspector } = useUi();
   const config = useWorkspace((s) => s.config);
@@ -19,9 +23,6 @@ export function CommandPalette() {
 
   const run = (fn: () => void) => () => { setPalette(false); setQ(""); fn(); };
   const ask = (text: string) => run(() => void threadActions.send(text));
-  const Item = ({ icon, children, onSelect, value }: { icon: ReactNode; children: ReactNode; onSelect: () => void; value?: string }) => (
-    <CommandItem value={value} onSelect={onSelect}>{icon}{children}</CommandItem>
-  );
 
   return (
     <CommandDialog open={paletteOpen} onOpenChange={(o) => { setPalette(o); if (!o) setQ(""); }}

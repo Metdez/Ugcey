@@ -1,6 +1,6 @@
 ---
 name: short-form-script-structure
-description: Beat grammar, timings and craft rules for 15, 30 and 45 second UGC scripts for TikTok, Reels and Shorts, including hook variants, on-screen text and shot lists. Use when writing or revising a short-form script or brief, or planning A/B hook variants.
+description: "Beat grammar, timings and craft rules for 15, 30 and 45 second UGC scripts for TikTok, Reels and Shorts, including hook variants, on-screen text and shot lists. Use when writing or revising a short-form script or brief, or planning A/B hook variants."
 ---
 # Short-form script structure
 

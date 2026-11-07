@@ -11,6 +11,7 @@ from ugecy import registry
 from ugecy.contracts import Source
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id, emit
+from ugecy.tools.source_policy import policy_error, take_budget
 
 _BLOCKED_SUFFIXES = (".internal", ".local", ".localhost", ".lan", ".home.arpa")
 
@@ -63,7 +64,12 @@ async def web_search(query: str, platform: str | None = None, limit: int = 8) ->
         await _record(s)
     if not sources:
         return json.dumps({"mode": research.mode, "results": 0, "note": "no results; try broader terms"})
-    head = json.dumps({"mode": research.mode, "results": len(sources)})
+    meta: dict[str, object] = {"mode": research.mode, "results": len(sources)}
+    if research.mode == "mock":
+        meta["note"] = ("SAMPLE DATA ONLY: live web search is not configured (no FIRECRAWL_API_KEY). Do not try "
+                        "to search by fetching search engines or scraping platforms. Use these samples, pages the "
+                        "operator gave you and your own expertise, and tell the operator search is in sample mode.")
+    head = json.dumps(meta)
     return "\n".join([head, *(json.dumps(s.model_dump(exclude_none=True)) for s in sources)])
 
 
@@ -76,7 +82,7 @@ async def fetch_page(url: str) -> str:
     operator is permitted to view; private, login-gated, internal or local addresses are refused.
     Returns metadata JSON then the first 8000 characters of markdown.
     """
-    err = check_public_url(url)
+    err = check_public_url(url) or policy_error(url) or take_budget(current_thread_id())
     if err:
         return json.dumps({"error": err, "url": url})
     try:

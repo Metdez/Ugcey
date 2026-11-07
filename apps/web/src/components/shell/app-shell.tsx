@@ -25,8 +25,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useShortcuts();
   useHealthPoll();
 
-  // Below 1280px the inspector starts closed (sheet on small screens).
+  // Below 1280px the inspector starts closed; crossing into sheet mode closes it too.
   useEffect(() => { if (window.innerWidth < 1280) useUi.setState({ inspectorOpen: false }); }, []);
+  useEffect(() => { if (!desktop) useUi.setState({ inspectorOpen: false }); }, [desktop]);
 
   // Store -> panel. The panel -> store direction is `onResize` below.
   useEffect(() => {

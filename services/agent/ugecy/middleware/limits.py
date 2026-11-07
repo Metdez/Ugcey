@@ -12,9 +12,9 @@ from langchain_core.language_models import BaseChatModel
 from ugecy.settings import Settings
 
 
-def limit_middleware(settings: Settings, fallback: BaseChatModel) -> list[AgentMiddleware]:
+def limit_middleware(settings: Settings, fallback: BaseChatModel, run_limit: int | None = None) -> list[AgentMiddleware]:
     return [
-        ModelCallLimitMiddleware(run_limit=settings.max_model_calls_per_run, exit_behavior="end"),
+        ModelCallLimitMiddleware(run_limit=run_limit or settings.max_model_calls_per_run, exit_behavior="end"),
         ModelRetryMiddleware(max_retries=2, backoff_factor=2.0),
         ModelFallbackMiddleware(fallback),
     ]

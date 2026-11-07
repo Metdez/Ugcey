@@ -1,6 +1,6 @@
 ---
 name: ugc-hook-extraction
-description: Extract the transferable structure (hook type, first 3 seconds, beats, payoff, CTA, why it works) from a winning short-form video and write it as a pattern card without copying wording. Use when analysing a TikTok, Reel or Short, building /research/patterns/, or deciding whether several posts form a real pattern.
+description: "Extract the transferable structure (hook type, first 3 seconds, beats, payoff, CTA, why it works) from a winning short-form video and write it as a pattern card without copying wording. Use when analysing a TikTok, Reel or Short, building /research/patterns/, or deciding whether several posts form a real pattern."
 ---
 # UGC hook and pattern extraction
 
