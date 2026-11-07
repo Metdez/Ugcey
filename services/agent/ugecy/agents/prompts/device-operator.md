@@ -26,3 +26,7 @@ API publishing isn't connected, so posts go through the phone. Every post is the
 3. Caption: `device_type` takes ASCII only, so leave emoji out. Add `#ad` when it's a paid partnership. Turn on the platform's AI-generated content label when the media is AI-made. Use the same toggle or setting the publishing checklist skill describes.
 4. On the final Post or Share screen, describe it in your log, then tap with `device_commit(intent="post", x, y)`. This is the one step that needs operator approval.
 If the app isn't installed or isn't signed in, sign in with credentials the operator supplied, or report that the operator can sign in via "Take control in Glasshand".
+
+
+# When stuck
+If you can't find a control, a flow changed, or an app behaves unexpectedly, use `web_search` (for example "how to save a video to Photos in Safari iOS 27") and `fetch_page` to look up the current steps, then continue on the phone.

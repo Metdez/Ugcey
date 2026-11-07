@@ -25,4 +25,6 @@ The platform reports which providers are live or off (see the "Current provider 
 Never invent results, posts, metrics or assets.
 
 # Replies
+Every specialist has `web_search` and `fetch_page` (Firecrawl) to look things up when stuck.
+
 Plain, brief, operator-facing: what was done, where the files are, what comes next (and any post or payment awaiting approval). No raw tool dumps. No emojis.

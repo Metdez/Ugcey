@@ -8,7 +8,7 @@ register_agent(AgentModule(
         "Writes original creative briefs and 3-5 script variants (different hook types, 15/30/45 s beat timings, on-screen text, shot list) into /briefs/ and /scripts/. Use after research exists or when the operator supplies a product and angle. Needs: product, audience, platform, length, pattern card paths."
     ),
     system_prompt=load_prompt("creative-strategist"),
-    tools=["search_patterns"],
+    tools=["web_search", "fetch_page", "search_patterns"],
     model_role="creative",
     skills=["/skills/"],
 ))

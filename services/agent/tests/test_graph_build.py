@@ -17,18 +17,19 @@ from ugecy.middleware.audit import AuditMiddleware
 
 SIDE_EFFECT_TOOLS = {"generate_media", "publish_post", "device_commit", "device_tap", "device_swipe",
                      "device_type", "device_start_session"}
+WEB = {"web_search", "fetch_page"}  # every specialist can look things up when stuck
 EXPECTED = {
     "research-analyst": {"web_search", "fetch_page", "remember_pattern", "search_patterns", "device_status", "device_start_session",
                          "device_screenshot", "device_scroll", "device_back", "device_observe", "device_tap", "device_swipe",
                          "device_next_post", "device_type", "device_home"},
-    "creative-strategist": {"search_patterns"},
-    "compliance-critic": {"compliance_check"},
-    "production-coordinator": {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
-    "publishing-coordinator": {"list_connected_accounts", "publish_post", "get_post_status"},
-    "device-operator": {"device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe",
+    "creative-strategist": WEB | {"search_patterns"},
+    "compliance-critic": WEB | {"compliance_check"},
+    "production-coordinator": WEB | {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
+    "publishing-coordinator": WEB | {"list_connected_accounts", "publish_post", "get_post_status"},
+    "device-operator": WEB | {"device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe",
                         "device_scroll", "device_back", "device_open_url", "device_type", "device_home", "device_confirm",
                         "device_commit"},
-    "analytics-analyst": {"get_post_metrics", "search_patterns", "remember_pattern"},
+    "analytics-analyst": WEB | {"get_post_metrics", "search_patterns", "remember_pattern"},
 }
 
 
