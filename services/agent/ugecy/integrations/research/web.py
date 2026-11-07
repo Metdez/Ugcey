@@ -45,7 +45,7 @@ class WebResearchProvider:
         body = {"query": q, "limit": limit, "sources": [{"type": "web"}], "domainTools": False}
         try:
             data = await self._post(body)
-        except Exception:  # not_configured (503), quota, network: degrade to labelled samples
+        except Exception:  # noqa: BLE001  not_configured (503), quota, network: degrade to labelled samples
             return await self._mock.search(query, platform, limit)
         out = []
         for r in (data.get("data") or {}).get("web") or []:
@@ -73,8 +73,8 @@ class WebResearchProvider:
         if not self.edge and platform in OEMBED:
             try:
                 return await self._oembed(url, platform)
-            except Exception:
-                pass
+            except (httpx.HTTPError, ValueError):
+                page = None  # fall through to the browser path
         page = await get_deps().edge.browser_markdown(url)
         return {"url": url, "title": page.get("title", ""), "platform": platform,
                 "markdown": (page.get("markdown") or "")[:MAX_MD], "metrics": {}}

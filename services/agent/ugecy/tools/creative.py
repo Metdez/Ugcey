@@ -23,10 +23,10 @@ _CLAIMS: list[tuple[str, str, str, str]] = [
      "Remove guaranteed or risk-free return claims; add the required risk disclosure."),
     ("finance.get_rich", "block", r"\b(get rich quick|make \$?\d[\d,]*\s*(a|per)\s*(day|week|month)|double your money)\b", "Remove income promises; show typical results with a disclaimer or drop the claim."),
 ]
-_CLINICAL = re.compile(r"\bclinically[- ](proven|tested|shown)\b|\bstudies (show|prove)\b|\bscientifically proven\b", re.I)
-_SOURCE = re.compile(r"https?://|\bsource:|\(\d{4}\)|\bstudy\b.{0,20}\b(n=|participants|journal)", re.I)
-_DISCLOSURE = re.compile(r"(#|\b)(ad|sponsored|paidpartnership|paid partnership|gifted)\b|paid partnership", re.I)
-_TESTIMONIAL = re.compile(r"\b(i tried|i['’]?ve been using|i used|my results?|i lost|i love this|changed my life|after (\d+|a few) (days|weeks|months) (of|using))\b", re.I)
+_CLINICAL = re.compile(r"\bclinically[- ](proven|tested|shown)\b|\bstudies (show|prove)\b|\bscientifically proven\b", re.IGNORECASE)
+_SOURCE = re.compile(r"https?://|\bsource:|\(\d{4}\)|\bstudy\b.{0,20}\b(n=|participants|journal)", re.IGNORECASE)
+_DISCLOSURE = re.compile(r"(#|\b)(ad|sponsored|paidpartnership|paid partnership|gifted)\b|paid partnership", re.IGNORECASE)
+_TESTIMONIAL = re.compile(r"\b(i tried|i['’]?ve been using|i used|my results?|i lost|i love this|changed my life|after (\d+|a few) (days|weeks|months) (of|using))\b", re.IGNORECASE)
 _AI_LABEL = {
     "tiktok": "Set the AI-generated content toggle (is_aigc) and add a visible label such as #AIgenerated.",
     "instagram": "Set the 'AI info' / is_ai_generated flag and keep C2PA/IPTC metadata intact.",
@@ -46,7 +46,7 @@ def run_checks(text: str, platform: str, is_ai_generated: bool, is_paid_partners
     issues: list[dict[str, str]] = []
     seen: set[str] = set()
     for rule, sev, pat, fix in _CLAIMS:
-        for m in re.finditer(pat, text, re.I | re.S):
+        for m in re.finditer(pat, text, re.IGNORECASE | re.DOTALL):
             if m.group(0).lower() not in seen:
                 seen.add(m.group(0).lower())
                 issues.append(_issue(rule, sev, m.group(0), fix))

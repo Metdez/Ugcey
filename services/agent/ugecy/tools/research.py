@@ -81,7 +81,7 @@ async def fetch_page(url: str) -> str:
         return json.dumps({"error": err, "url": url})
     try:
         page = await get_deps().research.fetch(url)
-    except Exception as e:  # tool errors go back to the model, not up the stack
+    except Exception as e:  # noqa: BLE001 tool errors go back to the model, not up the stack
         return json.dumps({"error": f"fetch failed: {type(e).__name__}", "url": url})
     await _record(Source(url=url, title=page.get("title") or url, platform=page.get("platform")))
     meta = {k: page.get(k) for k in ("url", "title", "platform", "metrics")}

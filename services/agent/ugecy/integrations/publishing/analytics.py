@@ -21,7 +21,7 @@ class MockAnalytics:
     def _one(self, post: Post) -> dict[str, Any]:
         rng = random.Random(int.from_bytes(hashlib.sha256(post.id.encode()).digest()[:8], "big"))
         views = int(rng.lognormvariate(8.5, 1.1))
-        curve = sorted((rng.random() + 0.2 for _ in range(7)))  # rising cumulative shape
+        curve = sorted(rng.random() + 0.2 for _ in range(7))  # rising cumulative shape
         total = curve[-1]
         daily = [int(views * c / total) for c in curve]
         return {

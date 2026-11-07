@@ -9,6 +9,7 @@ from typing import Any
 
 import httpx
 from langchain_core.messages import AIMessage, AIMessageChunk, ToolMessage
+from pydantic import ValidationError
 
 from ugecy import registry
 from ugecy.contracts import ApprovalRequest, FileEntry, Todo, UiEvent
@@ -207,4 +208,8 @@ class StreamAdapter:
             return []
         fields = {k: v for k, v in data.items() if k in UiEvent.model_fields and k not in
                   ("type", "seq", "ts", "thread_id", "run_id", "agent", "ns", "parent_call_id")}
-        return [self._ev(data["type"], self._where(ns), **fields)]
+        try:
+            return [self._ev(data["type"], self._where(ns), **fields)]
+        except ValidationError:  # a tool wrote a malformed payload; drop it rather than kill the run
+            self._seq -= 1
+            return []

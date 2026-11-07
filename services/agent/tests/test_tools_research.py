@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from tests._fakes_02_07 import FakeApp, FakeEdge, install
 from ugecy import registry
 from ugecy.contracts import Post
@@ -8,9 +10,16 @@ from ugecy.integrations.research.mock import search_samples
 from ugecy.integrations.research.samples import SAMPLES
 from ugecy.integrations.research.web import WebResearchProvider, platform_of
 from ugecy.settings import Settings
-from ugecy.tools import analytics, creative, memory, research  # noqa: F401  (register tools)
+from ugecy.tools import analytics, creative, memory, research
 from ugecy.tools.creative import run_checks
 from ugecy.tools.research import check_public_url
+
+
+@pytest.fixture(autouse=True)
+def _no_stream(monkeypatch):
+    # emit() needs a LangGraph run context; outside a run it is a no-op in production
+    for mod in (research, memory):
+        monkeypatch.setattr(mod, "emit", lambda *a, **k: None)
 
 
 def test_tool_names_registered():
