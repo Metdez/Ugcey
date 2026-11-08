@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ProviderChoice = Literal["auto", "live", "off"]
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     cf_api_token: str | None = Field(default=None, validation_alias="CLOUDFLARE_API_TOKEN")
     hf_key: str | None = Field(default=None, validation_alias="HF_KEY")
     hf_api_key_secret: str | None = Field(default=None, validation_alias="HF_API_KEY_SECRET")
-    firecrawl_api_key: str | None = Field(default=None, validation_alias="FIRECRAWL_API_KEY")
+    firecrawl_api_key: str | None = Field(default=None, validation_alias=AliasChoices("FIRECRAWL_API_KEY", "FIRECRAWL_API"))
     glasshand_token: str | None = Field(default=None, validation_alias="GLASSHAND_TOKEN")  # local dev only
     glasshand_rental_id: str | None = Field(default=None, validation_alias="GLASSHAND_RENTAL_ID")  # local dev only
 

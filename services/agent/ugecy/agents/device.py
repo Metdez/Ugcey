@@ -9,7 +9,8 @@ register_agent(AgentModule(
     ),
     system_prompt=load_prompt("device-operator"),
     tools=["device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe", "device_scroll",
-           "device_back", "device_open_url", "device_type", "device_home", "device_commit"],
+           "device_back", "device_open_url", "device_type", "device_home", "device_commit",
+           "web_search"],  # Firecrawl: look up how to get past a step it is stuck on
     model_role="research",  # deepseek: device navigation needs real reasoning; glm-flash looped
     skills=["/skills/"],
 ))

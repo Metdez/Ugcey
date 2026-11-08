@@ -41,6 +41,7 @@ pnpm dev:web
 # agent service
 cd services/agent
 uv sync
+# optional: FIRECRAWL_API_KEY (or FIRECRAWL_API) in the env turns on live web search
 uv run uvicorn ugecy.main:app --reload --port 8000
 uv run pytest -q
 
@@ -67,7 +68,7 @@ pnpm exec wrangler d1 migrations apply ugecy-db --remote --config wrangler.deplo
 pnpm build && pnpm exec wrangler deploy --config wrangler.deploy.json
 # 4. Secrets. The optional ones switch providers from mock to live.
 pnpm exec wrangler secret put HF_KEY --config wrangler.deploy.json            # Higgsfield "key-id:key-secret"
-pnpm exec wrangler secret put FIRECRAWL_API_KEY --config wrangler.deploy.json # live web search
+pnpm exec wrangler secret put FIRECRAWL_API_KEY --config wrangler.deploy.json # live web search (research, and the phone agent when stuck)
 ```
 
 Resources are created by `scripts/bootstrap.sh`: D1 `ugecy-db`, KV `ugecy-cache`, queues `ugecy-jobs` and `ugecy-jobs-dlq`, and Vectorize `ugecy-memory` (1024-d, cosine).
