@@ -75,7 +75,8 @@ async def device_status() -> str:
 
 @tool
 async def device_screenshot() -> str:
-    """Describe the device screen: JSON with app, screen and elements (label, kind, normalized x,y). Call before and after every action."""
+    """Describe the device screen: JSON with app, screen and elements (label, kind, normalized x,y). Call once after an action
+    that changes the screen; the latest description stays current until you act again, so never call it twice in a row."""
     d = get_deps()
     devices = await d.device.list_devices()
     if not devices:

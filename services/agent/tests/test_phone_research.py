@@ -146,3 +146,13 @@ def test_vision_normalize_keeps_navigation_hints():
     out = json.loads(normalize('```json\n{"app":"Settings","screen":"main","keyboard_visible":false,"focused_field":"",'
                                '"more_below":true,"elements":[{"label":"General","kind":"button","x":0.3,"y":0.95}]}\n```'))
     assert out["more_below"] is True and out["keyboard_visible"] is False and out["elements"][0]["label"] == "General"
+
+
+def test_device_operator_is_not_told_to_over_verify():
+    # A live run spent ~40 min re-screenshotting and opening Photos one by one to "verify" media (operator report).
+    from ugecy import modules, registry
+    modules.load_modules()
+    prompt = registry.AGENTS["device-operator"].system_prompt
+    assert "Slow and careful" not in prompt and "Check in Photos" not in prompt
+    assert "Do not screenshot before an action" in prompt and "Never browse to find or check media" in prompt
+    assert "before and after" not in registry.TOOLS["device_screenshot"].tool.description
