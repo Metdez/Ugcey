@@ -71,9 +71,10 @@ export function pipe(up: Sock, client: Sock): void {
   });
   const end = (to: Sock) => (ev: { code?: number; reason?: string }) => safe(() => to.close(closeCode(ev?.code), String(ev?.reason ?? "").slice(0, 100)));
   up.addEventListener("close", end(client));
-  up.addEventListener("error", () => safe(() => client.close(1011, "upstream error")));
+  // close() throws on codes other than 1000 or 3000-4999 (1011 included), and safe() would hide it, leaving the peer open.
+  up.addEventListener("error", () => safe(() => client.close(4502, "upstream error")));
   client.addEventListener("close", end(up));
-  client.addEventListener("error", () => safe(() => up.close(1011, "client error")));
+  client.addEventListener("error", () => safe(() => up.close(1000, "client error")));
 }
 
 function refused(code: number, reason: string): Response {

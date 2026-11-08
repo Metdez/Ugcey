@@ -87,8 +87,14 @@ class EdgeKV:
         return await post_json("state.internal", path, body, http=self._http, settings=self._s)
 
     async def get(self, ns: str, prefix: str = "") -> dict[str, bytes]:
-        r = await self._post("/kv/get", {"ns": ns, "prefix": prefix})
-        return {i["key"]: base64.b64decode(i["value_b64"]) for i in r["items"]}
+        out: dict[str, bytes] = {}
+        after = ""
+        while True:  # paged: the DO returns <= ~2 MB per call so large threads never exhaust its memory
+            r = await self._post("/kv/get", {"ns": ns, "prefix": prefix, "after": after})
+            out.update({i["key"]: base64.b64decode(i["value_b64"]) for i in r["items"]})
+            if not r.get("next"):
+                return out
+            after = r["next"]
 
     async def put(self, ns: str, items: dict[str, bytes]) -> None:
         for chunk in _chunks(items):  # shortcut: chunks are atomic individually, not across the whole call

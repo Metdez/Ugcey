@@ -8,7 +8,7 @@ register_agent(AgentModule(
         "Independent reviewer that scores scripts (hook strength, originality vs sources, claim safety, FTC #ad disclosure, platform AI-label readiness, brand fit) and writes /reviews/<script>.md with a verdict and required edits. Use on every script before production. Never approves health claims."
     ),
     system_prompt=load_prompt("compliance-critic"),
-    tools=["compliance_check"],
+    tools=["web_search", "fetch_page", "compliance_check"],
     model_role="critic",
     skills=["/skills/"],
 ))

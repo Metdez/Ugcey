@@ -20,7 +20,8 @@ Edit this file for your brand. Agents read it at the start of every thread. Do n
 - Platforms: TikTok, Instagram Reels, YouTube Shorts
 - Length: 30 s unless the brief says otherwise
 - Disclosure: `#ad` in the first caption line for paid or gifted content; AI-generated media is always labeled.
-- Approvals: only media generation pauses for operator approval (it costs money). Publish, drive the phone or change this file only when the operator asked for it.
+- Approvals: only for spending money and posting: media generation (it costs money), posting content, and payments or purchases. Device sessions, phone navigation, other final taps and edits to this file run without asking; act on the phone only for what the operator asked.
 
 ## Learned playbook
-(Agents propose short, dated, evidence-backed entries here. Keep each edit small, dated and reversible.)
+(Agents add short, dated, evidence-backed entries here. Keep each edit small and reversible.)
+- Media library: every Higgsfield output is saved automatically to the operator's Dropbox, in `/Ugecy/Videos` and `/Ugecy/Images`, named `<date> <prompt words> <asset id 8>`. To post from the iPhone, open the Dropbox app, Search the file name, then `•••`, Export, Save video, and pick it from Photos in TikTok, Instagram or YouTube. `list_dropbox_media` gives the exact file names.

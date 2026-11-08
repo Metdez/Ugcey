@@ -2,6 +2,9 @@
 // All container-API calls live in the small helpers at the bottom so an API change stays local.
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "../env";
+import { Dropbox } from "../dropbox/core";
+import { sqlStore as dbxStore } from "../dropbox/store";
+import { InvalidCodeError, type DropboxStatus } from "../dropbox/types";
 import { Glasshand } from "../glasshand/core";
 import { sqlStore } from "../glasshand/store";
 
@@ -15,14 +18,17 @@ const VHOSTS = [
   "higgsfield.internal",
   "hfupload.internal",
   "firecrawl.internal",
+  "tavily.internal",
   "glasshand.internal",
+  "dropbox.internal",
 ];
 
-const RUNTIME_CODE = "2026-11-07.r6";
+const RUNTIME_CODE = "2026-11-08.r8";
 
 export class AgentRuntime extends DurableObject<Env> {
   private starting?: Promise<void>;
   private gh: Glasshand;
+  private dbx: Dropbox;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -30,6 +36,7 @@ export class AgentRuntime extends DurableObject<Env> {
       "CREATE TABLE IF NOT EXISTS kv (ns TEXT NOT NULL, key TEXT NOT NULL, value BLOB, updated_at INTEGER, PRIMARY KEY (ns, key))",
     );
     this.gh = new Glasshand(sqlStore(ctx.storage));
+    this.dbx = new Dropbox(dbxStore(ctx.storage), env);
     // The inactivity timeout is lost when the DO restarts; re-arm it for a surviving container.
     if (ctx.container?.running) void ctx.blockConcurrencyWhile(() => ctx.container!.setInactivityTimeout(IDLE_MS));
   }
@@ -62,16 +69,20 @@ export class AgentRuntime extends DurableObject<Env> {
   }
 
   // ---- state.internal RPC (values cross RPC as base64 strings) ----
-  kvGet(ns: string, prefix: string): { key: string; value_b64: string }[] {
-    const rows = this.ctx.storage.sql
-      .exec<{ key: string; value: ArrayBuffer }>(
-        "SELECT key, value FROM kv WHERE ns = ? AND substr(key, 1, ?) = ? ORDER BY key",
-        ns,
-        prefix.length,
-        prefix,
-      )
-      .toArray();
-    return rows.map((r) => ({ key: r.key, value_b64: toB64(r.value) }));
+  /** One page of keys (> after) under prefix, capped by bytes so a large thread never exhausts DO memory. */
+  kvGet(ns: string, prefix: string, after = "", maxBytes = 2_000_000): { items: { key: string; value_b64: string }[]; next: string | null } {
+    const cur = this.ctx.storage.sql.exec<{ key: string; value: ArrayBuffer }>(
+      "SELECT key, value FROM kv WHERE ns = ? AND substr(key, 1, ?) = ? AND key > ? ORDER BY key",
+      ns, prefix.length, prefix, after,
+    );
+    const items: { key: string; value_b64: string }[] = [];
+    let bytes = 0;
+    for (const r of cur) {
+      items.push({ key: r.key, value_b64: toB64(r.value) });
+      bytes += r.value.byteLength;
+      if (bytes >= maxBytes) return { items, next: r.key };
+    }
+    return { items, next: null };
   }
 
   kvPut(ns: string, items: { key: string; value_b64: string }[]): number {
@@ -107,6 +118,21 @@ export class AgentRuntime extends DurableObject<Env> {
   glasshandState() { return this.gh.state(); }
   glasshandToken(stale?: string) { return this.gh.token(stale); }
 
+  // ---- Dropbox connection (tokens live only here; see worker/dropbox/core.ts) ----
+  dropboxConnectUrl() { return this.dbx.connectUrl(); }
+  async dropboxSubmitCode(code: string): Promise<DropboxStatus | { error: "invalid_code" | "not_configured"; message: string }> {
+    try {
+      return await this.dbx.submitCode(code);
+    } catch (e) { // typed errors do not survive RPC, so they are returned
+      if (e instanceof InvalidCodeError) return { error: "invalid_code", message: e.message };
+      if (!this.dbx.connectUrl()) return { error: "not_configured", message: "Dropbox app keys are not set" };
+      throw e;
+    }
+  }
+  dropboxStatus() { return this.dbx.status(); }
+  dropboxDisconnect() { return this.dbx.disconnect(); }
+  dropboxToken(stale?: string) { return this.dbx.token(stale); }
+
   // ---- container lifecycle ----
   private async ensureReady(): Promise<void> {
     if (!this.ctx.container?.running) await this.startContainer();
@@ -137,7 +163,9 @@ export class AgentRuntime extends DurableObject<Env> {
         UGECY_WORKSPACE_ID: e.WORKSPACE_ID,
         UGECY_HAS_HIGGSFIELD: e.HF_KEY ? "true" : "false",
         UGECY_HAS_FIRECRAWL: e.FIRECRAWL_API_KEY ? "true" : "false",
+        UGECY_HAS_TAVILY: e.TAVILY_API_KEY ? "true" : "false",
         UGECY_HAS_GLASSHAND: "true", // connection is checked live via glasshand.internal/_ugecy/status,
+        UGECY_HAS_DROPBOX: "true", // connection is checked live via dropbox.internal/_ugecy/status
         UGECY_DATA_DIR: "/tmp/ugecy",
       },
       labels: { app: "ugecy" },

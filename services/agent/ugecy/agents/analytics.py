@@ -8,7 +8,7 @@ register_agent(AgentModule(
         "Reads post metrics, explains why posts won or lost against stored patterns, and proposes playbook updates for /memories/playbook.md (operator approval required). Use after posts have been live long enough to measure."
     ),
     system_prompt=load_prompt("analytics-analyst"),
-    tools=["get_post_metrics", "search_patterns", "remember_pattern"],
+    tools=["web_search", "fetch_page", "get_post_metrics", "search_patterns", "remember_pattern"],
     model_role="research",
     skills=["/skills/"],
 ))

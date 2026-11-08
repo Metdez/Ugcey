@@ -31,7 +31,7 @@ export function MainHeader() {
       <RunStatusBadge />
       {modes && (
         <div className="hidden items-center gap-1 md:flex">
-          {([["iPhone", modes.device], ["Higgsfield", modes.media]] as const).map(([name, m]) => (
+          {([["iPhone", modes.device], ["Higgsfield", modes.media], ["Firecrawl", modes.research], ["Tavily", modes.tavily]] as const).map(([name, m]) => (
             <Badge key={name} variant="outline" className="gap-1 text-[11px]" title={`${name} ${m === "live" ? "connected" : "not connected"}`}>
               <span className={`size-1.5 rounded-full ${m === "live" ? "bg-success" : "bg-muted-foreground"}`} aria-hidden />
               {name} {m === "live" ? "live" : "off"}

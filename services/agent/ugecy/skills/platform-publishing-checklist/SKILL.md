@@ -4,7 +4,7 @@ description: "Per-platform publishing checklist for TikTok, Instagram Reels, Fac
 ---
 # Platform publishing checklist
 
-Run this before every `publish_post`. Publishing in this studio goes only to the operator's own connected accounts and runs without an approval step once the operator asks to post.
+Run this before every `publish_post`. Publishing in this studio goes only to the operator's own connected accounts, only once the operator asks to post, and the final post always needs operator approval.
 
 ## AI-content labels (set the flag AND disclose honestly)
 | Platform | Flag | Notes |
@@ -28,7 +28,7 @@ Never strip metadata or hide that media is AI-generated.
 - YouTube Shorts: vertical or square up to 3 minutes; always set `privacyStatus` explicitly and `selfDeclaredMadeForKids`.
 
 ## Posting caps (be well under them)
-TikTok about 15 posts per day per creator, 6 requests per minute; unaudited apps post `SELF_ONLY` privately. Instagram 50 to 100 API posts per 24 h (read the quota at runtime). Facebook 30 API Reels per 24 h per Page. YouTube has a daily quota; uploads cost units. House rule: at most 3 posts per account per day.
+TikTok about 15 posts per day per creator, 6 requests per minute; unaudited apps post `SELF_ONLY` privately. Instagram 50 to 100 API posts per 24 h (read the quota at runtime). Facebook 30 API Reels per 24 h per Page. YouTube has a daily quota; uploads cost units. Schedule across days if a request would exceed these.
 
 ## Pre-flight
 1. Asset status is `completed` and approved; review verdict is `approved`.
@@ -36,4 +36,4 @@ TikTok about 15 posts per day per creator, 6 requests per minute; unaudited apps
 3. Caption: disclosure first, 1 to 4 relevant hashtags, no banned claims.
 4. `ai_disclosure=true` for AI media. Paid or gifted: `#ad`.
 5. Schedule off-peak overlap with existing posts; do not post duplicates across accounts at the same minute.
-6. After posting, call `get_post_status` and report the result. Direct API publishing is not connected: when `publish_post` says so, hand the post to the device-operator to publish from the iPhone.
+6. After posting, call `get_post_status` and report the result. Direct API publishing is not connected: when `publish_post` says so, hand the post to the device-operator to publish from the iPhone (the final post tap is approved on the phone).

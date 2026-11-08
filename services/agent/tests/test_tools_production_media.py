@@ -111,16 +111,18 @@ async def test_failed_job_marks_asset_failed(monkeypatch):
 
 
 def test_tools_registered_with_expected_interrupts(monkeypatch):
+    mods = [importlib.import_module(f"ugecy.tools.{m}") for m in ("media", "publishing", "device")]  # import first: works run alone
     monkeypatch.setattr(registry, "TOOLS", {})
-    for m in ("media", "publishing", "device"):
-        importlib.reload(importlib.import_module(f"ugecy.tools.{m}"))
+    for mod in mods:
+        importlib.reload(mod)
     T = registry.TOOLS
+    # approvals only for money and posting: paid generation, publish_post, the phone's post/purchase tap
     assert T["generate_media"].interrupt == registry.APPROVE_EDIT_REJECT and T["generate_media"].side_effect
-    # only spending money pauses for approval
-    assert not T["publish_post"].interrupt and T["publish_post"].side_effect
+    assert T["publish_post"].interrupt == registry.APPROVE_EDIT_REJECT and T["publish_post"].side_effect
     assert not T["device_start_session"].interrupt
-    assert not T["device_commit"].interrupt and T["device_commit"].side_effect
-    assert set(registry.interrupt_map()) == {"generate_media"}
+    assert not T["device_confirm"].interrupt
+    assert T["device_commit"].interrupt == registry.APPROVE_REJECT and T["device_commit"].side_effect
+    assert set(registry.interrupt_map()) == {"generate_media", "publish_post", "device_commit"}
     for n in ("list_media_models", "estimate_media_cost", "check_media_job", "list_connected_accounts", "get_post_status",
               "device_status", "device_screenshot", "device_tap", "device_swipe", "device_type", "device_home"):
         assert n in T and not T[n].interrupt

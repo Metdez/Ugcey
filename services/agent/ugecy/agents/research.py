@@ -5,12 +5,11 @@ from ugecy.registry import AgentModule, register_agent
 register_agent(AgentModule(
     name="research-analyst",
     description=(
-        "Finds winning public short-form UGC (TikTok, Reels, Shorts) and turns each into an evidence-backed pattern card in /research/patterns/. Researches on the operator's Glasshand iPhone when one is connected (read-only), else on the web. Use for trend research, hook and format analysis, and competitor teardown. Cites every URL; never copies scripts. Give it the niche, product category, platforms and how many patterns you need."
+        "Deep web research with Firecrawl and Tavily (never the phone): which UGC hooks and short-form formats are winning right now, what people are saying about the niche, and competitor ads. Writes an evidence-backed hook library and pattern cards to /research/. Use for trend research, hook and format analysis, and competitor teardown. Cites every URL; never copies scripts. Give it the niche, product category, audience and platforms."
     ),
     system_prompt=load_prompt("research-analyst"),
-    tools=["web_search", "fetch_page", "remember_pattern", "search_patterns", "device_status", "device_start_session", "device_screenshot", "device_scroll", "device_back",
-           "device_observe", "device_tap", "device_swipe", "device_next_post", "device_type", "device_home"],
+    tools=["tavily_research", "tavily_search", "tavily_extract", "web_search", "fetch_page", "remember_pattern",
+           "search_patterns"],
     model_role="research",
-    long_running=True,  # 200-call ceiling instead of 30: stops cleanly and returns what it has
     skills=["/skills/"],
 ))

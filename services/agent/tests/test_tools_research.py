@@ -90,12 +90,12 @@ async def test_fetch_page_rejects_private():
     assert "error" in out
 
 
-async def test_fetch_page_truncates_and_records():
+async def test_fetch_page_returns_the_page_and_records():
     d = install()
     d.research = WebResearchProvider(Settings())  # no key -> browser_markdown path
     out = await research.fetch_page.ainvoke({"url": "https://example.org/page"})
     head, body = out.split("\n\n", 1)
-    assert json.loads(head)["title"] == "T" and len(body) == 8000
+    assert json.loads(head)["title"] == "T" and len(body) > 8000  # the provider caps at 20k; no second cut
 
 
 async def test_web_search_emits_sources(monkeypatch):
@@ -163,8 +163,9 @@ def test_no_fetch_budget_and_no_model_call_cap_for_research():
     from ugecy.tools import source_policy as sp
 
     assert not hasattr(sp, "take_budget") and not hasattr(sp, "FETCH_BUDGET")
-    assert AGENTS["research-analyst"].long_running
-    assert not any(a.long_running for n, a in AGENTS.items() if n != "research-analyst")
+    from ugecy.settings import Settings
+    assert AGENTS["research-analyst"] and not hasattr(AGENTS["research-analyst"], "long_running")
+    assert not any(k.startswith("max_model_calls") for k in Settings.model_fields)
 
 
 def test_all_skills_have_valid_frontmatter():

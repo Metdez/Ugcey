@@ -37,6 +37,12 @@ class MirroredSaver(InMemorySaver):
         self._locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
     async def _hydrate(self, thread_id: str) -> None:
+        """Load the thread's whole checkpoint history: checkpoints, blobs and writes.
+
+        All of it is needed. `messages` and `files` are LangGraph DeltaChannels, rebuilt from writes on the
+        latest checkpoint's ancestors back to the nearest snapshot, so loading only the latest checkpoint
+        returned threads with no messages. EdgeKV.get pages the read (about 2 MB per call), so a long thread
+        never exceeds the Durable Object's RPC or memory limits."""
         if thread_id in self._loaded:
             return
         async with self._locks[thread_id]:

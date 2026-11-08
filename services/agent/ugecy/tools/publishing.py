@@ -1,4 +1,4 @@
-"""Domain publishing tools. publish_post is irreversible: no approval step (only paid generation asks), audited, AI-disclosure enforced."""
+"""Domain publishing tools. publish_post is irreversible: the operator approves each post; audited, AI-disclosure enforced."""
 from __future__ import annotations
 
 import json
@@ -12,7 +12,7 @@ from ugecy.deps import get_deps
 from ugecy.events import current_thread_id
 from ugecy.integrations.publishing.policy import is_ai_generated
 from ugecy.integrations.unavailable import PUBLISH_OFF
-from ugecy.registry import register_tool
+from ugecy.registry import APPROVE_EDIT_REJECT, register_tool
 
 CAPTION_LIMITS = {"tiktok": 2200, "instagram": 2200, "youtube": 5000, "facebook": 5000}
 
@@ -112,5 +112,5 @@ async def get_post_status(post_id: str) -> str:
 
 
 register_tool(list_connected_accounts, domain="publishing")
-register_tool(publish_post, domain="publishing", side_effect=True)  # no approval: only paid generation asks
+register_tool(publish_post, domain="publishing", interrupt=APPROVE_EDIT_REJECT, side_effect=True)  # approvals: money and posting
 register_tool(get_post_status, domain="publishing")

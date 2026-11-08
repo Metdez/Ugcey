@@ -52,6 +52,36 @@ async def test_state_and_history_survive_restart():
     assert out["messages"][-1] == "step11" and out["n"] == 11
 
 
+async def test_interrupt_inside_a_subgraph_resumes_after_restart():
+    def sub():
+        g = StateGraph(S)
+        g.add_node("ask", lambda s: {"messages": [f"sub:{interrupt('ok?')}"]})
+        g.add_edge(START, "ask")
+        g.add_edge("ask", END)
+        return g.compile()
+
+    def parent(saver):
+        g = StateGraph(S)
+        g.add_node("step", lambda s: {"n": s["n"] + 1, "messages": ["step"]})
+        g.add_node("child", sub())
+        g.add_edge(START, "step")
+        g.add_edge("step", "child")
+        g.add_edge("child", END)
+        return g.compile(checkpointer=saver)
+
+    control = parent(InMemorySaver())  # the same run with no restart
+    await control.ainvoke({"n": 0, "messages": []}, CFG)
+    kv = MemoryKV()
+    await parent(build_checkpointer(kv)).ainvoke({"n": 0, "messages": []}, CFG)
+    assert any(k.startswith('c|["child:') for k in await kv.get("ckpt:t1"))  # the subgraph has its own namespace
+
+    g2 = parent(build_checkpointer(kv))
+    assert (await g2.aget_state(CFG)).tasks[0].interrupts
+    out = await g2.ainvoke(Command(resume="yes"), CFG)
+    assert out == await control.ainvoke(Command(resume="yes"), CFG)
+    assert out["messages"][-1] == "sub:yes"
+
+
 async def test_interrupt_resumes_after_restart():
     kv = MemoryKV()
     g1 = _graph(build_checkpointer(kv), with_interrupt=True)

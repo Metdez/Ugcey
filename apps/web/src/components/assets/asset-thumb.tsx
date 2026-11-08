@@ -1,4 +1,4 @@
-import { AlertCircle, Music } from "lucide-react";
+import { AlertCircle, Cloud, Music } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useThread } from "@/stores/thread-store";
@@ -34,6 +34,17 @@ export function AssetThumb({ assetId, size = "md" }: { assetId: string; size?: "
       ) : (
         <Music className="absolute inset-0 m-auto size-5 text-muted-foreground" />
       )}
+      {asset.dropbox_status && <DropboxBadge status={asset.dropbox_status} path={asset.dropbox_path} />}
     </button>
+  );
+}
+
+const DBX_LABEL = { saved: "Saved to Dropbox", pending: "Saving to Dropbox", failed: "Dropbox save failed" };
+export function DropboxBadge({ status, path }: { status: "pending" | "saved" | "failed"; path?: string | null }) {
+  return (
+    <span title={status === "saved" && path ? path : DBX_LABEL[status]} role="img" aria-label={DBX_LABEL[status]}
+      className={cn("absolute right-1 top-1 rounded-full bg-background/80 p-1 backdrop-blur", status === "failed" ? "text-destructive" : status === "pending" ? "animate-pulse text-muted-foreground" : "text-info")}>
+      <Cloud className="size-3" />
+    </span>
   );
 }

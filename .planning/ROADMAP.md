@@ -8,6 +8,8 @@ The work runs in three phases. Phase 1 laid the foundation and froze the contrac
 - [x] **Phase 2: Parallel build**: ten disjoint work packages (3 web, 5 Python, 2 edge).
 - [x] **Phase 3: Integrate & ship**: wire everything up, bootstrap Cloudflare, deploy, smoke-test, and hand over the URL.
 - [x] **Phase 4: Glasshand live iPhone**: OAuth device flow, token store, stream relay, vision grounding and the connect UI (see phases/04-glasshand).
+- [x] **Phase 7: Memory and stuck recovery**: per-agent Deep Agents memory with automatic episodes and lessons, and a Firecrawl lookup nudge when an agent loops (see phases/07-memory-stuck).
+- [x] **Phase 8: Dropbox media library**: every Higgsfield output is copied to the operator's Dropbox; agents find media in the Dropbox app on the iPhone (see phases/08-dropbox).
 
 ## Phase Details
 

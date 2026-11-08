@@ -36,6 +36,11 @@ async def _startup(app: FastAPI) -> Deps:
         await resume_media_jobs()
     except Exception:
         logging.getLogger(__name__).exception("resume_media_jobs failed")
+    try:  # copy anything not yet in Dropbox (finished while disconnected, or before a restart)
+        from ugecy.storage.backup import reconcile
+        await reconcile()
+    except Exception:
+        logging.getLogger(__name__).exception("dropbox reconcile failed")
     return deps
 
 

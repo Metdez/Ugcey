@@ -13,6 +13,7 @@ from typing import Any
 
 from ugecy.contracts import ApprovalRecord, AuditEntry, UiEvent, now_iso
 from ugecy.deps import Deps
+from ugecy.middleware.limits import RECURSION_LIMIT
 from ugecy.stream.adapter import StreamAdapter
 
 log = logging.getLogger("ugecy.runs")
@@ -95,7 +96,7 @@ class RunManager:
         await self._set_status(tid, "running")
         await self._publish(run, adapter.start())
         try:
-            cfg = {"configurable": {"thread_id": tid}, "recursion_limit": 400}
+            cfg = {"configurable": {"thread_id": tid}, "recursion_limit": RECURSION_LIMIT}
             async for part in self._agent().astream(
                     inp, config=cfg, context=_default_context(s.workspace_id, tid), version="v2", subgraphs=True,
                     stream_mode=["messages", "updates", "custom", "values"]):

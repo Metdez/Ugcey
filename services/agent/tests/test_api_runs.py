@@ -187,3 +187,15 @@ async def test_model_error_becomes_error_events():
         assert types(events)[-2:] == ["error", "run.completed"]
         assert events[-2]["retryable"] is True and events[-1]["status"] == "error"
         assert (await deps.app.get_thread("t1")).status == "error"
+
+
+async def test_running_thread_without_a_live_run_is_settled_idle():
+    # A container restart kills the run before it records its end, leaving "running" in the store forever.
+    client, deps = make_client(make_agent(simple_script()))
+    async with client:
+        await deps.app.upsert_thread(ThreadSummary(id="t1", title="x", status="running"))
+        assert [t["status"] for t in (await client.get("/api/threads")).json()] == ["idle"]
+        await deps.app.upsert_thread(ThreadSummary(id="t1", title="x", status="running"))
+        r = await client.get("/api/threads/t1")
+        assert r.status_code == 200 and r.json()["thread"]["status"] == "idle"
+        assert (await deps.app.get_thread("t1")).status == "idle"

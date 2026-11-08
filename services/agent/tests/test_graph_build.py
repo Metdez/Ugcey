@@ -17,17 +17,19 @@ from ugecy.middleware.audit import AuditMiddleware
 
 SIDE_EFFECT_TOOLS = {"generate_media", "publish_post", "device_commit", "device_tap", "device_swipe",
                      "device_type", "device_start_session"}
+WEB = {"web_search", "fetch_page"}  # every specialist can look things up when stuck
+DBX = {"dropbox_status", "list_dropbox_media", "browse_dropbox", "save_to_dropbox", "dropbox_backfill"}
 EXPECTED = {
-    "research-analyst": {"web_search", "fetch_page", "remember_pattern", "search_patterns", "device_status", "device_start_session",
-                         "device_screenshot", "device_scroll", "device_back", "device_observe", "device_tap", "device_swipe",
-                         "device_next_post", "device_type", "device_home"},
-    "creative-strategist": {"search_patterns"},
-    "compliance-critic": {"compliance_check"},
-    "production-coordinator": {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
-    "publishing-coordinator": {"list_connected_accounts", "publish_post", "get_post_status"},
-    "device-operator": {"device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe",
-                        "device_scroll", "device_back", "device_open_url", "device_type", "device_home", "device_commit"},
-    "analytics-analyst": {"get_post_metrics", "search_patterns", "remember_pattern"},
+    "research-analyst": WEB | {"tavily_research", "tavily_search", "tavily_extract", "remember_pattern", "search_patterns"},
+    "creative-strategist": WEB | {"search_patterns"},
+    "compliance-critic": WEB | {"compliance_check"},
+    "production-coordinator": WEB | DBX | {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
+    "publishing-coordinator": WEB | DBX | {"list_connected_accounts", "publish_post", "get_post_status"},
+    "device-operator": WEB | DBX | {"device_status", "device_screenshot", "device_observe", "device_start_session", "device_tap",
+                        "device_swipe",
+                        "device_scroll", "device_back", "device_open_url", "device_type", "device_home", "device_confirm",
+                        "device_commit"},
+    "analytics-analyst": WEB | {"get_post_metrics", "search_patterns", "remember_pattern"},
 }
 
 
@@ -52,8 +54,8 @@ def test_general_purpose_has_no_tools(reg):
     assert gp["tools"] == []
 
 
-def test_interrupt_map_has_only_paid_generation(reg):
-    assert set(registry.interrupt_map()) == {"generate_media"}
+def test_interrupt_map_lists_the_gated_tools(reg):
+    assert set(registry.interrupt_map()) == {"generate_media"}  # fake registry; real gates: test_tools_production_media
 
 
 def test_disabled_agent_is_dropped(reg):
@@ -94,15 +96,17 @@ async def test_audit_writes_entry_and_survives_failure(reg):
 
 async def test_seed_store_writes_skills_and_keeps_existing_memory():
     store = fake_deps().store
-    await seed_store(store, "ws1")
+    await store.aput(("global", "skills"), "/phone-research/SKILL.md", {"content": "old", "encoding": "utf-8"})
+    await seed_store(store, "ws1")  # retired skills are removed, or every agent would keep loading them
     names = {i.key for i in await store.asearch(("global", "skills"))}
     assert names == {f"/{n}/SKILL.md" for n in (
         "ugc-hook-extraction", "short-form-script-structure", "script-critic-rubric",
-        "higgsfield-prompting", "platform-publishing-checklist", "ftc-disclosure", "phone-research")}
+        "higgsfield-prompting", "platform-publishing-checklist", "ftc-disclosure", "deep-research")}
     assert (await store.aget(("ws1", "memories"), "/AGENTS.md")).value["content"].startswith("# Brand voice")
     await store.aput(("ws1", "memories"), "/AGENTS.md", {"content": "mine", "encoding": "utf-8"})
     await seed_store(store, "ws1")
-    assert (await store.aget(("ws1", "memories"), "/AGENTS.md")).value["content"] == "mine"
+    kept = (await store.aget(("ws1", "memories"), "/AGENTS.md")).value["content"]
+    assert kept.startswith("mine\n") and kept.count("- Media library:") == 1  # operator text kept; playbook line added once
 
 
 def test_skill_frontmatter_is_valid():
@@ -128,14 +132,43 @@ async def test_orchestrator_can_delegate_to_registered_subagent(reg):
     assert "summary.md" in task_result.content
 
 
-def test_research_gets_its_own_clean_stop_cap(reg):
+def test_no_model_call_caps_on_any_agent(reg):  # AGENTS.md rule 8 (operator decision)
     from langchain.agents.middleware import ModelCallLimitMiddleware
+    specs = _subagents(fake_deps(), fake_models())
+    assert specs and not any(isinstance(m, ModelCallLimitMiddleware) for s in specs for m in s["middleware"])
 
-    def cap(spec):
-        lims = [m for m in spec["middleware"] if isinstance(m, ModelCallLimitMiddleware)]
-        assert len(lims) == 1 and lims[0].exit_behavior == "end"
-        return lims[0].run_limit
+
+def test_subagents_are_not_bound_to_langchains_9999_recursion_limit(reg):
+    # create_agent binds 9_999 and a subagent's bound limit beats the run's: a long subagent stopped the whole run.
+    from deepagents.middleware import subagents
+
+    from ugecy.middleware.limits import RECURSION_LIMIT
+
+    agent = build_agent(fake_deps(), fake_models(fake_model([], "done")))
+    assert agent.config["recursion_limit"] == RECURSION_LIMIT
+    spec = _subagents(fake_deps(), fake_models())[0]
+    sub = subagents.create_sub_agent({**spec, "middleware": []})  # the call deepagents makes per subagent
+    assert sub.config["recursion_limit"] == RECURSION_LIMIT > 9_999
+
+
+async def test_messages_and_files_survive_a_restart_with_the_real_graph(reg):
+    # The real graph's `messages` and `files` are DeltaChannels, rebuilt from writes on ancestor checkpoints.
+    # Hydrating only the latest checkpoint returned every thread with no messages after a container restart.
+    from ugecy.persistence import build_checkpointer
+    from ugecy.persistence.kv import MemoryKV
+
+    kv, cfg, ctx = MemoryKV(), {"configurable": {"thread_id": "t"}}, RunContext(workspace_id="ws1")
+    write = AIMessage(content="", tool_calls=[{"name": "write_file", "id": "w1", "args": {
+        "file_path": "/brief.md", "content": "hook: morning glow"}}])
     deps = fake_deps()
-    specs = {s["name"]: s for s in _subagents(deps, fake_models()) if "middleware" in s}
-    assert cap(specs["research-analyst"]) == deps.settings.max_model_calls_research == 200
-    assert all(cap(s) == deps.settings.max_model_calls_per_subagent for n, s in specs.items() if n != "research-analyst")
+    deps.checkpointer = build_checkpointer(kv)
+    await build_agent(deps, fake_models(fake_model(write, "All done."))).ainvoke(
+        {"messages": [{"role": "user", "content": "go"}]}, cfg, context=ctx)
+    before = (await build_agent(deps, fake_models()).aget_state(cfg)).values
+
+    restarted = fake_deps()
+    restarted.checkpointer = build_checkpointer(kv)  # fresh saver, same KV: a new container
+    after = (await build_agent(restarted, fake_models()).aget_state(cfg)).values
+    assert len(before["messages"]) >= 4 and before["files"]
+    assert [m.content for m in after["messages"]] == [m.content for m in before["messages"]]
+    assert after["files"].keys() == before["files"].keys()

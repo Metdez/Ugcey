@@ -25,12 +25,17 @@ class Settings(BaseSettings):
     hf_key: str | None = Field(default=None, validation_alias="HF_KEY")
     hf_api_key_secret: str | None = Field(default=None, validation_alias="HF_API_KEY_SECRET")
     firecrawl_api_key: str | None = Field(default=None, validation_alias="FIRECRAWL_API_KEY")
+    tavily_api_key: str | None = Field(default=None, validation_alias="TAVILY_API_KEY")
     glasshand_token: str | None = Field(default=None, validation_alias="GLASSHAND_TOKEN")  # local dev only
     glasshand_rental_id: str | None = Field(default=None, validation_alias="GLASSHAND_RENTAL_ID")  # local dev only
+    dropbox_app_key: str | None = Field(default=None, validation_alias="DROPBOX_APP_KEY")  # local dev only
+    dropbox_app_secret: str | None = Field(default=None, validation_alias="DROPBOX_APP_SECRET")  # local dev only
+    dropbox_refresh_token: str | None = Field(default=None, validation_alias="DROPBOX_REFRESH_TOKEN")  # local dev only
 
     # edge-mode capability flags set by the AgentRuntime DO from the Worker's secrets
     has_higgsfield: bool = False
     has_firecrawl: bool = False
+    has_tavily: bool = False
     has_glasshand: bool = False
 
     # provider selection
@@ -41,19 +46,16 @@ class Settings(BaseSettings):
 
     # model routing (Workers AI ids; see .planning/research/MODELS.md). No Anthropic models.
     model_orchestrator: str = "@cf/zai-org/glm-5.3"
-    model_research: str = "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
-    model_creative: str = "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
+    model_research: str = "openai/gpt-5.6-terra"  # latest Terra on Workers AI (GPT-6 Terra not available)
+    model_creative: str = "openai/gpt-5.6-terra"
     model_critic: str = "@cf/zai-org/glm-5.3"
     model_fast: str = "@cf/zai-org/glm-4.7-flash"
-    model_vision: str = "@cf/qwen/qwen3.8-27b"
+    model_vision: str = "openai/gpt-6-luna"  # the ONLY screen-reading model (operator decision): 7/7 icons, avg err 0.016, 6.8s
     model_fallback: str = "@cf/qwen/qwen3.8-27b"  # 300 rpm; absorbs 20-rpm limits on paid models
     model_embeddings: str = "@cf/qwen/qwen3-embedding-0.6b"
 
     disabled_agents: str = ""  # comma-separated agent names
     disabled_tools: str = ""
-    max_model_calls_per_run: int = 80
-    max_model_calls_per_subagent: int = 30
-    max_model_calls_research: int = 200  # research-analyst; LangGraph run limits do not reach subagents
     llm_timeout_s: float = 180.0
 
     @property

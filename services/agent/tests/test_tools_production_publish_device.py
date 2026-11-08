@@ -77,12 +77,12 @@ async def test_device_session_guard_and_commit_flow():
     await device.device_tap.ainvoke({"x": 0.77, "y": 0.91})  # Next -> caption
     assert device_err(await device.device_commit.ainvoke({"intent": "bogus", "x": 0.7, "y": 0.9}))
     out = json.loads(await device.device_commit.ainvoke({"intent": "post", "x": 0.77, "y": 0.91}))
-    assert out["screen"] == "posted" and out["steps_left"] == 0
-    assert "budget" in await device.device_home.ainvoke({})
+    assert out["screen"] == "posted" and out["steps_used"] == 3
+    assert json.loads(await device.device_home.ainvoke({}))["ok"]  # no step cap
     snap = await device.device_status_snapshot()
-    assert snap.session.steps_used == 3 and snap.mode == "live" and snap.devices[0].id == "iphone-fake-1"
+    assert snap.session.steps_used == 4 and snap.mode == "live" and snap.devices[0].id == "iphone-fake-1"
     d = device.get_deps()
-    assert [a.tool for a in d.app.audit if a.tool != "device_start_session"] == ["device_tap", "device_tap", "device_commit"]
+    assert [a.tool for a in d.app.audit if a.tool != "device_start_session"] == ["device_tap", "device_tap", "device_commit", "device_home"]
 
 
 async def test_operate_session_does_not_require_predeclared_apps():
@@ -90,8 +90,8 @@ async def test_operate_session_does_not_require_predeclared_apps():
     device.reset_state()
     session = json.loads(await device.device_start_session.ainvoke({"goal": "sign in to the operator's account"}))
     assert session["max_steps"] == 60
-    result = await device.device_commit.ainvoke({"intent": "confirm", "x": 2, "y": 0})
-    assert "intent must" not in result
+    assert "intent must" in await device.device_commit.ainvoke({"intent": "confirm", "x": 0.5, "y": 0.5})
+    assert "intent must" not in await device.device_confirm.ainvoke({"intent": "login", "x": 0.5, "y": 0.5})
 
 
 def device_err(s: str) -> bool:

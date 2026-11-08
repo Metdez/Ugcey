@@ -29,6 +29,7 @@ export function AssetLightbox() {
                 <Badge variant="outline">{asset.provider}</Badge>
                 <Badge variant="outline">{asset.mode}</Badge>
                 <Badge variant="outline">{asset.status}</Badge>
+                {asset.dropbox_status && <Badge variant="outline" title={asset.dropbox_path ?? undefined}>Dropbox: {asset.dropbox_status}</Badge>}
               </div>
               {asset.url && (
                 <Button asChild variant="outline" size="sm" className="w-fit">
