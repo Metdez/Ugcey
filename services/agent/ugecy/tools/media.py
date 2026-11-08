@@ -1,4 +1,5 @@
-"""Domain media tools. generate_media is the only side effect (it spends money): approval-gated."""
+"""Domain media tools. generate_media spends money and runs without approval (operator decision: approvals are only
+for posting and payments); the agent states the estimated cost."""
 from __future__ import annotations
 
 import asyncio
@@ -13,7 +14,7 @@ from ugecy.contracts import Asset, AuditEntry
 from ugecy.deps import get_deps
 from ugecy.events import current_thread_id, emit
 from ugecy.integrations.unavailable import MEDIA_OFF
-from ugecy.registry import APPROVE_EDIT_REJECT, register_tool
+from ugecy.registry import register_tool
 
 # poll backoff: first delay, factor, max delay, overall cap (seconds). Tests shrink these.
 POLL = {"first": 2.0, "factor": 1.5, "max": 10.0, "cap": 900.0}
@@ -221,7 +222,7 @@ async def estimate_media_cost(model: str, args: dict | None = None) -> str:
 async def generate_media(model: str, prompt: str, kind: str = "video", args: dict | None = None,
                          image_asset_id: str | None = None, reference_asset_ids: list[str] | None = None,
                          end_image_asset_id: str | None = None, brief_path: str | None = None) -> str:
-    """Generate an image/video/audio asset with a catalog model (costs money; needs approval).
+    """Generate an image/video/audio asset with a catalog model (costs money; runs without approval).
     Returns the asset id and status; the file arrives asynchronously (use check_media_job).
     Videos for UGC should be 9:16. For image-to-video pass image_asset_id (a completed still) and optionally
     end_image_asset_id (a completed still the clip ends on); for Marketing Studio product photos or
@@ -270,5 +271,5 @@ async def check_media_job(asset_id: str) -> str:
 
 register_tool(list_media_models, domain="media")
 register_tool(estimate_media_cost, domain="media")
-register_tool(generate_media, domain="media", interrupt=APPROVE_EDIT_REJECT, side_effect=True)
+register_tool(generate_media, domain="media", side_effect=True)  # no approval: only posting and payments ask
 register_tool(check_media_job, domain="media")

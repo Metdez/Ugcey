@@ -130,6 +130,7 @@ def build_agent(deps: Deps, models: dict[str, BaseChatModel] | None = None):
 
 
 RETIRED_SKILLS = ("phone-research",)  # research is web-only now (Firecrawl + Tavily)
+MANAGED_MEMORY_LINES = ("- Media library:", "- Approvals:")  # rewritten in stored memory when the template changes
 
 
 async def seed_store(store: Any, workspace_id: str) -> None:
@@ -146,8 +147,13 @@ async def seed_store(store: Any, workspace_id: str) -> None:
     if item is None:
         await store.aput(memories_ns(workspace_id), "/AGENTS.md", create_file_data(template))
         return
-    text = file_text(item.value)  # existing memory: add playbook lines it is missing (e.g. the Dropbox media library)
-    new = [ln for ln in template.splitlines() if ln.startswith("- Media library:") and ln not in text]
-    if new:
-        await store.aput(memories_ns(workspace_id), "/AGENTS.md", create_file_data(
-            text.rstrip("\n") + "\n" + "\n".join(new) + "\n", created_at=item.value.get("created_at")))
+    text = file_text(item.value)  # existing memory: keep the operator's text, but these playbook rules follow the template
+    lines = text.rstrip("\n").splitlines()
+    for prefix in MANAGED_MEMORY_LINES:
+        want = next((ln for ln in template.splitlines() if ln.startswith(prefix)), None)
+        at = [i for i, ln in enumerate(lines) if ln.startswith(prefix)]
+        if want and [lines[i] for i in at] != [want]:  # replace in place (first match), or append if missing
+            lines = [want if i == at[0] else ln for i, ln in enumerate(lines) if i not in at[1:]] if at else [*lines, want]
+    if "\n".join(lines) + "\n" != text:
+        text = "\n".join(lines) + "\n"
+        await store.aput(memories_ns(workspace_id), "/AGENTS.md", create_file_data(text, created_at=item.value.get("created_at")))

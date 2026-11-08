@@ -117,12 +117,12 @@ def test_tools_registered_with_expected_interrupts(monkeypatch):
         importlib.reload(mod)
     T = registry.TOOLS
     # approvals only for money and posting: paid generation, publish_post, the phone's post/purchase tap
-    assert T["generate_media"].interrupt == registry.APPROVE_EDIT_REJECT and T["generate_media"].side_effect
+    assert not T["generate_media"].interrupt and T["generate_media"].side_effect  # generation never asks (operator)
     assert T["publish_post"].interrupt == registry.APPROVE_EDIT_REJECT and T["publish_post"].side_effect
     assert not T["device_start_session"].interrupt
     assert not T["device_confirm"].interrupt
     assert T["device_commit"].interrupt == registry.APPROVE_REJECT and T["device_commit"].side_effect
-    assert set(registry.interrupt_map()) == {"generate_media", "publish_post", "device_commit"}
+    assert set(registry.interrupt_map()) == {"publish_post", "device_commit"}  # only posting and payments ask
     for n in ("list_media_models", "estimate_media_cost", "check_media_job", "list_connected_accounts", "get_post_status",
               "device_status", "device_screenshot", "device_tap", "device_swipe", "device_type", "device_home"):
         assert n in T and not T[n].interrupt
