@@ -120,19 +120,19 @@ async def test_observe_live_path_records_device_fallback_and_url(monkeypatch):
 def test_research_analyst_tools(monkeypatch):
     from ugecy import modules, registry
     modules.load_modules()
-    tools = registry.AGENTS["research-analyst"].tools
-    need = {"device_status", "device_start_session", "device_screenshot", "device_observe", "device_tap", "device_swipe",
-            "device_next_post", "device_type", "device_home"}
-    assert need <= set(tools) and "device_commit" not in tools
-    assert "device_commit" in registry.AGENTS["device-operator"].tools
+    tools = set(registry.AGENTS["research-analyst"].tools)
+    assert {"tavily_research", "tavily_search", "tavily_extract", "web_search", "fetch_page"} <= tools
+    assert not any(t.startswith("device_") for t in tools)  # research is web-only (operator decision)
+    assert {"device_commit", "device_observe"} <= set(registry.AGENTS["device-operator"].tools)
     assert not registry.TOOLS["device_start_session"].interrupt  # starting a phone session never asks for approval
-    assert "phone-research" in registry.AGENTS["research-analyst"].system_prompt
+    prompt = registry.AGENTS["research-analyst"].system_prompt
+    assert "deep-research" in prompt and "device_" not in prompt
 
 
 def test_all_skills_frontmatter():
     root = pathlib.Path(__file__).parents[1] / "ugecy/skills"
     found = sorted(p.parent.name for p in root.glob("*/SKILL.md"))
-    assert "phone-research" in found
+    assert "deep-research" in found and "phone-research" not in found
     for p in root.glob("*/SKILL.md"):
         meta = yaml.safe_load(p.read_text().split("---")[1])
         assert meta["name"] == p.parent.name and isinstance(meta["description"], str) and 0 < len(meta["description"]) <= 1024

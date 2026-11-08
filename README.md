@@ -20,7 +20,6 @@ docs/              product, architecture, interface, engineering rules
 
 - **URL:** https://ugecy.zh-a16.workers.dev. The app is public: there is no access key, unlock link or cookie gate.
 - **Models:** Chinese models on Workers AI.
-- **Mock mode:** media, publishing and device run as mocks until their credentials are added (see Deploy).
 - **Real iPhone (Glasshand):**
   1. Open the Device tab and click **Connect Glasshand**.
   2. Open the approval page and enter the code Glasshand emails you.
@@ -67,7 +66,8 @@ pnpm exec wrangler d1 migrations apply ugecy-db --remote --config wrangler.deplo
 pnpm build && pnpm exec wrangler deploy --config wrangler.deploy.json
 # 4. Secrets. Each optional one turns a capability on; without it, that capability is off.
 pnpm exec wrangler secret put HF_KEY --config wrangler.deploy.json            # Higgsfield "key-id:key-secret"
-pnpm exec wrangler secret put FIRECRAWL_API_KEY --config wrangler.deploy.json # live web search
+pnpm exec wrangler secret put FIRECRAWL_API_KEY --config wrangler.deploy.json # web research (search + scrape)
+pnpm exec wrangler secret put TAVILY_API_KEY --config wrangler.deploy.json    # deep research (search, extract, research reports)
 pnpm exec wrangler secret put DROPBOX_APP_KEY --config wrangler.deploy.json    # Dropbox media library
 pnpm exec wrangler secret put DROPBOX_APP_SECRET --config wrangler.deploy.json # then Accounts > Dropbox > Connect in the app
 ```

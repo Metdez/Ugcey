@@ -52,12 +52,14 @@ def resolve_modes(s: Settings) -> ProviderModes:
 
     media_ok = bool(s.higgsfield_key) if local else s.has_higgsfield
     search_ok = bool(s.firecrawl_api_key) if local else s.has_firecrawl
+    tavily_ok = bool(s.tavily_api_key) if local else s.has_tavily
     return ProviderModes(
         llm="live" if s.internal_mode != "test" else "off",
         media=pick(s.media_provider, media_ok),  # type: ignore[arg-type]
         device=pick(s.device_provider, bool(s.glasshand_token) if local else s.has_glasshand),  # type: ignore[arg-type]
         publishing="off",  # no live API publisher yet
         research=pick(s.research_provider, search_ok),  # type: ignore[arg-type]
+        tavily=pick(s.research_provider, tavily_ok),  # type: ignore[arg-type]
     )
 
 

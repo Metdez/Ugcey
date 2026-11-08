@@ -90,12 +90,12 @@ async def test_fetch_page_rejects_private():
     assert "error" in out
 
 
-async def test_fetch_page_truncates_and_records():
+async def test_fetch_page_returns_the_page_and_records():
     d = install()
     d.research = WebResearchProvider(Settings())  # no key -> browser_markdown path
     out = await research.fetch_page.ainvoke({"url": "https://example.org/page"})
     head, body = out.split("\n\n", 1)
-    assert json.loads(head)["title"] == "T" and len(body) == 8000
+    assert json.loads(head)["title"] == "T" and len(body) > 8000  # the provider caps at 20k; no second cut
 
 
 async def test_web_search_emits_sources(monkeypatch):

@@ -18,7 +18,7 @@ from langchain_core.messages import AIMessage, ToolMessage
 
 from ugecy.memory import experience
 
-LOOKUP_TOOLS = {"web_search", "fetch_page"}
+LOOKUP_TOOLS = {"web_search", "fetch_page", "tavily_search", "tavily_extract", "tavily_research"}
 POLLING_TOOLS = {"check_media_job", "get_post_status"}  # repeating these with the same result is normal waiting
 SCREEN_TOOLS = {"device_screenshot", "device_observe"}
 REPEAT, ERRORS, SAME = 3, 3, 3

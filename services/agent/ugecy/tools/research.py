@@ -1,4 +1,4 @@
-"""Research tools: web_search, fetch_page. Public, permitted pages only."""
+"""Firecrawl research tools: web_search, fetch_page. Public, permitted pages only. Tavily tools: tools/tavily.py."""
 from __future__ import annotations
 
 import ipaddress
@@ -49,21 +49,23 @@ async def _record(source: Source) -> None:
 
 
 @tool
-async def web_search(query: str, platform: str | None = None, limit: int = 8) -> str:
+async def web_search(query: str, platform: str | None = None, limit: int = 8, recency: str | None = None,
+                     news: bool = False) -> str:
     """Search the public web for UGC ads, short-form video patterns, competitor pages, reviews or trends.
 
     Use this first when you need examples, hooks, formats or market context. `platform` may be
-    tiktok, instagram, youtube or facebook to bias results. Returns one JSON object per line
-    (url, title, platform, snippet). Only public, permitted pages are searched; never use it to
-    reach logged-in, private or paywalled content. If live search is not connected the result
-    says so (mode "off"): research on the iPhone or use fetch_page on specific URLs instead.
+    tiktok, instagram, youtube or facebook to bias results. `recency` (hour, day, week, month, year)
+    keeps results inside that window, newest first; `news=True` searches news articles instead of the
+    web. Returns one JSON object per line (url, title, platform, snippet). Only public, permitted pages
+    are searched; never use it to reach logged-in, private or paywalled content. If Firecrawl is not
+    connected the result says so (mode "off"): use the Tavily tools or fetch_page on specific URLs.
     """
     limit = max(1, min(limit, 100))  # Firecrawl's per-request maximum; no Ugecy budget
     research = get_deps().research
     if research.mode == "off":
         return json.dumps({"mode": "off", "results": 0, "error": SEARCH_OFF})
     try:
-        sources = await research.search(query, platform, limit)
+        sources = await research.search(query, platform, limit, recency=recency, news=news)
     except NotConnected as e:
         return json.dumps({"mode": "off", "results": 0, "error": str(e)})
     except Exception as e:  # noqa: BLE001 quota / network: report it, never substitute data
@@ -84,7 +86,7 @@ async def fetch_page(url: str) -> str:
     Use this to read a page the operator pasted or a result from web_search: product pages,
     reviews, blogs, competitor sites, or a video link for title/author. Only public pages the
     operator is permitted to view; private, login-gated, internal or local addresses are refused.
-    Returns metadata JSON then the first 8000 characters of markdown.
+    Returns metadata JSON then the page's markdown (up to 20,000 characters).
     """
     err = check_public_url(url) or policy_error(url)
     if err:
@@ -95,7 +97,7 @@ async def fetch_page(url: str) -> str:
         return json.dumps({"error": f"fetch failed: {type(e).__name__}", "url": url})
     await _record(Source(url=url, title=page.get("title") or url, platform=page.get("platform")))
     meta = {k: page.get(k) for k in ("url", "title", "platform", "metrics")}
-    return json.dumps(meta) + "\n\n" + (page.get("markdown") or "")[:8000]
+    return json.dumps(meta) + "\n\n" + (page.get("markdown") or "")
 
 
 registry.register_tool(web_search, domain="research")

@@ -13,10 +13,11 @@ All requests are `POST` with JSON (except the vendor proxies and llm). Responses
 | `bindings.internal` | D1, Browser Run, Vectorize, Stream, Workflows, metrics | Worker bindings | SQLite `.ugecy/app.db`, httpx fetch, in-memory vectors, no-ops |
 | `higgsfield.internal` | Higgsfield REST passthrough | `https://api.higgsfield.ai` + `Authorization: Key ${HF_KEY}` | direct to `https://api.higgsfield.ai` with `HF_KEY` / `HF_API_KEY_SECRET` |
 | `firecrawl.internal` | Firecrawl v2 REST passthrough (optional) | `https://api.firecrawl.dev` + `Authorization: Bearer ${FIRECRAWL_API_KEY}` | direct with `FIRECRAWL_API_KEY` |
+| `tavily.internal` | Tavily passthrough (optional): `POST /search`, `POST /extract`, `POST /research`, `GET /research/<request_id>`; anything else (incl. `/crawl`, `/map`) is `403 path_not_allowed`. Upstream status (202 running / 200 done, 429, 432/433 billing), body and `Retry-After` pass through unchanged | `https://api.tavily.com` + `Authorization: Bearer ${TAVILY_API_KEY}` | direct with `TAVILY_API_KEY` |
 | `dropbox.internal` | Dropbox API v2 RPC passthrough (optional) | `https://api.dropboxapi.com` + bearer from the stored OAuth refresh token | direct with `DROPBOX_APP_KEY`/`DROPBOX_APP_SECRET`/`DROPBOX_REFRESH_TOKEN` |
 | `glasshand.internal` | Glasshand REST passthrough (optional) | `https://api.glasshand.com` + bearer from stored device-flow token | direct |
 
-A vendor host whose secret is missing returns `503 {"error":{"code":"not_configured"}}`, and the Python provider then falls back to **mock mode**.
+A vendor host whose secret is missing returns `503 {"error":{"code":"not_configured"}}`, and the Python provider then reports that capability `off`.
 
 ## llm.internal
 

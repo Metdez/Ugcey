@@ -43,7 +43,7 @@ ORCHESTRATOR = "orchestrator"
 
 def memory_footer(agent: str, has_lookup: bool = True) -> str:
     look = ("`web_search` (Firecrawl) for how to do it, `fetch_page` for the best result" if has_lookup else
-            "delegate a `web_search` lookup to research-analyst (Firecrawl), or hand the step to a different specialist")
+            "delegate a lookup to research-analyst (Firecrawl and Tavily), or hand the step to a different specialist")
     return (f"## Memory and getting unstuck\n"
             f"- `{agent_memory_path(agent)}` holds lessons from your earlier runs (loaded above as agent memory). "
             "Use them before acting: they record what worked and what failed.\n"
@@ -129,9 +129,14 @@ def build_agent(deps: Deps, models: dict[str, BaseChatModel] | None = None):
     return agent.with_config({"recursion_limit": RECURSION_LIMIT})
 
 
+RETIRED_SKILLS = ("phone-research",)  # research is web-only now (Firecrawl + Tavily)
+
+
 async def seed_store(store: Any, workspace_id: str) -> None:
-    """Write the playbooks (always refreshed) and the brand-voice template (only if missing)."""
+    """Write the playbooks (always refreshed), drop retired ones, and the brand-voice template (only if missing)."""
     root = files("ugecy").joinpath("skills")
+    for gone in RETIRED_SKILLS:  # the store keeps old skills forever otherwise, and every agent would still load them
+        await store.adelete(SKILLS_NS, f"/{gone}/SKILL.md")
     for entry in root.iterdir():
         skill = entry.joinpath("SKILL.md")
         if entry.is_dir() and not entry.name.startswith("_") and skill.is_file():

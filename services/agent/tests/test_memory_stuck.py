@@ -155,9 +155,9 @@ async def test_end_to_end_stuck_nudge_memory_and_reload(reg):
     deps = fake_deps()
     models = fake_models(fake_model(
         AIMessage(content="", tool_calls=[{"name": "task", "id": "k1", "args": {
-            "description": "Open TikTok search", "subagent_type": "research-analyst"}}]), "Delegated."))
+            "description": "Open TikTok search", "subagent_type": "device-operator"}}]), "Delegated."))
     models["research"], models["critic"] = research, fake_model(*["- Tapping Search again does nothing; search first"] * 4)
-    await deps.store.aput(NS, "/agents/research-analyst.md", {"content": "- LESSON-ONE", "encoding": "utf-8"})
+    await deps.store.aput(NS, "/agents/device-operator.md", {"content": "- LESSON-ONE", "encoding": "utf-8"})
     agent = build_agent(deps, models)
     await agent.ainvoke({"messages": [{"role": "user", "content": "go"}]}, {"configurable": {"thread_id": "e2e"}},
                         context=RunContext())
@@ -165,9 +165,9 @@ async def test_end_to_end_stuck_nudge_memory_and_reload(reg):
     assert all("LESSON-ONE" in s for s in Recorder.systems)  # own lessons loaded into the subagent prompt
     assert not any("<stuck_recovery>" in s for s in Recorder.systems[:3])
     assert "<stuck_recovery>" in Recorder.systems[3] and "`web_search`" in Recorder.systems[3]
-    ep = (await deps.store.aget(NS, "/episodes/research-analyst.md")).value["content"]
+    ep = (await deps.store.aget(NS, "/episodes/device-operator.md")).value["content"]
     assert "Task: Open TikTok search" in ep and "device_tap×3" in ep and "Stuck: repeat" in ep
-    lessons = (await deps.store.aget(NS, "/agents/research-analyst.md")).value["content"]
+    lessons = (await deps.store.aget(NS, "/agents/device-operator.md")).value["content"]
     assert "- Tapping Search again does nothing" in lessons
     assert await deps.store.aget(NS, f"/episodes/{ORCHESTRATOR}.md") is not None
 

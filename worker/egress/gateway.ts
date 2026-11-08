@@ -21,6 +21,7 @@ export class EgressGateway extends WorkerEntrypoint<Env, RuntimeProps> {
         return handleUploadRelay(req);
       case "higgsfield.internal":
       case "firecrawl.internal":
+      case "tavily.internal":
       case "glasshand.internal":
       case "dropbox.internal":
         return handleVendor(req, this.env, this.ctx.props);

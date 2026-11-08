@@ -11,7 +11,8 @@ export interface ProviderModes {
   media: Mode;
   device: Mode;
   publishing: Mode;
-  research: Mode;
+  research: Mode; // Firecrawl
+  tavily: Mode; // Tavily deep research
   storage: Mode; // Dropbox
 }
 

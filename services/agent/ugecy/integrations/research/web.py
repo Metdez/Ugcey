@@ -29,6 +29,9 @@ def platform_of(url: str) -> str | None:
     return None
 
 
+_RECENCY = {"hour": "h", "day": "d", "week": "w", "month": "m", "year": "y"}
+
+
 class WebResearchProvider:
     name = "web"
 
@@ -38,17 +41,22 @@ class WebResearchProvider:
         configured = settings.has_firecrawl if self.edge else bool(settings.firecrawl_api_key)
         self.mode: Mode = "live" if configured else "off"  # web_search only; fetch always works
 
-    async def search(self, query: str, platform: str | None = None, limit: int = 8) -> list[Source]:
+    async def search(self, query: str, platform: str | None = None, limit: int = 8, recency: str | None = None,
+                     news: bool = False) -> list[Source]:
         if self.mode == "off":
             raise NotConnected(SEARCH_OFF)
         q = f"{query} {platform} short-form video" if platform else query
-        body = {"query": q, "limit": limit, "sources": [{"type": "web"}], "domainTools": False}
+        kind = "news" if news else "web"
+        body: dict[str, Any] = {"query": q, "limit": limit, "sources": [{"type": kind}], "domainTools": False}
+        if recency in _RECENCY:
+            body["tbs"] = f"sbd:1,qdr:{_RECENCY[recency]}"  # newest first within the window (web results)
         data = await self._post("/v2/search", body)  # quota / network errors propagate; the tool reports them, nothing is faked
         out = []
-        for r in (data.get("data") or {}).get("web") or []:
+        for r in (data.get("data") or {}).get(kind) or []:
             if r.get("url"):
+                snippet = r.get("description") or r.get("snippet") or ""
                 out.append(Source(url=r["url"], title=r.get("title") or r["url"], platform=platform_of(r["url"]),
-                                  snippet=(r.get("description") or "")[:400] or None))
+                                  snippet=(f"{r['date']}: {snippet}" if r.get("date") else snippet)[:400] or None))
         return out[:limit]
 
     async def _post(self, path: str, body: dict[str, Any]) -> dict[str, Any]:

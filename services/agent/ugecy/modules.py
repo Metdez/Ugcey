@@ -5,7 +5,8 @@ from __future__ import annotations
 import importlib
 
 TOOL_MODULES = [
-    "ugecy.tools.research",    # web_search, fetch_page
+    "ugecy.tools.research",    # web_search, fetch_page (Firecrawl)
+    "ugecy.tools.tavily",      # tavily_search, tavily_extract, tavily_research
     "ugecy.tools.memory",      # remember_pattern, search_patterns
     "ugecy.tools.creative",    # compliance_check
     "ugecy.tools.analytics",   # get_post_metrics

@@ -18,11 +18,12 @@ const VHOSTS = [
   "higgsfield.internal",
   "hfupload.internal",
   "firecrawl.internal",
+  "tavily.internal",
   "glasshand.internal",
   "dropbox.internal",
 ];
 
-const RUNTIME_CODE = "2026-11-08.r7";
+const RUNTIME_CODE = "2026-11-08.r8";
 
 export class AgentRuntime extends DurableObject<Env> {
   private starting?: Promise<void>;
@@ -162,6 +163,7 @@ export class AgentRuntime extends DurableObject<Env> {
         UGECY_WORKSPACE_ID: e.WORKSPACE_ID,
         UGECY_HAS_HIGGSFIELD: e.HF_KEY ? "true" : "false",
         UGECY_HAS_FIRECRAWL: e.FIRECRAWL_API_KEY ? "true" : "false",
+        UGECY_HAS_TAVILY: e.TAVILY_API_KEY ? "true" : "false",
         UGECY_HAS_GLASSHAND: "true", // connection is checked live via glasshand.internal/_ugecy/status,
         UGECY_HAS_DROPBOX: "true", // connection is checked live via dropbox.internal/_ugecy/status
         UGECY_DATA_DIR: "/tmp/ugecy",

@@ -49,7 +49,8 @@ class FakeResearchProvider:
     def __init__(self, settings: Any = None) -> None:
         self.settings = settings
 
-    async def search(self, query: str, platform: str | None = None, limit: int = 8) -> list[Source]:
+    async def search(self, query: str, platform: str | None = None, limit: int = 8, recency: str | None = None,
+                     news: bool = False) -> list[Source]:
         return [Source(url=c["url"], title=c["title"], platform=c["platform"],
                        snippet=f"{LABEL} | {c['hook_type']} / {c['format']} | {c['why_it_works']}")
                 for c in search_samples(query, platform, limit)]

@@ -13,7 +13,7 @@ Use LangChain Deep Agents as the orchestration layer: specialist agents, persist
 
 ## Agent modules
 
-- Research analyst: evidence-backed pattern discovery.
+- Research analyst: deep web research with Firecrawl and Tavily (no phone); evidence-backed pattern discovery.
 - Creative strategist: original briefs and scripts from findings.
 - Compliance critic: rubric scoring, FTC `#ad`, AI-label and claim checks before generation or publishing.
 - Production coordinator: Higgsfield asset jobs and review status.
@@ -32,7 +32,8 @@ Container egress (internet off) goes only through intercepted hosts, handled by 
   llm.internal       -> env.AI (Workers AI: GLM-5.3, GPT-5.6 Terra, GPT-6 Luna, GLM-4.7-flash, Qwen3.8)
   state.internal     -> DO SQLite (LangGraph checkpointer and store mirrors, which survive restarts)
   bindings.internal  -> D1, Browser Run, Vectorize, Queues (Stream ingest), Workflows (scheduled publish), Analytics Engine
-  higgsfield / firecrawl / glasshand .internal -> vendor APIs with keys injected at the edge
+  higgsfield / firecrawl / glasshand / dropbox .internal -> vendor APIs with keys injected at the edge
+  tavily.internal    -> api.tavily.com (search, extract, research; TAVILY_API_KEY injected at the edge)
 ```
 
 ## Agent memory and stuck recovery

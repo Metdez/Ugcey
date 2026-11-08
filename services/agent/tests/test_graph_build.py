@@ -20,14 +20,13 @@ SIDE_EFFECT_TOOLS = {"generate_media", "publish_post", "device_commit", "device_
 WEB = {"web_search", "fetch_page"}  # every specialist can look things up when stuck
 DBX = {"dropbox_status", "list_dropbox_media", "browse_dropbox", "save_to_dropbox", "dropbox_backfill"}
 EXPECTED = {
-    "research-analyst": {"web_search", "fetch_page", "remember_pattern", "search_patterns", "device_status", "device_start_session",
-                         "device_screenshot", "device_scroll", "device_back", "device_observe", "device_tap", "device_swipe",
-                         "device_next_post", "device_type", "device_home"},
+    "research-analyst": WEB | {"tavily_research", "tavily_search", "tavily_extract", "remember_pattern", "search_patterns"},
     "creative-strategist": WEB | {"search_patterns"},
     "compliance-critic": WEB | {"compliance_check"},
     "production-coordinator": WEB | DBX | {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},
     "publishing-coordinator": WEB | DBX | {"list_connected_accounts", "publish_post", "get_post_status"},
-    "device-operator": WEB | DBX | {"device_status", "device_screenshot", "device_start_session", "device_tap", "device_swipe",
+    "device-operator": WEB | DBX | {"device_status", "device_screenshot", "device_observe", "device_start_session", "device_tap",
+                        "device_swipe",
                         "device_scroll", "device_back", "device_open_url", "device_type", "device_home", "device_confirm",
                         "device_commit"},
     "analytics-analyst": WEB | {"get_post_metrics", "search_patterns", "remember_pattern"},
@@ -97,11 +96,12 @@ async def test_audit_writes_entry_and_survives_failure(reg):
 
 async def test_seed_store_writes_skills_and_keeps_existing_memory():
     store = fake_deps().store
-    await seed_store(store, "ws1")
+    await store.aput(("global", "skills"), "/phone-research/SKILL.md", {"content": "old", "encoding": "utf-8"})
+    await seed_store(store, "ws1")  # retired skills are removed, or every agent would keep loading them
     names = {i.key for i in await store.asearch(("global", "skills"))}
     assert names == {f"/{n}/SKILL.md" for n in (
         "ugc-hook-extraction", "short-form-script-structure", "script-critic-rubric",
-        "higgsfield-prompting", "platform-publishing-checklist", "ftc-disclosure", "phone-research")}
+        "higgsfield-prompting", "platform-publishing-checklist", "ftc-disclosure", "deep-research")}
     assert (await store.aget(("ws1", "memories"), "/AGENTS.md")).value["content"].startswith("# Brand voice")
     await store.aput(("ws1", "memories"), "/AGENTS.md", {"content": "mine", "encoding": "utf-8"})
     await seed_store(store, "ws1")
