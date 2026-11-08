@@ -5,7 +5,7 @@ from ugecy.registry import AgentModule, register_agent
 register_agent(AgentModule(
     name="analytics-analyst",
     description=(
-        "Reads post metrics, explains why posts won or lost against stored patterns, and proposes playbook updates for /memories/playbook.md (operator approval required). Use after posts have been live long enough to measure."
+        "Reads post metrics, explains why posts won or lost against stored patterns, and proposes playbook updates for /memories/playbook.md (written directly, no approval step). Use after posts have been live long enough to measure."
     ),
     system_prompt=load_prompt("analytics-analyst"),
     tools=["web_search", "fetch_page", "get_post_metrics", "search_patterns", "remember_pattern"],

@@ -172,3 +172,15 @@ async def test_messages_and_files_survive_a_restart_with_the_real_graph(reg):
     assert len(before["messages"]) >= 4 and before["files"]
     assert [m.content for m in after["messages"]] == [m.content for m in before["messages"]]
     assert after["files"].keys() == before["files"].keys()
+
+
+async def test_seed_store_rewrites_a_stale_approvals_rule_in_place():
+    # Stored memory keeps the operator's lines, but the approvals rule must follow the template (generation never asks).
+    store = fake_deps().store
+    old = "# Brand voice\n- Tone: warm\n- Approvals: only for spending money and posting: media generation (it costs money).\n- Mine: keep\n"
+    await store.aput(("ws1", "memories"), "/AGENTS.md", {"content": old, "encoding": "utf-8"})
+    await seed_store(store, "ws1")
+    lines = (await store.aget(("ws1", "memories"), "/AGENTS.md")).value["content"].splitlines()
+    assert lines[:2] == ["# Brand voice", "- Tone: warm"] and lines[3] == "- Mine: keep"
+    assert lines[2].startswith("- Approvals: only for posting content and for payments") and "generation" not in lines[2].split("Media")[0]
+    assert sum(ln.startswith("- Approvals:") for ln in lines) == 1
