@@ -57,8 +57,8 @@ async def web_search(query: str, platform: str | None = None, limit: int = 8, re
     tiktok, instagram, youtube or facebook to bias results. `recency` (hour, day, week, month, year)
     keeps results inside that window, newest first; `news=True` searches news articles instead of the
     web. Returns one JSON object per line (url, title, platform, snippet). Only public, permitted pages
-    are searched; never use it to reach logged-in, private or paywalled content. If Firecrawl is not
-    connected the result says so (mode "off"): use the Tavily tools or fetch_page on specific URLs.
+    are searched; never use it to reach logged-in, private or paywalled content. If web search is not
+    connected the result says so (mode "off"): use deep_search, deep_research or fetch_page instead.
     """
     limit = max(1, min(limit, 100))  # Firecrawl's per-request maximum; no Ugecy budget
     research = get_deps().research

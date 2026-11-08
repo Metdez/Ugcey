@@ -24,4 +24,5 @@ Edit this file for your brand. Agents read it at the start of every thread. Do n
 
 ## Learned playbook
 (Agents add short, dated, evidence-backed entries here. Keep each edit small and reversible.)
-- Media library: every Higgsfield output is saved automatically to the operator's Dropbox, in `/Ugecy/Videos` and `/Ugecy/Images`, named `<date> <prompt words> <asset id 8>`. To post from the iPhone, open the Dropbox app, Search the file name, then `•••`, Export, Save video, and pick it from Photos in TikTok, Instagram or YouTube. `list_dropbox_media` gives the exact file names.
+- Media library: every generated video or image is saved automatically to the operator's Dropbox, in `/Ugecy/Videos` and `/Ugecy/Images`, named `<date> <prompt words> <asset id 8>`. To post from the iPhone, open the Dropbox app, Search the file name, then `•••`, Export, Save video, and pick it from Photos in TikTok, Instagram or YouTube. `list_dropbox_media` gives the exact file names.
+- Naming: never name the underlying providers in anything the operator sees (replies, narration, file summaries); say the iPhone, video generation, web research and deep research.

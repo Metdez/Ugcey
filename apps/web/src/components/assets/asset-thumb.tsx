@@ -19,7 +19,7 @@ export function AssetThumb({ assetId, size = "md" }: { assetId: string; size?: "
       {pending ? (
         <>
           <Skeleton className="absolute inset-0 rounded-none" />
-          {size !== "sm" && <span className="absolute inset-x-1 bottom-2 text-center text-[11px] text-muted-foreground">Generating with Higgsfield…</span>}
+          {size !== "sm" && <span className="absolute inset-x-1 bottom-2 text-center text-[11px] text-muted-foreground">Generating…</span>}
         </>
       ) : asset.status === "failed" ? (
         <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-xs text-destructive">

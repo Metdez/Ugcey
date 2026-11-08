@@ -22,10 +22,10 @@ def tavily(handler, waits: list[float]) -> TavilyClient:
 async def test_off_without_a_key_says_what_to_connect():
     c = TavilyClient(Settings())
     assert c.mode == "off"
-    with pytest.raises(NotConnected, match="TAVILY_API_KEY"):
+    with pytest.raises(NotConnected, match="Deep research not connected"):
         await c.search({"query": "x"})
     install()
-    assert json.loads(await tools.tavily_search.ainvoke({"query": "x"})) == {"mode": "off", "error": TAVILY_OFF}
+    assert json.loads(await tools.deep_search.ainvoke({"query": "x"})) == {"mode": "off", "error": TAVILY_OFF}
 
 
 async def test_rate_limit_honours_retry_after_and_billing_errors_are_not_retried():
@@ -86,19 +86,19 @@ async def test_tools_search_extract_research(monkeypatch):
                                          "sources": [{"title": "S", "url": "https://s.example/1"}]})
 
     monkeypatch.setattr(tools, "_client", lambda: tavily(handler, []))
-    out = (await tools.tavily_search.ainvoke({"query": "serum hooks", "max_results": 50, "time_range": "month"})).splitlines()
+    out = (await tools.deep_search.ainvoke({"query": "serum hooks", "max_results": 50, "time_range": "month"})).splitlines()
     assert json.loads(out[0]) == {"mode": "live", "results": 1, "query": "serum hooks"}
     assert bodies[0][1] | {} == {"query": "serum hooks", "search_depth": "advanced", "chunks_per_source": 3,
                                  "max_results": 20, "topic": "general", "time_range": "month"}
 
     urls = [f"https://blog.example/{i}" for i in range(25)] + ["https://www.tiktok.com/tag/skincare", "http://localhost/x"]
-    out = (await tools.tavily_extract.ainvoke({"urls": urls, "query": "hooks"})).splitlines()
+    out = (await tools.read_pages.ainvoke({"urls": urls, "query": "hooks"})).splitlines()
     head = json.loads(out[0])
     assert head == {"mode": "live", "pages": 25, "failed": 2}  # platform tag page and private host refused
     assert [len(b["urls"]) for p, b in bodies if p == "/extract"] == [20, 5]  # Tavily's 20-URL maximum, in parallel
     assert len(json.loads(out[1])["content"]) == tools.PAGE_CHARS
 
-    out = await tools.tavily_research.ainvoke({"question": "winning serum hooks on TikTok right now"})
+    out = await tools.deep_research.ainvoke({"question": "winning serum hooks on TikTok right now"})
     assert '"status": "completed"' in out and "Hook table" in out and "[1] S - https://s.example/1" in out
     assert {s.url for _, s in d.app.sources} >= {"https://b.example/hooks", "https://s.example/1"}
 

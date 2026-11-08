@@ -3,11 +3,11 @@ import type { ProviderModes } from "@ugecy/contracts";
 export interface NotConnected { key: keyof ProviderModes; text: string; action?: "device" }
 
 const MESSAGES: Partial<Record<keyof ProviderModes, Omit<NotConnected, "key">>> = {
-  media: { text: "Higgsfield not connected — add the HF_KEY Worker secret" },
-  device: { text: "iPhone not connected — Connect Glasshand", action: "device" },
-  research: { text: "Web research (Firecrawl) not connected — add the FIRECRAWL_API_KEY Worker secret" },
-  tavily: { text: "Deep research (Tavily) not connected — add the TAVILY_API_KEY Worker secret" },
-  publishing: { text: "Publishing not connected — connect the Glasshand iPhone (posts go through the phone with approval)" },
+  media: { text: "Video generation not connected — add its API key secret (README, Secrets)" },
+  device: { text: "iPhone not connected — connect it in the Device tab", action: "device" },
+  research: { text: "Web research not connected — add its API key secret (README, Secrets)" },
+  tavily: { text: "Deep research not connected — add its API key secret (README, Secrets)" },
+  publishing: { text: "Publishing not connected — connect the iPhone (posts go through the phone with approval)" },
   storage: { text: "Dropbox is not connected. Connect it from Accounts in the sidebar." },
 };
 

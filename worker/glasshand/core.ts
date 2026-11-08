@@ -178,7 +178,7 @@ export class Glasshand {
     } catch (e) {
       return { state: "connected", rentals: [], selected_rental_id: this.state().selected_rental_id, message: e instanceof Error ? e.message : "rentals failed" };
     }
-    if (items === null) return { state: "disconnected", message: "Glasshand needs re-approval" };
+    if (items === null) return { state: "disconnected", message: "The iPhone needs re-approval" };
     const rentals: GlasshandRental[] = items.map((r) => ({ id: r.id, name: r.name, kind: r.kind, status: r.status, deviceReady: r.deviceReady }));
     let sel = this.state().selected_rental_id;
     if (!sel) {

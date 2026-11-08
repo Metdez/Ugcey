@@ -24,7 +24,7 @@ export default function DeviceTab() {
   return (
     <div className="flex flex-col gap-4 p-3">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-sm font-semibold capitalize">{dev.provider}</span>
+        <span className="text-sm font-semibold">iPhone</span>
         {dev.mode === "off" && <Badge variant="secondary">not connected</Badge>}
         <Badge variant="outline">control: {dev.control}</Badge>
       </div>
@@ -40,7 +40,7 @@ export default function DeviceTab() {
           <p className="text-[13px]">{s.goal}</p>
           <p className="tabular-nums text-muted-foreground">Steps {s.steps_used}{s.max_steps ? `/${s.max_steps}` : ""}</p>
         </section>
-      ) : <EmptyState icon={Smartphone}>No device session. The device operator asks for approval before it connects.</EmptyState>}
+      ) : <EmptyState icon={Smartphone}>No device session yet. The device operator starts one when a task needs the phone.</EmptyState>}
       <section className="flex flex-col gap-1.5">
         <h3 className="text-xs font-medium text-muted-foreground">Receipts</h3>
         <DeviceReceipts rows={receipts} />

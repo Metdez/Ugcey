@@ -1,20 +1,20 @@
 ---
 name: deep-research
-description: "Run deep web research on winning UGC hooks, short-form formats, customer language and trends with Tavily (tavily_research, tavily_search, tavily_extract) and Firecrawl (web_search, fetch_page). Use for any research brief: what is working now in a niche, competitor ad teardowns, voice of customer, trend scans."
+description: "Run deep web research on winning UGC hooks, short-form formats, customer language and trends with deep_research, deep_search, read_pages, web_search and fetch_page. Use for any research brief: what is working now in a niche, competitor ad teardowns, voice of customer, trend scans."
 ---
-# Deep research playbook (Tavily + Firecrawl)
+# Deep research playbook
 
 ## Principles
 - Breadth first, then depth. Fire many queries and research tasks in one turn (they run in parallel), then extract and read the best sources, then fill gaps in follow-up rounds.
 - Evidence beats opinion. A pattern needs 2+ independent sources dated within 90 days, at least one primary (an ad library or Creative Center entry, or a real post). An ad running 30+ days has passed a market test.
 - Log structures, not lines. Separate the angle (problem, outcome, social proof, demo, comparison) from the hook type (question, stat, POV, callout...).
 
-## Tavily
-- `tavily_research` (model pro): the heaviest tool. One task per angle, 4 to 6 in the first batch, more in follow-ups. Put the full context in the question: product, category, audience, platforms, time window ("right now", "last 30 days"), and the exact output wanted ("a table: hook pattern, example paraphrase, format, why it works, source URL, date").
-- `tavily_search`: advanced depth, up to 20 results with the relevant passages. Use `time_range` week or month for "now", `topic` news for launches and press, `include_domains` ["reddit.com"] for customer language, ["tiktok.com"] or ["youtube.com"] for trend snippets. Keep each query focused; split broad questions into several.
-- `tavily_extract`: pass all the promising URLs at once (groups of 20 run in parallel) with a `query` such as "ad hooks and the first 3 seconds" to get the relevant passages.
+## Deep research tools
+- `deep_research` (model pro): the heaviest tool. One task per angle, 4 to 6 in the first batch, more in follow-ups. Put the full context in the question: product, category, audience, platforms, time window ("right now", "last 30 days"), and the exact output wanted ("a table: hook pattern, example paraphrase, format, why it works, source URL, date").
+- `deep_search`: advanced depth, up to 20 results with the relevant passages. Use `time_range` week or month for "now", `topic` news for launches and press, `include_domains` ["reddit.com"] for customer language, ["tiktok.com"] or ["youtube.com"] for trend snippets. Keep each query focused; split broad questions into several.
+- `read_pages`: pass all the promising URLs at once (groups of 20 run in parallel) with a `query` such as "ad hooks and the first 3 seconds" to get the relevant passages.
 
-## Firecrawl
+## Web search tools
 - `web_search`: a second index. `recency` week or month returns the newest first; `news=True` for news. Run the same angles here to catch what Tavily missed.
 - `fetch_page`: the full text of one page, including TikTok Creative Center and Meta Ad Library keyword pages.
 

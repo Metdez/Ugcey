@@ -7,7 +7,7 @@ const STARTERS: Array<{ icon: LucideIcon; title: string; prompt: string }> = [
   { icon: Search, title: "Find winning hooks", prompt: "Find the top 20 TikTok UGC hooks for clean skincare this month and explain why they work." },
   { icon: Shapes, title: "Extract patterns", prompt: "Break these 5 videos into hook, script structure and CTA patterns." },
   { icon: PenLine, title: "Write scripts", prompt: "Write 5 original 30-second UGC scripts for our serum using the top patterns." },
-  { icon: Clapperboard, title: "Generate media", prompt: "Generate 3 vertical UGC-style videos for script #2 with Higgsfield." },
+  { icon: Clapperboard, title: "Generate media", prompt: "Generate 3 vertical UGC-style videos for script #2." },
   { icon: CalendarClock, title: "Schedule posts", prompt: "Schedule the approved videos to @glowco on TikTok and Instagram this week." },
   { icon: BarChart3, title: "Review performance", prompt: "How did last week's posts perform? What should we make next?" },
 ];
