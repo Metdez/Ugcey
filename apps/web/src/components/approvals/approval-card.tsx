@@ -3,6 +3,7 @@ import { Clapperboard, Send, ShieldCheck, Smartphone, type LucideIcon } from "lu
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
+import posthog from "@/lib/posthog";
 import { cn } from "@/lib/utils";
 import { threadActions, useThread } from "@/stores/thread-store";
 import type { ApprovalRequest } from "@/types/agent";
@@ -54,7 +55,10 @@ export function ApprovalCard({ approvalId, variant }: { approvalId: string; vari
   const allowed = allowedDecisions(rec.requests);
   const submit = async (d: Parameters<typeof threadActions.decide>[1]) => {
     setBusy(true);
-    try { await threadActions.decide(approvalId, d); } finally { setBusy(false); }
+    try {
+      await threadActions.decide(approvalId, d);
+      posthog.capture("approval_decided", { decision: d[0]?.type, request_count: d.length });
+    } finally { setBusy(false); }
   };
   const startEdit = () => { setDrafts(rec.requests.map(initialDraft)); setErrors({}); setMode("edit"); };
   const saveEdit = () => {

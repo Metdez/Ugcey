@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { dropbox, type DropboxStatus } from "@/lib/dropbox";
+import posthog from "@/lib/posthog";
 
 interface Props { open: boolean; onOpenChange: (o: boolean) => void; status: DropboxStatus | null; onStatus: (s: DropboxStatus) => void }
 
@@ -20,13 +21,18 @@ export function DropboxConnect({ open, onOpenChange, status, onStatus }: Props) 
     e.preventDefault();
     void run(async () => {
       onStatus(await dropbox.submitCode(code.trim()));
+      posthog.capture("dropbox_connected");
       setCode("");
       toast.success("Dropbox connected — copying your media");
       void dropbox.backfill().catch(() => {});
       onOpenChange(false);
     });
   };
-  const disconnect = () => run(async () => { onStatus(await dropbox.disconnect()); toast.success("Dropbox disconnected"); });
+  const disconnect = () => run(async () => {
+    onStatus(await dropbox.disconnect());
+    posthog.capture("dropbox_disconnected");
+    toast.success("Dropbox disconnected");
+  });
   const missing = status?.missing_scopes ?? [];
 
   return (

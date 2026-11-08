@@ -5,6 +5,7 @@ import { create } from "zustand";
 import type { Decision, UiEvent } from "@ugecy/contracts";
 import { api, ApiError, streams } from "@/lib/api";
 import { setThreadParam } from "@/lib/location";
+import posthog from "@/lib/posthog";
 import { clip } from "@/lib/time";
 import { emptySnapshot, type ThreadActions, type ThreadSnapshot, type UiMessage } from "@/types/agent";
 import { applyEvent } from "./apply-event";
@@ -18,6 +19,7 @@ export const useThread = <T,>(selector: (s: ThreadSnapshot) => T): T => useThrea
 
 const set = useThreadStore.setState;
 const get = useThreadStore.getState;
+const agentRunLog = posthog.logger;
 let abort: AbortController | null = null;
 
 const onEvent = (e: UiEvent) => {
@@ -41,6 +43,7 @@ async function run(fn: (signal: AbortSignal) => Promise<void>) {
       } catch (err) {
         if (ctl.signal.aborted) return;
         if (err instanceof ApiError && err.status >= 400 && err.status < 500 && err.status !== 409 && attempt === 0) {
+          agentRunLog.warn("agent_run_start_rejected", { status_code: err.status });
           toast(err.message);
           return set({ status: "idle" });
         }
@@ -52,6 +55,7 @@ async function run(fn: (signal: AbortSignal) => Promise<void>) {
         if (abort === ctl) abort = null;
         return threadActions.openThread(id); // finished while disconnected: load the final state
       }
+      agentRunLog.warn("agent_stream_reconnect_scheduled", { reconnect_attempt: attempt + 1 });
       set({ status: "streaming", progress: "Reconnecting to the live run…" });
       await sleep(Math.min(1000 * (attempt + 1), 5000));
     }
@@ -109,6 +113,8 @@ export const threadActions: ThreadActions = {
     } catch {
       return set({ status: "offline" });
     }
+    posthog.capture("chat_prompt_submitted");
+    agentRunLog.info("agent_run_started", { transport: "sse" });
     const um = userMessage(text);
     set((s) => ({ messages: [...s.messages, um] }));
     const tid = id;
