@@ -149,3 +149,26 @@ def test_subagents_are_not_bound_to_langchains_9999_recursion_limit(reg):
     spec = _subagents(fake_deps(), fake_models())[0]
     sub = subagents.create_sub_agent({**spec, "middleware": []})  # the call deepagents makes per subagent
     assert sub.config["recursion_limit"] == RECURSION_LIMIT > 9_999
+
+
+async def test_messages_and_files_survive_a_restart_with_the_real_graph(reg):
+    # The real graph's `messages` and `files` are DeltaChannels, rebuilt from writes on ancestor checkpoints.
+    # Hydrating only the latest checkpoint returned every thread with no messages after a container restart.
+    from ugecy.persistence import build_checkpointer
+    from ugecy.persistence.kv import MemoryKV
+
+    kv, cfg, ctx = MemoryKV(), {"configurable": {"thread_id": "t"}}, RunContext(workspace_id="ws1")
+    write = AIMessage(content="", tool_calls=[{"name": "write_file", "id": "w1", "args": {
+        "file_path": "/brief.md", "content": "hook: morning glow"}}])
+    deps = fake_deps()
+    deps.checkpointer = build_checkpointer(kv)
+    await build_agent(deps, fake_models(fake_model(write, "All done."))).ainvoke(
+        {"messages": [{"role": "user", "content": "go"}]}, cfg, context=ctx)
+    before = (await build_agent(deps, fake_models()).aget_state(cfg)).values
+
+    restarted = fake_deps()
+    restarted.checkpointer = build_checkpointer(kv)  # fresh saver, same KV: a new container
+    after = (await build_agent(restarted, fake_models()).aget_state(cfg)).values
+    assert len(before["messages"]) >= 4 and before["files"]
+    assert [m.content for m in after["messages"]] == [m.content for m in before["messages"]]
+    assert after["files"].keys() == before["files"].keys()

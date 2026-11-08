@@ -1,7 +1,6 @@
 import operator
 from typing import Annotated, TypedDict
 
-import httpx
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
@@ -38,53 +37,19 @@ def _graph(saver, with_interrupt=False):
 CFG = {"configurable": {"thread_id": "t1"}}
 
 
-class CappedKV(MemoryKV):
-    """state.internal stand-in: a read bigger than `cap` drops the connection, as the Durable Object does."""
-
-    def __init__(self, cap: int):
-        super().__init__()
-        self.cap, self.largest = cap, 0
-
-    async def get(self, ns: str, prefix: str = "") -> dict[str, bytes]:
-        out = await super().get(ns, prefix)
-        size = sum(map(len, out.values()))
-        self.largest = max(self.largest, size)
-        if size > self.cap:
-            raise httpx.RemoteProtocolError("Server disconnected without sending a response.")
-        return out
-
-
-async def test_latest_state_survives_restart():
+async def test_state_and_history_survive_restart():
     kv = MemoryKV()
     g1 = _graph(build_checkpointer(kv))
     await g1.ainvoke({"n": 0, "messages": ["hi"]}, CFG)
     await g1.ainvoke({"n": 5, "messages": []}, CFG)
-    latest = (await g1.aget_state(CFG)).config["configurable"]["checkpoint_id"]
+    history1 = [c.config["configurable"]["checkpoint_id"] async for c in g1.aget_state_history(CFG)]
 
     g2 = _graph(build_checkpointer(kv))  # simulated restart: fresh saver, same KV
     state = await g2.aget_state(CFG)
     assert state.values["messages"] == ["hi", "step1", "step6"]
-    # Only the latest checkpoint is loaded; older ones stay in KV.
-    assert [c.config["configurable"]["checkpoint_id"] async for c in g2.aget_state_history(CFG)] == [latest]
+    assert [c.config["configurable"]["checkpoint_id"] async for c in g2.aget_state_history(CFG)] == history1
     out = await g2.ainvoke({"n": 10, "messages": []}, CFG)
     assert out["messages"][-1] == "step11" and out["n"] == 11
-
-
-async def test_long_thread_hydrates_without_reading_its_whole_history():
-    kv = CappedKV(cap=1_000_000)
-    g1 = _graph(build_checkpointer(kv))
-    for i in range(60):  # every step stores a full copy of `messages`: ~7 MB of history, ~240 KB of state
-        await g1.ainvoke({"n": i, "messages": ["x" * 4000]}, CFG)
-    history = sum(map(len, (await MemoryKV.get(kv, "ckpt:t1")).values()))
-    assert history > kv.cap  # reading it all in one go is what failed in production
-
-    g2 = _graph(build_checkpointer(kv))
-    kv.largest = 0
-    state = await g2.aget_state(CFG)
-    assert len(state.values["messages"]) == 120 and state.values["n"] == 60
-    assert kv.largest * 10 < history  # the biggest read is the latest messages, not the history
-    out = await g2.ainvoke({"n": 100, "messages": []}, CFG)
-    assert out["messages"][-1] == "step101" and len(out["messages"]) == 121
 
 
 async def test_interrupt_inside_a_subgraph_resumes_after_restart():

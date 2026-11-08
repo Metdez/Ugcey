@@ -1,7 +1,7 @@
 """InMemorySaver whose state is mirrored write-through into a KVStore (ns `ckpt:<thread_id>`).
 
-Reads hit memory; a thread's latest state is hydrated from KV the first time it is touched, so a
-restarted container resumes any thread. Everything stored is serde output ((type, bytes) pairs), encoded as
+Reads hit memory; a thread is hydrated from KV the first time it is touched, so a restarted
+container resumes any thread. Everything stored is serde output ((type, bytes) pairs), encoded as
 JSON+base64, so no arbitrary pickling is introduced."""
 from __future__ import annotations
 
@@ -37,46 +37,30 @@ class MirroredSaver(InMemorySaver):
         self._locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
     async def _hydrate(self, thread_id: str) -> None:
-        """Load each namespace's latest checkpoint with its channel blobs and pending writes.
+        """Load the thread's whole checkpoint history: checkpoints, blobs and writes.
 
-        Older checkpoints stay in KV but are not loaded: every step stores a full copy of each changed
-        channel, so a long thread's history runs to hundreds of MB. state.internal pages reads (~2 MB) so
-        the Durable Object survives them, but that would still be dozens of round trips and the whole
-        history held in memory. Nothing here reads them (no time travel); `aget_state_history` after a
-        restart starts at the latest checkpoint."""
+        All of it is needed. `messages` and `files` are LangGraph DeltaChannels, rebuilt from writes on the
+        latest checkpoint's ancestors back to the nearest snapshot, so loading only the latest checkpoint
+        returned threads with no messages. EdgeKV.get pages the read (about 2 MB per call), so a long thread
+        never exceeds the Durable Object's RPC or memory limits."""
         if thread_id in self._loaded:
             return
         async with self._locks[thread_id]:
             if thread_id in self._loaded:
                 return
-            latest: dict[str, tuple[str, bytes]] = {}
-            for key, raw in (await self.kv.get(_ns(thread_id), "c|")).items():
-                ns, cid = json.loads(key[2:])
-                if cid > latest.get(ns, ("",))[0]:  # ids sort by time, as InMemorySaver's max() relies on
-                    latest[ns] = (cid, raw)
-            prefixes = []
-            for ns, (cid, raw) in latest.items():
-                ckpt, meta, parent = json.loads(raw)
-                self.storage[thread_id][ns][cid] = (_typed(ckpt), _typed(meta), parent)
-                versions = self.serde.loads_typed(_typed(ckpt))["channel_versions"]
-                prefixes += [f"b|{json.dumps([ns, ch, ver])}" for ch, ver in versions.items()]
-                prefixes.append(f"w|{json.dumps([ns, cid])[:-1]},")  # every write key of this checkpoint
-            sem = asyncio.Semaphore(16)
-
-            async def fetch(prefix: str) -> dict[str, bytes]:
-                async with sem:
-                    return await self.kv.get(_ns(thread_id), prefix)
-
-            for found in await asyncio.gather(*map(fetch, prefixes)):
-                for key, raw in found.items():
-                    body = json.loads(raw)
-                    if key[0] == "w":
-                        ns, cid, task, idx = json.loads(key[2:])
-                        t, ch, val, path = body
-                        self.writes[(thread_id, ns, cid)][(task, idx)] = (t, ch, _typed(val), path)
-                    else:
-                        ns, ch, ver = json.loads(key[2:])
-                        self.blobs[(thread_id, ns, ch, ver)] = _typed(body[0])
+            for key, raw in (await self.kv.get(_ns(thread_id))).items():
+                kind, body = key[0], json.loads(raw)
+                if kind == "c":
+                    ns, cid = json.loads(key[2:])
+                    ckpt, meta, parent = body
+                    self.storage[thread_id][ns][cid] = (_typed(ckpt), _typed(meta), parent)
+                elif kind == "w":
+                    ns, cid, task, idx = json.loads(key[2:])
+                    t, ch, val, path = body
+                    self.writes[(thread_id, ns, cid)][(task, idx)] = (t, ch, _typed(val), path)
+                elif kind == "b":
+                    ns, ch, ver = json.loads(key[2:])
+                    self.blobs[(thread_id, ns, ch, ver)] = _typed(body[0])
             self._loaded.add(thread_id)
 
     async def aget_tuple(self, config):
