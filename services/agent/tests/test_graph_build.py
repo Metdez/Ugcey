@@ -136,3 +136,16 @@ def test_no_model_call_caps_on_any_agent(reg):  # AGENTS.md rule 8 (operator dec
     from langchain.agents.middleware import ModelCallLimitMiddleware
     specs = _subagents(fake_deps(), fake_models())
     assert specs and not any(isinstance(m, ModelCallLimitMiddleware) for s in specs for m in s["middleware"])
+
+
+def test_subagents_are_not_bound_to_langchains_9999_recursion_limit(reg):
+    # create_agent binds 9_999 and a subagent's bound limit beats the run's: a long subagent stopped the whole run.
+    from deepagents.middleware import subagents
+
+    from ugecy.middleware.limits import RECURSION_LIMIT
+
+    agent = build_agent(fake_deps(), fake_models(fake_model([], "done")))
+    assert agent.config["recursion_limit"] == RECURSION_LIMIT
+    spec = _subagents(fake_deps(), fake_models())[0]
+    sub = subagents.create_sub_agent({**spec, "middleware": []})  # the call deepagents makes per subagent
+    assert sub.config["recursion_limit"] == RECURSION_LIMIT > 9_999

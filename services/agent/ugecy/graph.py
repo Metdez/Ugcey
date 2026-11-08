@@ -18,7 +18,11 @@ from ugecy.interfaces import SKILLS_NS, memories_ns
 from ugecy.llm.routing import models_for
 from ugecy.middleware.audit import AuditMiddleware
 from ugecy.middleware.compat import CompatMiddleware
-from ugecy.middleware.limits import limit_middleware
+from ugecy.middleware.limits import (
+    RECURSION_LIMIT,
+    lift_subagent_recursion_limit,
+    limit_middleware,
+)
 from ugecy.middleware.memory import (
     ExperienceMiddleware,
     LiveMemoryMiddleware,
@@ -56,8 +60,8 @@ class RunContext:
     workspace_id: str = "default"
 
 
-def _middleware(deps: Deps, models: dict[str, BaseChatModel], run_limit: int | None = None) -> list[Any]:
-    return [StopMiddleware(), AuditMiddleware(), *limit_middleware(deps.settings, models["fallback"], run_limit),
+def _middleware(deps: Deps, models: dict[str, BaseChatModel]) -> list[Any]:
+    return [StopMiddleware(), AuditMiddleware(), *limit_middleware(deps.settings, models["fallback"]),
             CompatMiddleware()]
 
 
@@ -76,7 +80,7 @@ def _subagents(deps: Deps, models: dict[str, BaseChatModel], backend: Any = None
         "name": "general-purpose",
         "description": "Read-only helper for searching and summarizing files. Has no external tools.",
         "system_prompt": GENERAL_PURPOSE_PROMPT, "tools": [], "model": models["fast"],
-        "middleware": _middleware(deps, models, s.max_model_calls_per_subagent), "skills": ["/skills/"],
+        "middleware": _middleware(deps, models), "skills": ["/skills/"],
     }]
     for agent in registry.enabled_agents(s.disabled("agents")):
         tools = registry.tools_for(agent, s.disabled("tools"))  # always explicit: no inherited tools
@@ -85,7 +89,7 @@ def _subagents(deps: Deps, models: dict[str, BaseChatModel], backend: Any = None
             "name": agent.name, "description": agent.description, "tools": tools,
             "system_prompt": f"{agent.system_prompt}\n\n{memory_footer(agent.name, has_lookup)}",
             "model": models.get(agent.model_role, models["fast"]),
-            "middleware": [*_middleware(deps, models, s.max_model_calls_per_subagent),
+            "middleware": [*_middleware(deps, models),
                            *_memory_middleware(deps, models, backend, agent.name, has_lookup)],
         }
         if agent.skills:
@@ -112,6 +116,7 @@ def build_agent(deps: Deps, models: dict[str, BaseChatModel] | None = None):
     models = models or models_for(deps.settings)
     backend = _backend()
     permissions: list = []  # no filesystem gates (operator decision)
+    lift_subagent_recursion_limit()  # no step or call limit on any agent (AGENTS.md rule 8)
     agent = create_deep_agent(
         model=models["orchestrator"], name="ugecy-orchestrator", tools=[], context_schema=RunContext,
         system_prompt=_system_prompt(deps), subagents=_subagents(deps, models, backend),
@@ -121,7 +126,7 @@ def build_agent(deps: Deps, models: dict[str, BaseChatModel] | None = None):
         skills=["/skills/"],  # memory: LiveMemoryMiddleware above (reloads every turn, per-agent lessons)
         checkpointer=deps.checkpointer, store=deps.store,
     )
-    return agent.with_config({"recursion_limit": 100_000})
+    return agent.with_config({"recursion_limit": RECURSION_LIMIT})
 
 
 async def seed_store(store: Any, workspace_id: str) -> None:

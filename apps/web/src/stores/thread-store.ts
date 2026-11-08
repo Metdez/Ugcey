@@ -34,7 +34,7 @@ async function run(fn: (signal: AbortSignal) => Promise<void>) {
   const ctl = (abort = new AbortController());
   set({ status: "connecting", error: null });
   try {
-    for (let attempt = 0; attempt < 120; attempt++) {
+    for (let attempt = 0; ; attempt++) { // no attempt cap: follow the run until the server says it ended
       const id = get().threadId;
       try {
         await (attempt === 0 ? fn(ctl.signal) : streams.attach(id!, get().lastSeq, onEvent, ctl.signal));
