@@ -7,6 +7,7 @@ import { api, ApiError, streams } from "@/lib/api";
 import { setThreadParam } from "@/lib/location";
 import { clip } from "@/lib/time";
 import { emptySnapshot, type ThreadActions, type ThreadSnapshot, type UiMessage } from "@/types/agent";
+import { retryTransient } from "@/lib/retry";
 import { applyEvent } from "./apply-event";
 import { historyToUi } from "./history";
 import { useWorkspace } from "./workspace-store";
@@ -78,7 +79,8 @@ export const threadActions: ThreadActions = {
     if (!id) return set(emptySnapshot());
     set({ ...emptySnapshot(), threadId: id, status: "connecting" });
     try {
-      const [st, assets] = await Promise.all([api.getThread(id), api.listAssets(id).catch(() => [])]);
+      // A restart or deploy makes the server briefly unreachable: keep loading instead of showing Error.
+      const [st, assets] = await Promise.all([retryTransient(() => api.getThread(id)), api.listAssets(id).catch(() => [])]);
       if (get().threadId !== id) return; // user navigated away
       const hist = historyToUi(st.messages);
       const messages = hist.messages;
