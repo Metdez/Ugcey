@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import posthog from "@/lib/posthog";
 import { slugify } from "../inspector/lib";
 
 export function MemoryAdd({ onAdded }: { onAdded: () => void }) {
@@ -18,6 +19,7 @@ export function MemoryAdd({ onAdded }: { onAdded: () => void }) {
     e.preventDefault();
     try {
       await api.putMemory(`/memories/${slug}.md`, content);
+      posthog.capture("memory_created");
       setTitle(""); setContent(""); setOpen(false);
       onAdded();
     } catch (err) {

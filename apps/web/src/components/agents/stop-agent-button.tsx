@@ -3,6 +3,7 @@ import { Square } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import posthog from "@/lib/posthog";
 import { useThread } from "@/stores/thread-store";
 
 /** Stops one running subagent (identified by its `task` call id). The rest of the run keeps going. */
@@ -15,6 +16,7 @@ export function StopAgentButton({ callId, label, className }: { callId: string; 
     setStopping(true);
     try {
       await api.stopSubagent(threadId, callId);
+      posthog.capture("agent_run_stop_requested");
       toast(`Stopping ${label}…`);
     } catch {
       setStopping(false);

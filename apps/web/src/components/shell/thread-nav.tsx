@@ -14,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { StatusDot } from "@/components/common/status-dot";
 import { navigateToThread } from "@/hooks/use-thread-route";
 import { api } from "@/lib/api";
+import posthog from "@/lib/posthog";
 import { dateBucket } from "@/lib/time";
 import { useThread } from "@/stores/thread-store";
 import { useWorkspace } from "@/stores/workspace-store";
@@ -42,7 +43,8 @@ export function ThreadNav() {
 
   const remove = async () => {
     if (!doomed) return;
-    await api.deleteThread(doomed.id).catch(() => undefined);
+    const deleted = await api.deleteThread(doomed.id).then(() => true).catch(() => false);
+    if (deleted) posthog.capture("chat_deleted");
     if (doomed.id === activeId) navigateToThread(null);
     setDoomed(null);
     void useWorkspace.getState().refreshThreads();
