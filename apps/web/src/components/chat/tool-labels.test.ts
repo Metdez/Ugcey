@@ -7,9 +7,9 @@ describe("toolLabel", () => {
     expect(toolLabel("write_file", { file_path: "/research/x.md" }, "complete")).toBe("Wrote /research/x.md");
     expect(toolLabel("generate_media", {}, "error")).toBe("Failed to generate media");
     expect(toolLabel("custom_tool", {}, "running")).toBe("Running custom_tool…");
-    expect(toolLabel("tavily_search", { query: "hooks" }, "complete")).toBe("Searched the web in depth for hooks");
-    expect(toolLabel("tavily_extract", { urls: ["https://a", "https://b"] }, "running")).toBe("Reading 2 pages…");
-    expect(toolLabel("tavily_research", { question: "winning hooks" }, "error")).toBe("Research failed for winning hooks");
+    expect(toolLabel("deep_search", { query: "hooks" }, "complete")).toBe("Searched the web in depth for hooks");
+    expect(toolLabel("read_pages", { urls: ["https://a", "https://b"] }, "running")).toBe("Reading 2 pages…");
+    expect(toolLabel("deep_research", { question: "winning hooks" }, "error")).toBe("Research failed for winning hooks");
     expect(toolLabel("fetch_page", { url: "https://a.com" }, "complete")).toBe("Fetched https://a.com");
   });
   it("extracts file paths and agent colours", () => {

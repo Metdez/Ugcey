@@ -47,7 +47,7 @@ export function GlasshandLive({ rentalId }: { rentalId: string }) {
         c.getContext("2d")?.drawImage(bmp, vx, vy, vw, vh, 0, 0, c.width, c.height);
         frames++; drawn++; lastFrameAt = Date.now();
       } catch (err) {
-        if (!warned) { warned = true; console.warn("Glasshand live frame could not be drawn", err); }
+        if (!warned) { warned = true; console.warn("Live iPhone frame could not be drawn", err); }
       } finally { bmp?.close(); busy = false; }
     };
     const open = () => {

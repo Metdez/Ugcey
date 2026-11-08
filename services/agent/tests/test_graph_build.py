@@ -20,7 +20,7 @@ SIDE_EFFECT_TOOLS = {"generate_media", "publish_post", "device_commit", "device_
 WEB = {"web_search", "fetch_page"}  # every specialist can look things up when stuck
 DBX = {"dropbox_status", "list_dropbox_media", "browse_dropbox", "save_to_dropbox", "dropbox_backfill"}
 EXPECTED = {
-    "research-analyst": WEB | {"tavily_research", "tavily_search", "tavily_extract", "remember_pattern", "search_patterns"},
+    "research-analyst": WEB | {"deep_research", "deep_search", "read_pages", "remember_pattern", "search_patterns"},
     "creative-strategist": WEB | {"search_patterns"},
     "compliance-critic": WEB | {"compliance_check"},
     "production-coordinator": WEB | DBX | {"list_media_models", "estimate_media_cost", "generate_media", "check_media_job"},

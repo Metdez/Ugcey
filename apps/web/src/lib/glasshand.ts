@@ -12,7 +12,7 @@ async function call(method: string, path: string, body?: unknown): Promise<Glass
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: "same-origin",
   });
-  if (!res.ok) throw new Error(`Glasshand request failed (${res.status})`);
+  if (!res.ok) throw new Error(`iPhone request failed (${res.status})`);
   return res.json() as Promise<GlasshandStatus>;
 }
 

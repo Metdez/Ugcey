@@ -121,7 +121,7 @@ def test_research_analyst_tools(monkeypatch):
     from ugecy import modules, registry
     modules.load_modules()
     tools = set(registry.AGENTS["research-analyst"].tools)
-    assert {"tavily_research", "tavily_search", "tavily_extract", "web_search", "fetch_page"} <= tools
+    assert {"deep_research", "deep_search", "read_pages", "web_search", "fetch_page"} <= tools
     assert not any(t.startswith("device_") for t in tools)  # research is web-only (operator decision)
     assert {"device_commit", "device_observe"} <= set(registry.AGENTS["device-operator"].tools)
     assert not registry.TOOLS["device_start_session"].interrupt  # starting a phone session never asks for approval

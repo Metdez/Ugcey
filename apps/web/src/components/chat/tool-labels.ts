@@ -26,14 +26,14 @@ export function toolLabel(name: string, args: Record<string, unknown>, status: S
       return t("Updating the plan…", "Updated the plan", "Failed to update the plan");
     case "web_search": case "internet_search": case "search":
       return t(`Searching the web for ${clip(q)}…`, `Searched the web for ${clip(q)}`, `Search failed for ${clip(q)}`);
-    case "tavily_search":
+    case "deep_search":
       return t(`Searching the web in depth for ${clip(q)}…`, `Searched the web in depth for ${clip(q)}`, `Deep search failed for ${clip(q)}`);
-    case "tavily_extract": {
+    case "read_pages": {
       const n = Array.isArray(args.urls) ? args.urls.length : 0;
       const pages = n === 1 ? "1 page" : `${n} pages`;
       return t(`Reading ${pages}…`, `Read ${pages}`, `Failed to read ${pages}`);
     }
-    case "tavily_research": {
+    case "deep_research": {
       const topic = clip(str(args.question) || q);
       return t(`Researching ${topic}…`, `Researched ${topic}`, `Research failed for ${topic}`);
     }

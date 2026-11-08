@@ -26,7 +26,7 @@ export function AssetLightbox() {
               <DialogDescription className="text-foreground">{asset.prompt}</DialogDescription>
               <div className="flex flex-wrap gap-1">
                 <Badge variant="outline">{asset.model}</Badge>
-                <Badge variant="outline">{asset.provider}</Badge>
+                <Badge variant="outline">{asset.provider === "upload" ? "Uploaded" : "Generated"}</Badge>
                 <Badge variant="outline">{asset.mode}</Badge>
                 <Badge variant="outline">{asset.status}</Badge>
                 {asset.dropbox_status && <Badge variant="outline" title={asset.dropbox_path ?? undefined}>Dropbox: {asset.dropbox_status}</Badge>}

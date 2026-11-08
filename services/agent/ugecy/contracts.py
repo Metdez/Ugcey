@@ -22,7 +22,7 @@ class ProviderModes(BaseModel):
     device: Mode = "off"
     publishing: Mode = "off"
     research: Mode = "off"  # web_search (Firecrawl); fetch_page is always available
-    tavily: Mode = "off"  # tavily_search, tavily_extract, tavily_research
+    tavily: Mode = "off"  # deep_search, read_pages, deep_research
     storage: Mode = "off"  # Dropbox media library, live while the operator's Dropbox is connected
 
 

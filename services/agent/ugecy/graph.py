@@ -130,7 +130,7 @@ def build_agent(deps: Deps, models: dict[str, BaseChatModel] | None = None):
 
 
 RETIRED_SKILLS = ("phone-research",)  # research is web-only now (Firecrawl + Tavily)
-MANAGED_MEMORY_LINES = ("- Media library:", "- Approvals:")  # rewritten in stored memory when the template changes
+MANAGED_MEMORY_LINES = ("- Media library:", "- Approvals:", "- Naming:")  # rewritten in stored memory when the template changes
 
 
 async def seed_store(store: Any, workspace_id: str) -> None:

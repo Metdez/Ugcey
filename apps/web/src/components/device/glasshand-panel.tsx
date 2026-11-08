@@ -14,8 +14,8 @@ export function GlasshandPanel({ status, busy, onSelect, onDisconnect }: Props) 
     <section className="flex flex-col gap-3">
       {rentals.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          No active rental. Rent an iPhone at{" "}
-          <a className="inline-flex items-center gap-0.5 underline" href="https://glasshand.com" target="_blank" rel="noopener noreferrer">glasshand.com<ExternalLink className="size-3" aria-hidden /></a>
+          No active iPhone rental.{" "}
+          <a className="inline-flex items-center gap-0.5 underline" href="https://glasshand.com" target="_blank" rel="noopener noreferrer">Rent an iPhone<ExternalLink className="size-3" aria-hidden /></a>
         </p>
       )}
       {rentals.length > 1 && (
@@ -31,13 +31,13 @@ export function GlasshandPanel({ status, busy, onSelect, onDisconnect }: Props) 
       {selected && rentalReady(selected) && <GlasshandLive rentalId={selected.id} />}
       <div className="flex flex-wrap justify-center gap-2">
         <Button size="sm" variant="outline" asChild>
-          <a href="https://app.glasshand.com" target="_blank" rel="noopener noreferrer">Take control in Glasshand<ExternalLink aria-hidden /></a>
+          <a href="https://app.glasshand.com" target="_blank" rel="noopener noreferrer">Take control<ExternalLink aria-hidden /></a>
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild><Button size="sm" variant="ghost" disabled={busy}>Disconnect</Button></AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Disconnect Glasshand?</AlertDialogTitle>
+              <AlertDialogTitle>Disconnect the iPhone?</AlertDialogTitle>
               <AlertDialogDescription>Stored access tokens are deleted. You will need to approve a new email code to reconnect. Your rental is not cancelled.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -1,4 +1,4 @@
-"""Tavily deep research tools: tavily_search, tavily_extract, tavily_research.
+"""Deep research tools (Tavily, internal only): deep_search, read_pages, deep_research.
 
 No Ugecy budget: only Tavily's own per-request maxima (20 results, 20 URLs) apply. Off -> mode "off" + what to connect."""
 from __future__ import annotations
@@ -36,15 +36,15 @@ async def _source(url: str, title: str | None, snippet: str | None = None) -> No
 
 
 @tool
-async def tavily_search(query: str, topic: str = "general", time_range: str | None = None, max_results: int = 20,
+async def deep_search(query: str, topic: str = "general", time_range: str | None = None, max_results: int = 20,
                         include_domains: list[str] | None = None, exclude_domains: list[str] | None = None) -> str:
-    """Deep web search with Tavily (advanced depth): the most relevant passages from each result, not just snippets.
+    """Deep web search (advanced depth): the most relevant passages from each result, not just snippets.
 
     Run many of these, in parallel, from different angles. `topic` is general or news (news adds publish
     dates). `time_range` is day, week, month or year; use week or month for what is working now.
     `max_results` up to 20. `include_domains` focuses on chosen sites (e.g. reddit.com for real customer
     language, tiktok.com for trend snippets). Returns one JSON object per line: url, title, published_date,
-    score, content. Follow up with tavily_extract on the best URLs.
+    score, content. Follow up with read_pages on the best URLs.
     """
     c = _client()
     body: dict[str, Any] = {"query": query, "search_depth": "advanced", "chunks_per_source": 3,
@@ -55,7 +55,7 @@ async def tavily_search(query: str, topic: str = "general", time_range: str | No
     try:
         data = await c.search(body)
     except Exception as e:  # noqa: BLE001 tool errors go back to the model
-        return _fail(c, e, "tavily search")
+        return _fail(c, e, "deep search")
     results = [r for r in data.get("results") or [] if r.get("url")]
     for r in results:
         await _source(r["url"], r.get("title"), r.get("content"))
@@ -65,8 +65,8 @@ async def tavily_search(query: str, topic: str = "general", time_range: str | No
 
 
 @tool
-async def tavily_extract(urls: list[str], query: str | None = None) -> str:
-    """Read the full text of public pages with Tavily (advanced extraction handles JS-heavy pages and tables).
+async def read_pages(urls: list[str], query: str | None = None) -> str:
+    """Read the full text of public pages (advanced extraction handles JS-heavy pages and tables).
 
     Pass up to dozens of URLs (sent in groups of 20, in parallel). With `query`, each page returns the
     passages most relevant to it. Platform search, tag and profile pages, logins and private hosts are
@@ -86,7 +86,7 @@ async def tavily_extract(urls: list[str], query: str | None = None) -> str:
     try:
         parts = await asyncio.gather(*(c.extract({**base, "urls": ok[i:i + 20]}) for i in range(0, len(ok), 20)))
     except Exception as e:  # noqa: BLE001
-        return _fail(c, e, "tavily extract")
+        return _fail(c, e, "page reading")
     pages = [r for p in parts for r in p.get("results") or [] if r.get("url")]
     failed = [*refused, *({"url": f.get("url"), "error": f.get("error")} for p in parts for f in p.get("failed_results") or [])]
     for r in pages:
@@ -97,9 +97,9 @@ async def tavily_extract(urls: list[str], query: str | None = None) -> str:
 
 
 @tool
-async def tavily_research(question: str, model: str = "pro", include_domains: list[str] | None = None,
+async def deep_research(question: str, model: str = "pro", include_domains: list[str] | None = None,
                           exclude_domains: list[str] | None = None) -> str:
-    """Run a Tavily deep research task: Tavily plans, searches many sources and writes a long cited report.
+    """Run a deep research task: it plans, searches many sources and writes a long cited report.
 
     Takes minutes. Start several at once on different angles (e.g. winning hooks in the niche right now,
     winning short-form formats and structures, what customers say and complain about, competitor ads)
@@ -115,9 +115,9 @@ async def tavily_research(question: str, model: str = "pro", include_domains: li
     try:
         data = await c.research(body)
     except Exception as e:  # noqa: BLE001
-        return _fail(c, e, "tavily research")
+        return _fail(c, e, "deep research")
     if data.get("status") != "completed":
-        return json.dumps({"mode": c.mode, "status": data.get("status"), "error": "Tavily research task failed"})
+        return json.dumps({"mode": c.mode, "status": data.get("status"), "error": "deep research task failed"})
     sources = [s for s in data.get("sources") or [] if s.get("url")]
     for s in sources:
         await _source(s["url"], s.get("title"))
@@ -127,6 +127,6 @@ async def tavily_research(question: str, model: str = "pro", include_domains: li
     return json.dumps({"mode": c.mode, "status": "completed", "sources": len(sources)}) + f"\n\n{report}\n\nSources:\n{refs}"
 
 
-registry.register_tool(tavily_search, domain="research")
-registry.register_tool(tavily_extract, domain="research")
-registry.register_tool(tavily_research, domain="research")
+registry.register_tool(deep_search, domain="research")
+registry.register_tool(read_pages, domain="research")
+registry.register_tool(deep_research, domain="research")

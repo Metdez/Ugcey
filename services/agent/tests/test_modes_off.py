@@ -60,7 +60,8 @@ def test_test_mode_builds_all_off():
 async def test_web_search_off_message():
     _off_deps()
     out = json.loads(await research.web_search.ainvoke({"query": "skincare hooks"}))
-    assert out["mode"] == "off" and "FIRECRAWL_API_KEY" in out["error"] and "SAMPLE" not in json.dumps(out)
+    assert out["mode"] == "off" and "README, Secrets" in out["error"] and "SAMPLE" not in json.dumps(out)
+    assert "firecrawl" not in out["error"].lower()  # no provider names in operator-visible text
     with pytest.raises(NotConnected):
         await WebResearchProvider(Settings()).search("x")
 

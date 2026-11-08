@@ -7,16 +7,16 @@ from ugecy.contracts import DeviceInfo, Mode, Post
 from ugecy.integrations.media.catalog import catalog_models
 from ugecy.interfaces import MediaJob
 
-MEDIA_OFF = "Higgsfield not connected: set the HF_KEY Worker secret"
-DEVICE_OFF = "No iPhone connected: connect Glasshand in the Device tab"
+MEDIA_OFF = "Video generation not connected: set its API key Worker secret (README, Secrets)"
+DEVICE_OFF = "No iPhone connected: connect it in the Device tab"
 PUBLISH_OFF = ("Direct API publishing isn't connected; publish from the iPhone via the device-operator "
                "(with approval)")
 ANALYTICS_OFF = "No analytics source connected; have the device-operator read metrics on the iPhone with device_observe"
 STORAGE_OFF = "Dropbox not connected: open Accounts in the sidebar and connect Dropbox"
-SEARCH_OFF = ("Firecrawl web search not connected: add the FIRECRAWL_API_KEY Worker secret. Use the Tavily tools or "
-              "fetch specific URLs meanwhile.")
-TAVILY_OFF = ("Tavily deep research not connected: add the TAVILY_API_KEY Worker secret "
-              "(wrangler secret put TAVILY_API_KEY). Use web_search and fetch_page meanwhile.")
+SEARCH_OFF = ("Web research not connected: add its API key Worker secret (README, Secrets). Use deep_search, "
+              "deep_research or fetch_page meanwhile.")
+TAVILY_OFF = ("Deep research not connected: add its API key Worker secret (README, Secrets). Use web_search and "
+              "fetch_page meanwhile.")
 
 
 class NotConnected(RuntimeError):

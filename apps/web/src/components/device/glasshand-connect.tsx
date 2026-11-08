@@ -11,15 +11,15 @@ export function GlasshandDisconnected({ busy, error, onConnect }: Pick<Props, "b
   return (
     <Card className="gap-3 py-4">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Smartphone className="size-4" aria-hidden />Connect your Glasshand iPhone</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Smartphone className="size-4" aria-hidden />Connect your iPhone</CardTitle>
         <CardDescription>
-          Glasshand rents a real iPhone you can watch live here. You approve access with an email code on Glasshand&apos;s site,
+          Connect a rented iPhone you can watch live here. You approve access with an email code on the rental site,
           and the access tokens stay on the server, never in your browser.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
-        <Button onClick={onConnect} disabled={busy}>{busy && <Loader2 className="animate-spin" aria-hidden />}Connect Glasshand</Button>
+        <Button onClick={onConnect} disabled={busy}>{busy && <Loader2 className="animate-spin" aria-hidden />}Connect iPhone</Button>
       </CardContent>
     </Card>
   );
@@ -32,8 +32,8 @@ export function GlasshandPending({ status, busy, onCancel }: Pick<Props, "status
   return (
     <Card className="gap-3 py-4">
       <CardHeader>
-        <CardTitle>Approve Glasshand access</CardTitle>
-        <CardDescription>Open the approval page and confirm this code. Glasshand emails you a verification code.</CardDescription>
+        <CardTitle>Approve iPhone access</CardTitle>
+        <CardDescription>Open the approval page and confirm this code. You get a verification code by email.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-3">
         <p className="select-all font-mono text-3xl font-semibold tracking-[0.25em]" aria-label="Approval code">{status?.user_code ?? "…"}</p>
@@ -53,13 +53,13 @@ export function GlasshandPending({ status, busy, onCancel }: Pick<Props, "status
 }
 
 export function GlasshandFailed({ status, busy, onConnect }: Pick<Props, "status" | "busy" | "onConnect">) {
-  const title = status?.state === "denied" ? "Access denied" : status?.state === "expired" ? "Approval code expired" : "Glasshand error";
+  const title = status?.state === "denied" ? "Access denied" : status?.state === "expired" ? "Approval code expired" : "Connection error";
   return (
     <Alert variant="destructive">
       <AlertTriangle aria-hidden />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
-        <p>{status?.message ?? "Glasshand access was not approved. You can try again."}</p>
+        <p>{status?.message ?? "iPhone access was not approved. You can try again."}</p>
         <Button size="sm" variant="outline" className="mt-2" onClick={onConnect} disabled={busy}>Try again</Button>
       </AlertDescription>
     </Alert>

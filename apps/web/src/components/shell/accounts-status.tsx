@@ -26,7 +26,7 @@ export function AccountsStatus() {
       <SidebarGroupContent>
         <div className="flex items-center gap-2 px-2 py-1.5 text-xs">
           <Smartphone className="size-4 shrink-0 text-muted-foreground" />
-          <span className="truncate">Glasshand iPhone</span>
+          <span className="truncate">iPhone</span>
           <StatusDot tone={ghTone[0]} label={ghTone[1]} className="ml-auto" />
         </div>
         <button type="button" onClick={() => setDbxOpen(true)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs hover:bg-sidebar-accent">
