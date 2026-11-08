@@ -28,8 +28,8 @@ JOB_POLL_S = 3.0
 TRANSFER_WINDOW_S = 16 * 60  # Dropbox fails a save_url transfer after 15 minutes; poll a little past that
 PARALLEL = 3  # Dropbox rate-limits bursts of writes per user
 PHONE_STEPS = ("On the iPhone: open the Dropbox app, tap Search and type the file name (or Files > Ugecy > "
-               "Videos/Images), tap ••• next to the file > Export > Save video (or Save image). It is then in "
-               "Photos, ready to pick in TikTok/Instagram/YouTube.")
+               "Videos/Images), tap ••• next to the file > Export > Save video (or Save image). Do not open the Photos "
+               "app to check the download: go straight to TikTok/Instagram/YouTube and pick the newest item there.")
 _TASKS: set[asyncio.Task] = set()
 _ACTIVE: set[str] = set()
 _SEM: asyncio.Semaphore | None = None

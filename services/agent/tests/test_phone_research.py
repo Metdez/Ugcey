@@ -156,3 +156,17 @@ def test_device_operator_is_not_told_to_over_verify():
     assert "Slow and careful" not in prompt and "Check in Photos" not in prompt
     assert "Do not screenshot before an action" in prompt and "Never browse to find or check media" in prompt
     assert "before and after" not in registry.TOOLS["device_screenshot"].tool.description
+
+
+def test_dropbox_downloads_are_never_checked_in_photos():
+    # After "Save video" from the Dropbox app, the agent went into Photos to verify it, which took forever (operator report).
+    from importlib.resources import files
+
+    from ugecy.storage import backup
+    from ugecy.tools import dropbox
+
+    assert "Do not open the Photos app to check the download" in backup.PHONE_STEPS
+    assert "never open the Photos app to verify it" in dropbox.list_dropbox_media.description
+    media = next(ln for ln in files("ugecy").joinpath("skills", "_memory", "AGENTS.md").read_text("utf-8").splitlines()
+                 if ln.startswith("- Media library:"))
+    assert "never open the Photos app to check the download" in media and "pick it from Photos" not in media
