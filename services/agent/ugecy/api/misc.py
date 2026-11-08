@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import asyncio
+import time
+from datetime import UTC, datetime, timedelta
 
 import httpx
 from fastapi import APIRouter, Request, Response
@@ -63,12 +65,45 @@ async def _live_modes(deps):
     except Exception:  # noqa: BLE001 unreachable device = off
         ready = False
     phone = "live" if ready else "off"
-    return deps.modes.model_copy(update={"device": phone, "publishing": phone})
+    try:
+        from ugecy.integrations.storage.dropbox import get_dropbox
+        storage = "live" if await asyncio.wait_for(get_dropbox().connected(), 8) else "off"
+    except Exception:  # noqa: BLE001
+        storage = "off"
+    return deps.modes.model_copy(update={"device": phone, "publishing": phone, "storage": storage})
+
+
+_LINKS: dict[str, tuple[str, float]] = {}  # dropbox path -> (temporary link, expiry); links last 4 h
+_LINK_AFTER = timedelta(days=6, hours=12)  # Higgsfield deletes outputs at 7 days
+
+
+async def _durable(a: Asset) -> Asset:
+    """After Higgsfield deletes an output, serve it from the operator's Dropbox (private 4 h link)."""
+    if a.dropbox_status != "saved" or not a.dropbox_path:
+        return a
+    try:
+        if datetime.now(UTC) - datetime.fromisoformat(a.created_at) < _LINK_AFTER:
+            return a
+        from ugecy.integrations.storage.dropbox import get_dropbox
+        link, exp = _LINKS.get(a.dropbox_path, ("", 0.0))
+        if exp < time.time():
+            link, exp = await get_dropbox().temp_link(a.dropbox_path), time.time() + 3.5 * 3600
+            _LINKS[a.dropbox_path] = (link, exp)
+    except Exception:  # noqa: BLE001 - keep the stored url
+        return a
+    return a.model_copy(update={"url": link, "thumbnail_url": link if a.kind == "image" else a.thumbnail_url})
 
 
 @router.get("/api/assets")
 async def assets(request: Request, thread_id: str | None = None) -> list[Asset]:
-    return await deps_of(request).app.list_assets(thread_id)
+    return list(await asyncio.gather(*[_durable(a) for a in await deps_of(request).app.list_assets(thread_id)]))
+
+
+@router.post("/api/storage/backfill")
+async def storage_backfill(retry_failed: bool = False) -> dict:
+    from ugecy.storage.backup import reconcile
+
+    return {"queued": await reconcile(retry_failed)}
 
 
 @router.get("/api/approvals")

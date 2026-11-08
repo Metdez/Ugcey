@@ -1,5 +1,6 @@
 // Thread store: the only channel between chat and inspector components (FROZEN API:
 // `useThread`, `threadActions`). Streams real SSE.
+import { toast } from "sonner";
 import { create } from "zustand";
 import type { Decision, UiEvent } from "@ugecy/contracts";
 import { api, ApiError, streams } from "@/lib/api";
@@ -24,21 +25,40 @@ const onEvent = (e: UiEvent) => {
   set((s) => applyEvent(s, e));
 };
 
-/** Run one stream, mapping transport failures onto status. */
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const active = () => ["connecting", "streaming"].includes(get().status);
+
+/** Run one stream. If it drops mid-run, silently reattach to the live run (no error state) until it completes. */
 async function run(fn: (signal: AbortSignal) => Promise<void>) {
   abort?.abort();
   const ctl = (abort = new AbortController());
   set({ status: "connecting", error: null });
   try {
-    await fn(ctl.signal);
-  } catch (err) {
-    if (ctl.signal.aborted) return;
-    if (err instanceof ApiError) set({ status: "error", error: { message: err.message, retryable: err.status >= 500 } });
-    else set({ status: "offline" });
+    for (let attempt = 0; attempt < 120; attempt++) {
+      const id = get().threadId;
+      try {
+        await (attempt === 0 ? fn(ctl.signal) : streams.attach(id!, get().lastSeq, onEvent, ctl.signal));
+      } catch (err) {
+        if (ctl.signal.aborted) return;
+        if (err instanceof ApiError && err.status >= 400 && err.status < 500 && err.status !== 409 && attempt === 0) {
+          toast(err.message);
+          return set({ status: "idle" });
+        }
+      }
+      if (ctl.signal.aborted || !active() || !id) return; // run.completed / approval arrived
+      // Stream ended without run.completed: is the run still going on the server?
+      const t = await api.getThread(id).catch(() => null);
+      if (t && t.thread.status !== "running") {
+        if (abort === ctl) abort = null;
+        return threadActions.openThread(id); // finished while disconnected: load the final state
+      }
+      set({ status: "streaming", progress: "Reconnecting to the live run…" });
+      await sleep(Math.min(1000 * (attempt + 1), 5000));
+    }
   } finally {
     if (abort === ctl) {
       abort = null;
-      if (get().status === "connecting" || get().status === "streaming") set({ status: "idle" }); // stream ended without run.completed
+      if (active()) set({ status: "idle" });
       void useWorkspace.getState().refreshThreads();
     }
   }
@@ -89,9 +109,20 @@ export const threadActions: ThreadActions = {
     } catch {
       return set({ status: "offline" });
     }
-    set((s) => ({ messages: [...s.messages, userMessage(text)] }));
+    const um = userMessage(text);
+    set((s) => ({ messages: [...s.messages, um] }));
     const tid = id;
-    await run((sig) => streams.run(tid, text, onEvent, sig));
+    await run(async (sig) => {
+      try {
+        await streams.run(tid, text, onEvent, sig);
+      } catch (err) {
+        if (!(err instanceof ApiError && err.status === 409)) throw err;
+        // The agent is still working on the previous request: reconnect to it instead of erroring.
+        set((s) => ({ messages: s.messages.filter((m) => m !== um) }));
+        toast("Ugecy is still working on the previous task. Showing it live; press Stop to interrupt, then send again.");
+        await streams.attach(tid, get().lastSeq, onEvent, sig);
+      }
+    });
   },
 
   async ensureThread(titleSource) {

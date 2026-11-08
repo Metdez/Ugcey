@@ -22,6 +22,7 @@ class ProviderModes(BaseModel):
     device: Mode = "off"
     publishing: Mode = "off"
     research: Mode = "off"  # web_search; fetch_page is always available
+    storage: Mode = "off"  # Dropbox media library, live while the operator's Dropbox is connected
 
 
 class ModelRoute(BaseModel):
@@ -129,6 +130,8 @@ class Asset(BaseModel):
     mode: Mode
     estimated_usd: float | None = None
     created_at: str = Field(default_factory=now_iso)
+    dropbox_path: str | None = None  # copy in the operator's Dropbox (written only by set_asset_dropbox)
+    dropbox_status: Literal["pending", "saved", "failed"] | None = None
 
 
 class Source(BaseModel):

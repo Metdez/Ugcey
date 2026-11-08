@@ -50,6 +50,8 @@ export const api = {
   getThread: (id: string) => req<ThreadState>("GET", `/api/threads/${id}`),
   deleteThread: (id: string) => req<{ ok: true }>("DELETE", `/api/threads/${id}`),
   cancel: (id: string) => req<{ ok: boolean }>("POST", `/api/threads/${id}/cancel`),
+  stopSubagent: (id: string, callId: string) =>
+    req<{ ok: boolean }>("POST", `/api/threads/${id}/subagents/${encodeURIComponent(callId)}/stop`),
   getFile: (id: string, path: string) => req<FileContent>("GET", `/api/threads/${id}/files${q({ path })}`),
   listMemories: () => req<MemoryFile[]>("GET", "/api/memories"),
   putMemory: (path: string, content: string) => req<MemoryFile>("PUT", "/api/memories", { path, content }),

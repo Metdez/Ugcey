@@ -11,7 +11,7 @@ from ugecy.contracts import Mode, Source
 from ugecy.deps import get_deps
 from ugecy.integrations.unavailable import SEARCH_OFF, NotConnected
 
-FIRECRAWL_URL = "https://api.firecrawl.dev/v2/search"
+FIRECRAWL_BASE = "https://api.firecrawl.dev"
 MAX_MD = 20_000
 OEMBED = {  # Instagram oEmbed needs a Meta app token, so Instagram goes through the browser path.
     "tiktok": "https://www.tiktok.com/oembed",
@@ -43,7 +43,7 @@ class WebResearchProvider:
             raise NotConnected(SEARCH_OFF)
         q = f"{query} {platform} short-form video" if platform else query
         body = {"query": q, "limit": limit, "sources": [{"type": "web"}], "domainTools": False}
-        data = await self._post(body)  # quota / network errors propagate; the tool reports them, nothing is faked
+        data = await self._post("/v2/search", body)  # quota / network errors propagate; the tool reports them, nothing is faked
         out = []
         for r in (data.get("data") or {}).get("web") or []:
             if r.get("url"):
@@ -51,12 +51,12 @@ class WebResearchProvider:
                                   snippet=(r.get("description") or "")[:400] or None))
         return out[:limit]
 
-    async def _post(self, body: dict[str, Any]) -> dict[str, Any]:
+    async def _post(self, path: str, body: dict[str, Any]) -> dict[str, Any]:
         if self.edge:
             from ugecy.internal import post_json  # owned by plan 02-06
-            return await post_json("firecrawl.internal", "/v2/search", body)
-        async with httpx.AsyncClient(timeout=30) as c:
-            r = await c.post(FIRECRAWL_URL, json=body,
+            return await post_json("firecrawl.internal", path, body)
+        async with httpx.AsyncClient(timeout=60) as c:
+            r = await c.post(FIRECRAWL_BASE + path, json=body,
                              headers={"Authorization": f"Bearer {self.settings.firecrawl_api_key}"})
             r.raise_for_status()
             return r.json()
@@ -68,6 +68,13 @@ class WebResearchProvider:
         if not self.edge and platform in OEMBED:
             with contextlib.suppress(httpx.HTTPError, ValueError):  # else fall through to browser path
                 return await self._oembed(url, platform)
+        if self.mode == "live":  # Firecrawl handles JS-heavy and protected pages better; fall back on any failure
+            with contextlib.suppress(Exception):
+                d = (await self._post("/v2/scrape", {"url": url, "formats": ["markdown"], "onlyMainContent": True}))
+                data = d.get("data") or {}
+                if data.get("markdown"):
+                    return {"url": url, "title": (data.get("metadata") or {}).get("title", ""), "platform": platform,
+                            "markdown": data["markdown"][:MAX_MD], "metrics": {}}
         page = await get_deps().edge.browser_markdown(url)
         return {"url": url, "title": page.get("title", ""), "platform": platform,
                 "markdown": (page.get("markdown") or "")[:MAX_MD], "metrics": {}}

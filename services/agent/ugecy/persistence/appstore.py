@@ -25,6 +25,9 @@ from ugecy.settings import Settings
 SCHEMA = Path(__file__).with_name("schema.sql")
 _UP = Path(__file__).resolve().parents
 REPO_MIGRATION = (_UP[4] / "migrations" / "0001_init.sql") if len(_UP) > 4 else Path("/nonexistent")  # absent in the container
+ALTERS = ["ALTER TABLE assets ADD COLUMN dropbox_path TEXT",  # = migrations/0002_asset_dropbox.sql
+          "ALTER TABLE assets ADD COLUMN dropbox_status TEXT"]
+KEEP = {"assets": ("dropbox_path", "dropbox_status")}  # owned by set_asset_dropbox; a stale upsert never wipes them
 
 
 class SqlExecutor(Protocol):
@@ -46,7 +49,7 @@ class _D1Executor:
 
 
 def _upsert(table: str, cols: list[str], pk: list[str]) -> str:
-    sets = ", ".join(f"{c}=excluded.{c}" for c in cols if c not in pk)
+    sets = ", ".join(f"{c}=excluded.{c}" for c in cols if c not in pk and c not in KEEP.get(table, ()))
     return (f"INSERT INTO {table}({', '.join(cols)}) VALUES({', '.join('?' * len(cols))}) "
             f"ON CONFLICT({', '.join(pk)}) DO UPDATE SET {sets}")
 
@@ -124,6 +127,9 @@ class SqlAppStore:
     async def get_asset(self, asset_id: str) -> Asset | None:
         return await self._get(Asset, "assets", "id", asset_id)
 
+    async def set_asset_dropbox(self, asset_id: str, path: str | None, status: str | None) -> None:
+        await self.db.execute("UPDATE assets SET dropbox_path=?, dropbox_status=? WHERE id=?", [path, status, asset_id])
+
     async def list_assets(self, thread_id: str | None = None) -> list[Asset]:
         where, params = ("WHERE thread_id=?", [thread_id]) if thread_id else ("", [])
         return await self._list(Asset, "assets", "created_at DESC", where, params)
@@ -176,6 +182,12 @@ class SqliteAppStore(SqlAppStore):
     async def init(self) -> None:
         path = REPO_MIGRATION if REPO_MIGRATION.exists() else SCHEMA
         await self._sqlite.script(path.read_text())
+        for sql in ALTERS:  # D1 gets these from migrations/; local sqlite applies them here, once
+            try:
+                await self._sqlite.execute(sql, [])
+            except Exception as e:
+                if "duplicate column" not in str(e).lower():
+                    raise
 
 
 class D1AppStore(SqlAppStore):

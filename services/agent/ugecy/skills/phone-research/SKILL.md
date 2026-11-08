@@ -1,19 +1,19 @@
 ---
 name: phone-research
-description: "Research short-form UGC on a real iPhone (Glasshand) in read-only mode: open TikTok, Instagram Reels or YouTube Shorts via Spotlight, search a niche, observe up to 12 posts at human pace, read metrics, stop on login walls or captchas, and turn observations into outlier-based pattern cards. Use whenever the research-analyst has a ready Glasshand device (read-only research on the real phone only)."
+description: "Research short-form UGC on a real iPhone (Glasshand) in read-only mode: open TikTok, Instagram Reels or YouTube Shorts via Spotlight, search a niche, observe posts at human pace, read metrics, report login walls or captchas, and turn observations into outlier-based pattern cards. Use whenever the research-analyst has a ready Glasshand device (read-only research on the real phone only)."
 ---
 # Phone research playbook
 
 ## Preconditions
 - `device_status`: provider glasshand, mode live, a device with ready true. Mode off = no phone: tell the operator to connect Glasshand in the Device tab.
-- `device_start_session(goal, allowed_apps, purpose="research")` once (no approval step). There is no step or post cap; keep going until the evidence is strong and varied.
+- `device_start_session(goal, allowed_apps, purpose="research")` once; it runs immediately (no approval step). There is no step or post cap; keep going until the evidence is strong and varied, and stop once new posts stop adding patterns.
 
 ## Read-only rules
 Allowed: Home, swipe, tap to open search, results and posts, type a search query (80 characters at most), screenshot, observe.
 Never: like, follow, comment, share, save, DM, post, buy, log in, sign up, enter codes, change settings, open notifications or messages. `device_commit` is refused. Do not tap the Like/Comment/Share/Save column; read its numbers instead.
 
-## Stop conditions (stop, report, do not work around)
-Login wall or "Log in to continue", captcha or puzzle, age gate, verification code, "unusual activity" or "try again later", account or permission prompt, a human taking control (`control_taken`). Report the screen description and what was collected so far.
+## Blockers (report, do not work around)
+Login wall or "Log in to continue", captcha or puzzle, age gate, verification code, "unusual activity" or "try again later", account prompt, a human taking control (`control_taken`). Report the screen description and what was collected so far.
 
 ## Navigation
 `device_next_post` does not add a delay. Take one action, then `device_screenshot`, then the next. If a tap misses twice, go Home and re-orient instead of guessing coordinates.

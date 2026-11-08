@@ -65,9 +65,11 @@ D1_ID=... KV_ID=... node scripts/render-config.mjs wrangler.jsonc wrangler.deplo
 # 3. Migrate, build and deploy
 pnpm exec wrangler d1 migrations apply ugecy-db --remote --config wrangler.deploy.json
 pnpm build && pnpm exec wrangler deploy --config wrangler.deploy.json
-# 4. Secrets. The optional ones switch providers from mock to live.
+# 4. Secrets. Each optional one turns a capability on; without it, that capability is off.
 pnpm exec wrangler secret put HF_KEY --config wrangler.deploy.json            # Higgsfield "key-id:key-secret"
 pnpm exec wrangler secret put FIRECRAWL_API_KEY --config wrangler.deploy.json # live web search
+pnpm exec wrangler secret put DROPBOX_APP_KEY --config wrangler.deploy.json    # Dropbox media library
+pnpm exec wrangler secret put DROPBOX_APP_SECRET --config wrangler.deploy.json # then Accounts > Dropbox > Connect in the app
 ```
 
 Resources are created by `scripts/bootstrap.sh`: D1 `ugecy-db`, KV `ugecy-cache`, queues `ugecy-jobs` and `ugecy-jobs-dlq`, and Vectorize `ugecy-memory` (1024-d, cosine).

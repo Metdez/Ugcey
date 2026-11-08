@@ -23,7 +23,7 @@ Prohibited: reviews or testimonials by someone who does not exist, or by someone
 
 ## Claims
 - Objective claims need substantiation on file before the ad runs.
-- Health, medical and weight-loss claims (cures, treats, prevents, lose X pounds) are out of scope for this studio. Never approve them. Cosmetic language must stay cosmetic ("feels hydrated", not "heals eczema").
+- Health, medical and weight-loss claims (cures, treats, prevents, lose X pounds) are out of scope for this studio. Never write or pass them. Cosmetic language must stay cosmetic ("feels hydrated", not "heals eczema").
 - Earnings or results claims need typical-results context. "Guaranteed" needs terms.
 - Comparative claims need a fair basis; do not disparage competitors by name without substantiation.
 

@@ -40,9 +40,10 @@ class MirroredSaver(InMemorySaver):
         """Load each namespace's latest checkpoint with its channel blobs and pending writes.
 
         Older checkpoints stay in KV but are not loaded: every step stores a full copy of each changed
-        channel, so a long thread's history runs to hundreds of MB, far more than one state.internal read
-        can return. Nothing here reads them (no time travel); `aget_state_history` after a restart starts
-        at the latest checkpoint."""
+        channel, so a long thread's history runs to hundreds of MB. state.internal pages reads (~2 MB) so
+        the Durable Object survives them, but that would still be dozens of round trips and the whole
+        history held in memory. Nothing here reads them (no time travel); `aget_state_history` after a
+        restart starts at the latest checkpoint."""
         if thread_id in self._loaded:
             return
         async with self._locks[thread_id]:

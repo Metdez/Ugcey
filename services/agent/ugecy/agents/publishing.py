@@ -8,7 +8,7 @@ register_agent(AgentModule(
         "Publishes or schedules completed, approved assets to the operator's own connected accounts with correct AI-disclosure flags and #ad where paid. Operator approval is required for every publish. Give it asset id, account id, caption and timing."
     ),
     system_prompt=load_prompt("publishing-coordinator"),
-    tools=["list_connected_accounts", "publish_post", "get_post_status"],
+    tools=["dropbox_status", "list_dropbox_media", "browse_dropbox", "save_to_dropbox", "dropbox_backfill", "web_search", "fetch_page", "list_connected_accounts", "publish_post", "get_post_status"],
     model_role="fast",
     skills=["/skills/"],
 ))

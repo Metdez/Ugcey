@@ -50,10 +50,12 @@ async def test_research_session_guards(monkeypatch):
     assert "80" in await call(device.device_type, text="x" * 81)
     assert json.loads(await call(device.device_type, text="x" * 80))["ok"]
     for _ in range(120):  # well past the old 60-step cap
-        assert "budget" not in await call(device.device_home)
-    # operate sessions keep the old rules
-    await start("operate", max_steps=2)
+        assert json.loads(await call(device.device_home))["ok"]
+    # operate sessions keep the old typing rules; max_steps is informational, never a cap
+    assert (await start("operate", max_steps=2))["max_steps"] == 2
     assert json.loads(await call(device.device_type, text="x" * 200))["ok"]
+    for _ in range(3):
+        assert json.loads(await call(device.device_home))["ok"]
     assert not slept
 
 
@@ -91,6 +93,7 @@ async def test_observe_needs_a_post_and_has_no_post_cap(monkeypatch):
     await tap(0.5, 0.26)
     for _ in range(25):  # well past the old 12-post cap
         assert "error" not in json.loads(await call(device.device_observe))
+    assert "limit" not in await call(device.device_observe)  # no post cap
     assert (await call(device.device_next_post)).startswith("{")
 
 
@@ -122,7 +125,7 @@ def test_research_analyst_tools(monkeypatch):
             "device_next_post", "device_type", "device_home"}
     assert need <= set(tools) and "device_commit" not in tools
     assert "device_commit" in registry.AGENTS["device-operator"].tools
-    assert not registry.TOOLS["device_start_session"].interrupt  # only paid generation asks for approval
+    assert not registry.TOOLS["device_start_session"].interrupt  # starting a phone session never asks for approval
     assert "phone-research" in registry.AGENTS["research-analyst"].system_prompt
 
 

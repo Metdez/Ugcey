@@ -146,6 +146,8 @@ async def _poll(asset_id: str, thread_id: str | None) -> None:
                 else:
                     thumb = url
                 await _save(asset.model_copy(update={"status": "completed", "url": url, "thumbnail_url": thumb}))
+                from ugecy.storage.backup import schedule_backup
+                schedule_backup(asset_id)  # copy to the operator's Dropbox (no-op until it is connected)
                 await _audit("media_job", "ok", f"completed job {asset.job_id}; {_expiry_note(out)}", thread_id, "generate_media")
             else:
                 await _save(asset.model_copy(update={"status": "failed"}))

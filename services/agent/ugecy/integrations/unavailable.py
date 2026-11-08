@@ -12,6 +12,7 @@ DEVICE_OFF = "No iPhone connected: connect Glasshand in the Device tab"
 PUBLISH_OFF = ("Direct API publishing isn't connected; publish from the iPhone via the device-operator "
                "(with approval)")
 ANALYTICS_OFF = "No analytics source connected; read metrics on the iPhone with device_observe"
+STORAGE_OFF = "Dropbox not connected: open Accounts in the sidebar and connect Dropbox"
 SEARCH_OFF = ("Live web search not connected (add FIRECRAWL_API_KEY). Research on the iPhone or fetch specific URLs.")
 
 

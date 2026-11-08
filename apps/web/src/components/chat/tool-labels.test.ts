@@ -15,3 +15,9 @@ describe("toolLabel", () => {
     expect(agentColor("ugecy")).toBe("var(--agent-orchestrator)");
   });
 });
+
+import { stripJson } from "./trace/subagent-line";
+it("stripJson hides echoed screen JSON but keeps prose", () => {
+  expect(stripJson('{"app": "Home", "elements": [{"label": "A {b}", "x": 0.1}]}I see the dialog. Tapping "Not Now".'))
+    .toBe('I see the dialog. Tapping "Not Now".');
+});

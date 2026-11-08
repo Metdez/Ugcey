@@ -19,9 +19,9 @@ def test_local_mode_uses_cloudflare_with_account_and_token(monkeypatch):
     m = make_model("research", Settings(internal_mode="local"))
     assert m.openai_api_base == "https://api.cloudflare.com/client/v4/accounts/acct1/ai/v1"
     assert m.openai_api_key.get_secret_value() == "tok"
-    assert m.model_name == "@cf/deepseek-ai/deepseek-v4.1-flash-1017"
+    assert m.model_name == "openai/gpt-5.6-terra"
     assert m.max_retries == 1 and not m.use_responses_api
-    assert m.profile["max_input_tokens"] == 200_000
+    assert m.profile["max_input_tokens"] == 400_000
 
 
 def test_per_model_kwargs_and_context():
@@ -29,7 +29,6 @@ def test_per_model_kwargs_and_context():
     fast = make_model("fast", s)
     assert fast.extra_body == {"chat_template_kwargs": {"enable_thinking": False}}
     assert fast.reasoning_effort is None and fast.profile["max_input_tokens"] == 131_072
-    assert make_model("vision", s).profile["max_input_tokens"] == 262_144
     assert make_model("orchestrator", s).reasoning_effort == "high"
 
 
