@@ -18,7 +18,7 @@ Use LangChain Deep Agents as the orchestration layer: specialist agents, persist
 - Compliance critic: rubric scoring, FTC `#ad`, AI-label and claim checks before generation or publishing.
 - Production coordinator: Higgsfield asset jobs and review status.
 - Publishing coordinator: approved platform connections, schedules, and logs.
-- Device operator: Glasshand sessions and action receipts.
+- Device operator: Glasshand sessions and action receipts. When a step fails or it gets stuck, it looks the fix up with Firecrawl `web_search` before trying again.
 - Analytics analyst: post metrics, winners/losers, and playbook updates to memory (approval-gated).
 
 Each module exposes a narrow contract, can be enabled or removed independently, and never bypasses approval, permission, or audit boundaries. To add or remove a module, add or remove its import in `services/agent/ugecy/modules.py`, or disable it at runtime with `UGECY_DISABLED_AGENTS` or `UGECY_DISABLED_TOOLS`.

@@ -5,6 +5,8 @@ import os
 import pytest
 
 os.environ.setdefault("UGECY_INTERNAL_MODE", "test")
+for _key in ("FIRECRAWL_API_KEY", "FIRECRAWL_API"):  # a developer's real key must not switch tests to live search
+    os.environ.pop(_key, None)
 
 
 @pytest.fixture(autouse=True)

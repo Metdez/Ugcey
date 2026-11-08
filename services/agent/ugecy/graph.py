@@ -10,6 +10,7 @@ from deepagents.backends import CompositeBackend, StateBackend, StoreBackend
 from deepagents.backends.utils import create_file_data
 from langchain.agents.middleware import TodoListMiddleware
 from langchain_core.language_models import BaseChatModel
+from langchain_core.tools import BaseTool
 
 from ugecy import registry
 from ugecy.agents._base import load_prompt
@@ -19,6 +20,7 @@ from ugecy.llm.routing import models_for
 from ugecy.middleware.audit import AuditMiddleware
 from ugecy.middleware.compat import CompatMiddleware
 from ugecy.middleware.limits import limit_middleware
+from ugecy.middleware.stuck import SearchWhenStuckMiddleware
 
 GENERAL_PURPOSE_PROMPT = (
     "You are a read-only helper. Search, read and summarize files in the virtual filesystem and return "
@@ -32,8 +34,11 @@ class RunContext:
     workspace_id: str = "default"
 
 
-def _middleware(deps: Deps, models: dict[str, BaseChatModel], run_limit: int | None = None) -> list[Any]:
-    return [AuditMiddleware(), *limit_middleware(deps.settings, models["fallback"], run_limit), CompatMiddleware()]
+def _middleware(deps: Deps, models: dict[str, BaseChatModel], run_limit: int | None = None,
+                tools: list[BaseTool] | None = None) -> list[Any]:
+    stuck = deps.modes.research == "live" and any(t.name == "web_search" for t in tools or [])
+    return [AuditMiddleware(), *limit_middleware(deps.settings, models["fallback"], run_limit), CompatMiddleware(),
+            *([SearchWhenStuckMiddleware()] if stuck else [])]
 
 
 def _subagents(deps: Deps, models: dict[str, BaseChatModel]) -> list[dict[str, Any]]:
@@ -45,11 +50,12 @@ def _subagents(deps: Deps, models: dict[str, BaseChatModel]) -> list[dict[str, A
         "middleware": _middleware(deps, models, s.max_model_calls_per_subagent), "skills": ["/skills/"],
     }]
     for agent in registry.enabled_agents(s.disabled("agents")):
+        tools = registry.tools_for(agent, s.disabled("tools"))  # always explicit: no inherited tools
+        cap = s.max_model_calls_research if agent.long_running else s.max_model_calls_per_subagent
         spec: dict[str, Any] = {
             "name": agent.name, "description": agent.description, "system_prompt": agent.system_prompt,
-            "tools": registry.tools_for(agent, s.disabled("tools")),  # always explicit: no inherited tools
-            "model": models.get(agent.model_role, models["fast"]),
-            "middleware": _middleware(deps, models, s.max_model_calls_research if agent.long_running else s.max_model_calls_per_subagent),
+            "tools": tools, "model": models.get(agent.model_role, models["fast"]),
+            "middleware": _middleware(deps, models, cap, tools),
         }
         if agent.skills:
             spec["skills"] = agent.skills
