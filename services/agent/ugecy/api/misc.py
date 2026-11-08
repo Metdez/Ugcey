@@ -31,7 +31,7 @@ STARTER_PROMPTS = [
     "Find the top 20 TikTok UGC hooks for clean skincare this month and explain why they work.",
     "Break these 5 videos into hook, script structure and CTA patterns.",
     "Write 5 original 30-second UGC scripts for our serum using the top patterns.",
-    "Generate 3 vertical UGC-style videos for script #2 with Higgsfield.",
+    "Generate 3 vertical UGC-style videos for script #2.",
     "Schedule the approved videos to @glowco on TikTok and Instagram this week.",
     "How did last week's posts perform? What should we make next?",
 ]

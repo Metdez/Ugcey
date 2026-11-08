@@ -31,7 +31,9 @@ export function MainHeader() {
       <RunStatusBadge />
       {modes && (
         <div className="hidden items-center gap-1 md:flex">
-          {([["iPhone", modes.device], ["Video", modes.media], ["Research", modes.research], ["Deep research", modes.tavily]] as const).map(([name, m]) => (
+          {([["iPhone", modes.device], ["Video", modes.media], ["Research", modes.research], ["Deep research", modes.tavily]] as const)
+            .filter(([, m]) => m === "live") // only connected (green) chips; the Not connected banner says what to connect
+            .map(([name, m]) => (
             <Badge key={name} variant="outline" className="gap-1 text-[11px]" title={`${name} ${m === "live" ? "connected" : "not connected"}`}>
               <span className={`size-1.5 rounded-full ${m === "live" ? "bg-success" : "bg-muted-foreground"}`} aria-hidden />
               {name} {m === "live" ? "live" : "off"}
