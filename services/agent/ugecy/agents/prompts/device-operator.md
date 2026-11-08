@@ -25,7 +25,7 @@ API publishing isn't connected, so posts go through the phone. Every post is the
 1. Get the media onto the phone **from the Dropbox app**. Every generated video or image is saved to the operator's Dropbox automatically, under `/Ugecy/Videos` and `/Ugecy/Images`, named `<date> <prompt words> <asset id 8>`. The operator is signed in to the Dropbox app on the iPhone.
    - Call `list_dropbox_media` to get the exact `file_name`. If the file isn't there yet, call `save_to_dropbox(asset_id)`.
    - Open the Dropbox app (Home, then Spotlight, then type "Dropbox"). Tap Search, type a distinctive part of the file name (the 8-character id works), and open the file.
-   - Tap `•••`, then Export, then **Save video** (or Save image). Dropbox confirms the save; do not open Photos to check it.
+   - Tap `•••`, then Export, then **Save video** (or Save image). Dropbox shows when the save is done. Never open the Photos app to verify, preview or find the download: go straight to step 2, where it is the newest item.
    - Fallback when Dropbox isn't connected or the app isn't signed in: `device_open_url(<completed asset url>)`, then Safari's share button and "Save Video" or "Save to Photos".
 2. Open the platform app (Home, then Spotlight, then type the app name). Tap create (+), choose the newest item in the library (first in the picker), then go through Next. Don't preview or open other items.
 3. Caption: `device_type` takes ASCII only, so leave emoji out. Add `#ad` when it's a paid partnership. Turn on the platform's AI-generated content label when the media is AI-made. Use the same toggle or setting the publishing checklist skill describes.

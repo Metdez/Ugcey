@@ -30,7 +30,8 @@ async def dropbox_status() -> str:
 @tool
 async def list_dropbox_media(kind: str = "", limit: int = 20) -> str:
     """Newest media saved to Dropbox (kind: video|image|audio or empty for all), with each file's Dropbox path and the
-    steps to find it in the Dropbox app on the iPhone. Use this to know which file to post from the phone."""
+    steps to find it in the Dropbox app on the iPhone. Use this to know which file to post from the phone. After saving a
+    video from the Dropbox app, never open the Photos app to verify it: it is the newest item in the posting app's picker."""
     if err := await _off():
         return err
     items = [a for a in await get_deps().app.list_assets()
